@@ -269,10 +269,10 @@ xm_to_gene <- function(xms){
   }
 }
 #load parallel mp DE
-pmp_c_48 <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/parallel/parallel_same_dir_mp_crp_48.csv", header = TRUE, stringsAsFactors = FALSE)
-pmp_c_8 <-  read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/parallel/parallel_same_dir_mp_crp_8.csv", header = TRUE, stringsAsFactors = FALSE)
-pmp_o_48 <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/parallel/parallel_same_dir_mp_osp_48.csv", header = TRUE, stringsAsFactors = FALSE)
-pmp_o_8 <-  read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/parallel/parallel_same_dir_mp_osp_8.csv", header = TRUE, stringsAsFactors = FALSE)
+pmp_c_48 <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/parallel/parallel_same_dir_CRP_48hpf.csv", header = TRUE, stringsAsFactors = FALSE)
+pmp_c_8 <-  read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/parallel/parallel_same_dir_CRP_8dpf.csv", header = TRUE, stringsAsFactors = FALSE)
+pmp_o_48 <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/parallel/parallel_same_dir_OSP_48hpf.csv", header = TRUE, stringsAsFactors = FALSE)
+pmp_o_8 <-  read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/parallel/parallel_same_dir_OSP_8dpf.csv", header = TRUE, stringsAsFactors = FALSE)
 pmp_c_48 <- pmp_c_48$related_accession
 pmp_c_8 <-  pmp_c_8$related_accession
 pmp_o_48 <- pmp_o_48$related_accession
@@ -535,8 +535,8 @@ venn(list(pmp_c_48=pmp_c_48,cmxcp_fixed=cmxcp_fixed, gem_cans= gem_cans, cmxcp_d
      ilabels = TRUE, cexsn = 0.70, zcolor = "style", cexil = 0.85)
 venn(list(pmp_o_48=pmp_o_48,omxop_fixed=omxop_fixed, gem_cans= gem_cans,omxop_dxy=omxop_dxy), 
      ilabels = TRUE, cexsn = 0.70, zcolor = "style", cexil = 0.85)
-intersect(intersect(pmp_c_8,gem_cans),intersect(cmxcp_dxy,cmxcp_fixed))
-intersect(intersect(pmp_o_8,gem_cans),intersect(omxop_dxy,omxop_fixed))
+intersect(intersect(pmp_c_8 ,gem_cans),intersect(cmxcp_dxy,cmxcp_fixed))
+intersect(intersect(pmp_o_8 ,gem_cans),intersect(omxop_dxy,omxop_fixed))
 intersect(intersect(pmp_c_48,gem_cans),intersect(cmxcp_dxy,cmxcp_fixed))
 intersect(intersect(pmp_o_48,gem_cans),intersect(omxop_dxy,omxop_fixed))
 xm_to_gene(intersect(intersect(pmp_c_8,gem_cans), intersect(cmxcp_dxy,cmxcp_fixed)))
@@ -1164,21 +1164,21 @@ for (i in c(1:length(crosses)))
   
   # taj_p1 <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",p1,"_taj_d_20kb.txt.Tajima.D", sep = ""), header = TRUE, stringsAsFactors = FALSE)
   # taj_p2 <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",p2,"_taj_d_20kb.txt.Tajima.D", sep = ""), header = TRUE, stringsAsFactors = FALSE)
-  # sweed_p1 <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/",p1,"_pop_bottle_58_sweeps_90_percentile.txt", sep = ""), header = TRUE, stringsAsFactors = FALSE)
-  # sweed_p2 <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/",p2,"_pop_bottle_58_sweeps_90_percentile.txt", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  sweed_p1 <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/",p1,"_pop_bottle_58_sweeps_95_percentile.txt", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  sweed_p2 <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/",p2,"_pop_bottle_58_sweeps_95_percentile.txt", sep = ""), header = TRUE, stringsAsFactors = FALSE)
   # 
-  # sweed_p1$alpha <- sweed_p1$X2
-  # sweed_p1$clr <- sweed_p1$X3
-  # sweed_p2$alpha <- sweed_p2$X2
-  # sweed_p2$clr <- sweed_p2$X3
-  # sweed_p1$START <- sweed_p1$X2 
-  # sweed_p1$END <- sweed_p1$X2 + 1
-  # sweed_p2$START <- sweed_p2$X2
-  # sweed_p2$END <- sweed_p2$X2 + 1
-  # sweed_p1$CHROM <- sweed_p1$X0
-  # sweed_p2$CHROM <- sweed_p2$X0
-  # sweed_p1 <- sweed_p1[c("CHROM","START","END","alpha","clr")]
-  # sweed_p2 <- sweed_p2[c("CHROM","START","END","alpha","clr")]
+  sweed_p1$alpha <- sweed_p1$X2
+  sweed_p1$clr <- sweed_p1$X3
+  sweed_p2$alpha <- sweed_p2$X2
+  sweed_p2$clr <- sweed_p2$X3
+  sweed_p1$START <- sweed_p1$X1 
+  sweed_p1$END <- sweed_p1$X1 + 1
+  sweed_p2$START <- sweed_p2$X1
+  sweed_p2$END <- sweed_p2$X1 + 1
+  sweed_p1$CHROM <- sweed_p1$X0
+  sweed_p2$CHROM <- sweed_p2$X0
+  sweed_p1 <- sweed_p1[c("CHROM","START","END","alpha","clr")]
+  sweed_p2 <- sweed_p2[c("CHROM","START","END","alpha","clr")]
   # 
   # taj_p1$END <- taj_p1$BIN_START + 19999
   # taj_p1$START <- taj_p1$BIN_START
@@ -1221,30 +1221,32 @@ for (i in c(1:length(crosses)))
   # neg_taj_p1_or_p2 <- unique(c(neg_taj_p1,neg_taj_p2))
   # 
   # # sweed 
-  # setDT(sweed_p1)
-  # setkey(mrna_table)
-  # c <- foverlaps(sweed_p1, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHROM", "START", "END"),type="any", nomatch=0L)
-  # c <- as.data.frame(c)
-  # rownames(c) <- NULL
-  # sig_sweed_p1 <- c$related_accession
-  # c <- merge(c,final_features,all.x = TRUE, by = c("related_accession"))
-  # c<- merge(c, blast_key,all.x = TRUE, by = c("product_accession"))
-  # c$name <- NULL
-  # c$tag <- NULL
-  # 
-  # #write.csv(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",p1,"_sweed_90.csv",sep=""), row.names = FALSE, quote = FALSE)
-  # 
-  # setDT(sweed_p2)
-  # c <- foverlaps(sweed_p2, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHROM", "START", "END"),type="any", nomatch=0L)
-  # c <- as.data.frame(c)
-  # rownames(c) <- NULL
-  # sig_sweed_p2 <- c$related_accession
-  # c <- merge(c,final_features,all.x = TRUE, by = c("related_accession"))
-  # c<- merge(c, blast_key,all.x = TRUE, by = c("product_accession"))
-  # c$name <- NULL
-  # c$tag <- NULL
-  # 
-  # #write.csv(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",p2,"_sweed_90.csv",sep=""), row.names = FALSE, quote = FALSE)
+   setDT(sweed_p1)
+   setkey(mrna_table)
+   c <- foverlaps(sweed_p1, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHROM", "START", "END"),type="any", nomatch=0L)
+   c <- as.data.frame(c)
+   rownames(c) <- NULL
+   sig_sweed_p1 <- c$related_accession
+   c <- merge(c,final_features,all.x = TRUE, by = c("related_accession"))
+   c<- merge(c, blast_key,all.x = TRUE, by = c("product_accession"))
+   c$name <- NULL
+   c$tag <- NULL
+   
+   write.csv(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",p1,"_sweed_95.csv",sep=""), row.names = FALSE, quote = FALSE)
+   
+  setDT(sweed_p2)
+  setkey(mrna_table)
+  c <- foverlaps(sweed_p2, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHROM", "START", "END"),type="any", nomatch=0L)
+  c <- as.data.frame(c)
+  rownames(c) <- NULL
+  sig_sweed_p2 <- c$related_accession
+  c <- merge(c,final_features,all.x = TRUE, by = c("related_accession"))
+  c<- merge(c, blast_key,all.x = TRUE, by = c("product_accession"))
+  c$name <- NULL
+  c$tag <- NULL
+  
+  
+   write.csv(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",p2,"_sweed_95.csv",sep=""), row.names = FALSE, quote = FALSE)
   # 
   # sig_sweed_p1_or_p2 <- unique(c(sig_sweed_p1,sig_sweed_p2))
   
@@ -1274,24 +1276,24 @@ for (i in c(1:length(crosses)))
   #venn(list(ai_genes=ai[,1],near_fixed_snp=fixed,gemma=gem_cans,sig_sweed_p1_or_p2=sig_sweed_p1_or_p2), 
   #     ilabels = TRUE, cexsn = 0.70, zcolor = "style", cexil = 0.85, title = cross)
   
-  dxy <- read.csv(paste("D:/Martin Lab/rna_2018/fst/dna/",cross,"_popgen_dna_stats_corr_dxy.csv",sep=""), header = TRUE, stringsAsFactors = FALSE)
-  colnames(dxy)[colnames(dxy )=="start"] <- "START"
-  colnames(dxy)[colnames(dxy )=="end"] <- "END"
-  colnames(dxy)[colnames(dxy )=="scaffold"] <- "CHROM"
+  #dxy <- read.csv(paste("D:/Martin Lab/rna_2018/fst/dna/",cross,"_popgen_dna_stats_corr_dxy.csv",sep=""), header = TRUE, stringsAsFactors = FALSE)
+  #colnames(dxy)[colnames(dxy )=="start"] <- "START"
+  #colnames(dxy)[colnames(dxy )=="end"] <- "END"
+  #colnames(dxy)[colnames(dxy )=="scaffold"] <- "CHROM"
 
-  setDT(dxy)
-  setkey(mrna_table)
-  c <- foverlaps(dxy, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHROM", "START", "END"),type="any", nomatch=0L)
-  c <- as.data.frame(c)
-  rownames(c) <- NULL
-  thresh <- quantile(na.omit(dxy$corr_dxy), 0.90)
-  c <- c[which(c$corr_dxy >= thresh),]
-  c <- merge(c,final_features,all.x = TRUE, by = c("related_accession"))
-  c<- merge(c, blast_key,all.x = TRUE, by = c("product_accession"))
-  c$name <- NULL
-  c$tag <- NULL
+  #setDT(dxy)
+  #setkey(mrna_table)
+  #c <- foverlaps(dxy, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHROM", "START", "END"),type="any", nomatch=0L)
+  #c <- as.data.frame(c)
+  #rownames(c) <- NULL
+  #thresh <- quantile(na.omit(dxy$corr_dxy), 0.90)
+  #c <- c[which(c$corr_dxy >= thresh),]
+  #c <- merge(c,final_features,all.x = TRUE, by = c("related_accession"))
+  #c<- merge(c, blast_key,all.x = TRUE, by = c("product_accession"))
+  #c$name <- NULL
+  #c$tag <- NULL
   
-  write.csv(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",cross,"_corr_dxy_90.csv",sep=""), row.names = FALSE, quote = FALSE)
+  #write.csv(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",cross,"_corr_dxy_90.csv",sep=""), row.names = FALSE, quote = FALSE)
   
 
 }

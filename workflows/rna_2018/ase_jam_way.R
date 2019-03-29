@@ -3070,6 +3070,27 @@ intersect(omxop_48_ai, omxop_sweed)
 intersect(omxop_8_ai , omxop_sweed)
 
 
+intersect(intersect(oaxom_8_ai ,om_sweed),intersect(oaxom_dxy,oaxom_fixed))
+intersect(intersect(caxcp_8_ai ,cm_sweed),intersect(caxcp_dxy,caxcp_fixed))
+intersect(intersect(oaxop_48_ai,op_sweed),intersect(oaxop_dxy,oaxop_fixed))
+intersect(intersect(oaxop_8_ai ,op_sweed),intersect(oaxop_dxy,oaxop_fixed))
+intersect(intersect(cmxcp_48_ai,cmxcp_sweed),intersect(cmxcp_dxy,cmxcp_fixed))
+intersect(intersect(cmxcp_8_ai ,cmxcp_sweed),intersect(cmxcp_dxy,cmxcp_fixed))
+intersect(intersect(omxop_48_ai,omxop_sweed),intersect(omxop_dxy,omxop_fixed))
+intersect(intersect(omxop_8_ai ,omxop_sweed),intersect(omxop_dxy,omxop_fixed))
+
+
+
+intersect(oaxom_8_ai , om_taj)
+intersect(caxcp_8_ai , cp_taj)
+intersect(oaxop_48_ai, op_taj)
+intersect(oaxop_8_ai , om_taj)
+intersect(cmxcp_48_ai, cmxcp_sweed)
+intersect(cmxcp_8_ai , cmxcp_taj)
+intersect(omxop_48_ai, omxop_sweed)
+intersect(omxop_8_ai , omxop_sweed)
+
+
 
 
 

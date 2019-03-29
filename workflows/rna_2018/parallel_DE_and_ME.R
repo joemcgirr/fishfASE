@@ -334,7 +334,7 @@ opp_dirs <-  c()
 #same_dirs_genes <- c()
  
 for (i in c(1:4)) 
-#i <- 4
+#i <- 1
 {
 #dev.off()
   lake <- strsplit(comp_names[i],"_")[[1]][1]
@@ -390,6 +390,8 @@ for (i in c(1:4))
   same_dirs <- c(same_dirs,same_dir_up$related_accession,same_dir_dn$related_accession)
   opp_dirs <- c(opp_dirs, opp_dir_m_up$related_accession,opp_dir_m_dn$related_accession)
   parallel_mp <- rbind(same_dir_up, same_dir_dn)
+  parallel_mp$name.x <- NULL
+  parallel_mp$name.y <- NULL
   write.table(parallel_mp,paste("C:/Users/jmcgirr/Documents/all_2018_samples/parallel/parallel_same_dir_",comp_names[i],".csv",sep = ""), sep = ",",quote = FALSE, row.names = FALSE)
   
 }
