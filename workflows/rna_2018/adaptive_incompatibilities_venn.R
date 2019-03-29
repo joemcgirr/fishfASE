@@ -1167,10 +1167,10 @@ for (i in c(1:length(crosses)))
   sweed_p1 <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/",p1,"_pop_bottle_58_sweeps_95_percentile.txt", sep = ""), header = TRUE, stringsAsFactors = FALSE)
   sweed_p2 <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/",p2,"_pop_bottle_58_sweeps_95_percentile.txt", sep = ""), header = TRUE, stringsAsFactors = FALSE)
   # 
-  sweed_p1$alpha <- sweed_p1$X2
-  sweed_p1$clr <- sweed_p1$X3
-  sweed_p2$alpha <- sweed_p2$X2
-  sweed_p2$clr <- sweed_p2$X3
+  sweed_p1$alpha <- sweed_p1$X3
+  sweed_p1$clr <- sweed_p1$X2
+  sweed_p2$alpha <- sweed_p2$X3
+  sweed_p2$clr <- sweed_p2$X2
   sweed_p1$START <- sweed_p1$X1 
   sweed_p1$END <- sweed_p1$X1 + 1
   sweed_p2$START <- sweed_p2$X1
