@@ -1,0 +1,621 @@
+gatk strategy all het sites
+
+bsub -q week "java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon.fasta -T ASEReadCounter -o CRPA1_DNA_allele_counts_phased_gatk.csv -I /proj/cmarlab/users/joe/genome_bams/CRPA1.dedup.bam -sites CRPA1_DNA_filtered_phased.vcf  -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+bsub -q week "java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon.fasta -T ASEReadCounter -o CRPM1_DNA_allele_counts_phased_gatk.csv -I /proj/cmarlab/users/joe/genome_bams/CRPM1.dedup.bam -sites CRPM1_DNA_filtered_phased.vcf  -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+bsub -q week "java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon.fasta -T ASEReadCounter -o LILA1_DNA_allele_counts_phased_gatk.csv -I /proj/cmarlab/users/joe/genome_bams/LILA1.dedup.bam -sites LILA1_DNA_filtered_phased.vcf  -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+bsub -q week "java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon.fasta -T ASEReadCounter -o LILM3_DNA_allele_counts_phased_gatk.csv -I /proj/cmarlab/users/joe/genome_bams/LILM3.dedup.bam -sites LILM3_DNA_filtered_phased.vcf  -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+bsub -q week "java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon.fasta -T VariantsToTable -V CRPA1_DNA_filtered_phased.vcf -F CHROM -F POS -GF GT -GF HP -o CRPA1_DNA_phased_snp_table.txt
+bsub -q week "java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon.fasta -T VariantsToTable -V CRPM1_DNA_filtered_phased.vcf -F CHROM -F POS -GF GT -GF HP -o CRPM1_DNA_phased_snp_table.txt
+bsub -q week "java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon.fasta -T VariantsToTable -V LILA1_DNA_filtered_phased.vcf -F CHROM -F POS -GF GT -GF HP -o LILA1_DNA_phased_snp_table.txt
+bsub -q week "java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon.fasta -T VariantsToTable -V LILM3_DNA_filtered_phased.vcf -F CHROM -F POS -GF GT -GF HP -o LILM3_DNA_phased_snp_table.txt
+
+# VariantsToTable output all snps for all individuals from 43_pupfish vcf
+
+awk '{print $1}' DNA_phased_snp_table.txt > p1
+awk '{print $2}' DNA_phased_snp_table.txt > p2
+awk '{print $35}' DNA_phased_snp_table.txt > ex
+awk '{print $36}' DNA_phased_snp_table.txt > cs
+paste p1 p2 ex cs > LILM3_DNA_phased_snp_table_test.txt
+
+awk '$4 != "NA"' CRPA1_DNA_phased_snp_table_test.txt > CRPA1_DNA_phased_snp_table_no_na.txt
+awk '$4 != "NA"' CRPM1_DNA_phased_snp_table_test.txt > CRPM1_DNA_phased_snp_table_no_na.txt
+awk '$4 != "NA"' LILA1_DNA_phased_snp_table_test.txt > LILA1_DNA_phased_snp_table_no_na.txt
+awk '$4 != "NA"' LILM3_DNA_phased_snp_table_test.txt > LILM3_DNA_phased_snp_table_no_na.txt
+
+module load r/2.15.1
+bsub -q week "Rscript DNAmodel.R 500_CRPA1_DNA_gene_haplotype_counts.txt 500_CRPA1_DNA_model_output_1000_40_1000.gz 1000 40 1000" (result: a.hat = 24.98, d.hat = 27.65)
+bsub -q week "Rscript DNAmodel.R CRPA1_DNA_gene_haplotype_counts.txt CRPA1_DNA_model_output_10000_20_200.gz 1000 40 1000" 
+bsub -q week "Rscript DNAmodel.R CRPA1_DNA_gene_haplotype_counts_no_zeros.txt CRPA1_DNA_model_output_1000_20_200_no_zeros.gz 1000 20 200" 
+
+
+bsub -q week "Rscript DNAmodel.R 500_LLA-QTL_gene_haplotype_counts.txt 500_LLA-QTL_DNA_model_output_1000_40_1000.gz 1000 40 1000" (result: a.hat = 11 d.hat = 20)
+bsub -q week "Rscript DNAmodel.R 500_LLA-QTL_gene_haplotype_counts.txt 500_LLA-QTL_DNA_model_output_100_10_100.gz 100 10 100" (result:)
+bsub -q week "Rscript DNAmodel.R 500_LLA-QTL_gene_haplotype_counts.txt 500_LLA-QTL_DNA_model_output_2000_100_200.gz 2000 40 200" (result:)
+
+bsub -q week "Rscript DNAmodel.R 500_LLA-QTL_gene_haplotype_counts.txt 500_LLA-QTL_DNA_model_output_200000_40_2000.gz 200000 40 2000" (result: a.hat = 11 d.hat = 19)
+bsub -q week "Rscript DNAmodel.R 500_LLA-QTL_gene_haplotype_counts.txt 500_LLA-QTL_DNA_model_output_200000_40_2000_trial2.gz 200000 40 2000" 
+bsub -q week "Rscript DNAmodel.R 500_LLM-QTL_gene_haplotype_counts.txt 500_LLM-QTL_DNA_model_output_200000_40_2000.gz 200000 40 2000" 
+bsub -q week "Rscript DNAmodel.R 500_LLM-QTL_gene_haplotype_counts.txt 500_LLM-QTL_DNA_model_output_200000_40_2000_trial2.gz 200000 40 2000" (result: a.hat = 13 d.hat = 25)
+
+bsub -q week "Rscript DNAmodel.R LLA-QTL_gene_haplotype_counts.txt LLA-QTL_DNA_model_output_200000_40_2000.gz 200000 40 2000"
+bsub -q week "Rscript DNAmodel.R LLA-QTL_gene_haplotype_counts.txt LLA-QTL_DNA_model_output_200000_40_2000_trial2.gz 200000 40 2000"
+bsub -q week "Rscript DNAmodel.R LLM-QTL_gene_haplotype_counts.txt LLM-QTL_DNA_model_output_200000_40_2000.gz 200000 40 2000"
+bsub -q week "Rscript DNAmodel.R LLM-QTL_gene_haplotype_counts.txt LLM-QTL_DNA_model_output_200000_40_2000_trial2.gz 200000 40 2000" 
+
+
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 axmE1_gene_haplotype_counts.txt RNAresults_axmE1_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 axmE2_gene_haplotype_counts.txt RNAresults_axmE2_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 axmJ1_gene_haplotype_counts.txt RNAresults_axmJ1_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 axmJ4_gene_haplotype_counts.txt RNAresults_axmJ4_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 axmJ5_gene_haplotype_counts.txt RNAresults_axmJ5_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 axmJ6_gene_haplotype_counts.txt RNAresults_axmJ6_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPAE1_gene_haplotype_counts.txt RNAresults_CPAE1_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPAE2_gene_haplotype_counts.txt RNAresults_CPAE2_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPAE3_gene_haplotype_counts.txt RNAresults_CPAE3_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPAJ1_gene_haplotype_counts.txt RNAresults_CPAJ1_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPAJ2_gene_haplotype_counts.txt RNAresults_CPAJ2_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPAJ3_gene_haplotype_counts.txt RNAresults_CPAJ3_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPME1_gene_haplotype_counts.txt RNAresults_CPME1_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPME2_gene_haplotype_counts.txt RNAresults_CPME2_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPME3_gene_haplotype_counts.txt RNAresults_CPME3_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPMJ1_gene_haplotype_counts.txt RNAresults_CPMJ1_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPMJ2_gene_haplotype_counts.txt RNAresults_CPMJ2_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPMJ3_gene_haplotype_counts.txt RNAresults_CPMJ3_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPPE1_gene_haplotype_counts.txt RNAresults_CPPE1_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPPE2_gene_haplotype_counts.txt RNAresults_CPPE2_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPPE3_gene_haplotype_counts.txt RNAresults_CPPE3_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPPJ1_gene_haplotype_counts.txt RNAresults_CPPJ1_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 CPPJ2_gene_haplotype_counts.txt RNAresults_CPPJ2_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 LLAE1_gene_haplotype_counts.txt RNAresults_LLAE1_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 LLAE2_gene_haplotype_counts.txt RNAresults_LLAE2_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 LLAE3_gene_haplotype_counts.txt RNAresults_LLAE3_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 LLAJ1_gene_haplotype_counts.txt RNAresults_LLAJ1_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 LLAJ2_gene_haplotype_counts.txt RNAresults_LLAJ2_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 LLAJ3_gene_haplotype_counts.txt RNAresults_LLAJ3_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 LLME1_gene_haplotype_counts.txt RNAresults_LLME1_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 LLME2_gene_haplotype_counts.txt RNAresults_LLME2_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 LLME3_gene_haplotype_counts.txt RNAresults_LLME3_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 LLMJ1_gene_haplotype_counts.txt RNAresults_LLMJ1_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 LLMJ2_gene_haplotype_counts.txt RNAresults_LLMJ2_500000_20_200_hat9.gz"
+bsub -q week "Rscript RNAmodel.R --n.iter=500000 --thin=20 --n.scaling.iter=200 --a.hat=200 --d.hat=50 --max.rounds.of.scaling=8 LLMJ3_gene_haplotype_counts.txt RNAresults_LLMJ3_500000_20_200_hat9.gz"
+
+first run: a.hat = 12 d.hat = 25 (based on DNAmodel with 500 genes 1000 iter)
+hat 1: a.hat = 2000 d.hat = 500 (skelly example)
+hat 2: a.hat = 1000 d.hat = 250 (half skelly)
+hat 3: a.hat = 500 d.hat = 125
+hat 4: a.hat = 250 d.hat = 75
+hat 5: a.hat = 125 d.hat = 35
+hat 6: a.hat = 65 d.hat = 25
+hat 7: a.hat = 125 d.hat = 35 repeat fuck up
+hat 8: a.hat = 150 d.hat = 50
+hat 9: a.hat = 200 d.hat = 50
+hat 10: a.hat = 15 d.hat = 25 (min_cov_20) 10000 = 100000
+hat 11: a.hat = 30 d.hat = 35 (min_cov_20) 10000 = 100000
+hat 12: a.hat = 80 d.hat = 100 (min_cov_20)
+hat 13: a.hat = 100 d.hat = 200 (min_cov_20)
+
+hat 14: a.hat = 25 d.hat = 60 (min_cov_20)
+hat 15: a.hat = 50 d.hat = 100 (min_cov_20)
+hat 16: a.hat = 500 d.hat = 1000 (min_cov_20)
+hat 17: a.hat = 1000 d.hat = 2000 (min_cov_20)
+hat 18: a.hat = 3600 d.hat = 550 (min_cov_20)
+hat 19: a.hat = 550 d.hat = 3600 (min_cov_20)
+
+
+bsub -q week "Rscript RNAmodel.R --n.iter=100000 --thin=200 --n.scaling.iter=5000 --a.hat=12 --d.hat=25 --max.rounds.of.scaling=8 CPME2_gene_haplotype_counts.txt RNAresults_CPME2_100000_20_200.gz"
+bsub -q week "Rscript RNAmodel_JAM.R --n.iter=100000 --thin=20 --n.scaling.iter=200 --a.hat=12 --d.hat=25 --max.rounds.of.scaling=8 CPME2_gene_haplotype_counts.txt RNAresults_CPME2_100000_20_200_JAM.gz"
+
+
+
+
+Rscript RNAmodel_exctract_results_95.R RNAresults_axmJ4_500000_20_200_hat5.gz 
+#more RNAresults_axmJ4_500000_20_200_hat5.gz_signASE.csv 
+wc -l RNAresults_axmJ4_500000_20_200_hat5.gz_signASE.csv 
+wc -l RNAresults_axmJ4_500000_20_200_hat5.gz_allASE.csv 
+
+Rscript RNAmodel_exctract_results_95.R RNAresults_axmJ1_500_100_500_trial2.gz
+more RNAresults_axmJ1_500_100_500_trial2.gz_signASE.csv 
+
+bsub -q week "Rscript DNAmodel.R CRPM1_DNA_gene_haplotype_counts.txt CRPM1_DNA_model_output.gz 20000 40 2000"
+bsub -q week "Rscript DNAmodel.R LILA1_DNA_gene_haplotype_counts.txt LILA1_DNA_model_output.gz 20000 40 2000"
+bsub -q week "Rscript DNAmodel.R LILM3_DNA_gene_haplotype_counts.txt LILM3_DNA_model_output.gz 20000 40 2000"
+ 
+source('readGzippedMcmcOutput.R')
+result <- read.mcmc('random_500_LLA-QTL_gene_haplotype_counts.txt') 
+n.iter <- result$n.iter/result$thin
+burnin <- 0.1*n.iter
+a.hat <- median(exp(result$mcmc$logA[burnin:n.iter]))
+d.hat <- median(exp(result$mcmc$logD[burnin:n.iter]))
+a.hat
+d.hat
+
+
+source('readGzippedMcmcOutput.R')
+# define the inverse logit function
+inv.logit <- function(val) exp(val)/(1 + exp(val))
+result <- read.mcmc('RNAresults_axmJ1_500000_20_200_hat10.gz')
+genes <- result$features # character vector of gene names
+genes
+a.hat <- result$a.hat
+d.hat <- result$d.hat
+# below we take the posterior median of MCMC samples that are vectors
+# of length equal to n.iter
+pi0 <- median(inv.logit(result$mcmc$logitPi0))
+f <- median(exp(result$mcmc$logF))
+g <- median(exp(result$mcmc$logG))
+h <- median(exp(result$mcmc$logH))
+# below we take the posterior median across columns of matrices with
+#  nrow==n.iter and ncol==length(genes)
+p <- apply(inv.logit(result$logit_p), 2, median)
+e <- apply(inv.logit(result$logit_e), 2, median)
+
+
+head(result$logit_p$logit_p_1)
+length(result$logit_p$logit_p_1)
+tiff("test.tif", width = 7, height = 7, units = 'in', res = 200)
+plot(result$logit_e$logit_e_212)
+dev.off()
+tiff("test.tif", width = 7, height = 7, units = 'in', res = 200)
+hist(result$logit_e$logit_e_212)
+dev.off()
+
+
+
+######## gatk strategy # use previous g.vcf files sed for gi ###
+sed 's/gi...............//' LLA-QTL_raw_variants.g.vcf | sed 's/|//g' > LLA-QTL_raw_variants_no_header.g.vcf
+sed 's/gi...............//' LLM-QTL_raw_variants.g.vcf | sed 's/|//g' > LLM-QTL_raw_variants_no_header.g.vcf
+
+bsub -q week -M 50 java -Xmx50g -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -T CombineVariants -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta --variant axmE1_raw_variants.g.vcf --variant axmE2_raw_variants.g.vcf --variant axmJ1_raw_variants.g.vcf --variant axmJ4_raw_variants.g.vcf --variant axmJ5_raw_variants.g.vcf  --variant axmJ6_raw_variants.g.vcf --variant LLA-QTL_raw_variants_no_header.g.vcf --variant LLM-QTL_raw_variants_no_header.g.vcf -o LLAxLLM_f1_and_parents_gatk_kill.vcf
+
+#subset individuals into separate vcfs
+bsub -q week -M 50 "vcftools --vcf LLAxLLM_f1_and_parents_gatk_kill.vcf --remove-indels --max-missing 0.9 --indv axmJ1 --recode --out axmJ1_kill"
+bsub -q week -M 50 "vcftools --vcf LLAxLLM_f1_and_parents_gatk_kill.vcf --remove-indels --max-missing 0.9 --indv axmJ4 --recode --out axmJ4_kill"
+bsub -q week -M 50 "vcftools --vcf LLAxLLM_f1_and_parents_gatk_kill.vcf --remove-indels --max-missing 0.9 --indv axmJ5 --recode --out axmJ5_kill"
+bsub -q week -M 50 "vcftools --vcf LLAxLLM_f1_and_parents_gatk_kill.vcf --remove-indels --max-missing 0.9 --indv axmJ6 --recode --out axmJ6_kill"
+bsub -q week -M 50 "vcftools --vcf LLAxLLM_f1_and_parents_gatk_kill.vcf --remove-indels --max-missing 0.9 --indv LLA-QTL --recode --out LLA-QTL_kill"
+bsub -q week -M 50 "vcftools --vcf LLAxLLM_f1_and_parents_gatk_kill.vcf --remove-indels --max-missing 0.9 --indv LLM-QTL --recode --out LLM-QTL_kill"
+
+#count reads
+#bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -U ALLOW_SEQ_DICT_INCOMPATIBILITY -o ./allele_counts/LLA-QTL_allele_counts_kill.csv -I LLA-QTL.sort.dedup.bam -sites LLA-QTL_kill.recode.vcf"           
+#bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -U ALLOW_SEQ_DICT_INCOMPATIBILITY -o ./allele_counts/LLM-QTL_allele_counts_kill.csv -I LLM-QTL.sort.dedup.bam -sites LLM-QTL_kill.recode.vcf"      
+#bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -U ALLOW_SEQ_DICT_INCOMPATIBILITY -o ./allele_counts/axmJ1_allele_counts_kill.csv -I axmJ1.sort.dedup.RG.split.bam -sites axmJ1_kill.recode.vcf"
+#bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -U ALLOW_SEQ_DICT_INCOMPATIBILITY -o ./allele_counts/axmJ4_allele_counts_kill.csv -I axmJ4.sort.dedup.RG.split.bam -sites axmJ4_kill.recode.vcf"
+#bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -U ALLOW_SEQ_DICT_INCOMPATIBILITY -o ./allele_counts/axmJ5_allele_counts_kill.csv -I axmJ5.sort.dedup.RG.split.bam -sites axmJ5_kill.recode.vcf"
+#bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -U ALLOW_SEQ_DICT_INCOMPATIBILITY -o ./allele_counts/axmJ6_allele_counts_kill.csv -I axmJ6.sort.dedup.RG.split.bam -sites axmJ6_kill.recode.vcf"
+
+  
+#make snp table for all sites
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ1_kill.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ1_kill_snp_table.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ4_kill.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ4_kill_snp_table.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ5_kill.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ5_kill_snp_table.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ6_kill.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ6_kill_snp_table.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V LLA-QTL_kill.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/LLA-QTL_kill_snp_table.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V LLM-QTL_kill.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/LLM-QTL_kill_snp_table.txt
+
+
+
+
+
+
+
+
+
+#########
+#########
+fastq to vcf
+#########
+#########
+
+###### try again #####
+
+#concatenate trimmed fastqs from 2 lanes
+
+bsub -q week "cat LLA-QTLs6_1_val_1.fq LLA-QTLs7_1_val_1.fq > LLA-QTL_1_val_1.trimmed.fq"
+bsub -q week "cat LLA-QTLs6_2_val_2.fq LLA-QTLs7_2_val_2.fq > LLA-QTL_2_val_2.trimmed.fq"
+bsub -q week "cat LLM-QTLs6_1_val_1.fq LLM-QTLs7_1_val_1.fq > LLM-QTL_1_val_1.trimmed.fq"
+bsub -q week "cat LLM-QTLs6_2_val_2.fq LLM-QTLs7_2_val_2.fq > LLM-QTL_2_val_2.trimmed.fq"
+
+bsub -q week "wc -l LLA-QTL_1_val_1.trimmed.fq > lines_in_final_A1"
+bsub -q week "wc -l LLA-QTLs6_1_val_1.fq > lines_in_initial_A1s6"
+bsub -q week "wc -l LLA-QTLs7_1_val_1.fq > lines_in_initial_A1s7"
+
+1035059904 should be in lines_in_final_A1
+
+#create index for existing fasta file
+bsub -q week "bwa index Cyprinodon_NW_noheader.fasta"
+
+#align trimmed fastq to reference
+bsub -n 8 -R "span[hosts=1]" -M 50 -q whole_node 'bwa mem -aM -t 8 -R "@RG\tID:group1\tSM:LLA-QTL\tPL:illumina\tLB:lib1" /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta LLA-QTL_1_val_1.trimmed.fq LLA-QTL_2_val_2.trimmed.fq > LLA-QTL.sam'
+bsub -n 8 -R "span[hosts=1]" -M 50 -q whole_node 'bwa mem -aM -t 8 -R "@RG\tID:group1\tSM:LLM-QTL\tPL:illumina\tLB:lib1" /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta LLM-QTL_1_val_1.trimmed.fq LLM-QTL_2_val_2.trimmed.fq > LLM-QTL.sam'
+ 
+#compress sam to bam
+bsub -q week "samtools view -Shu LLA-QTL.sam > LLA-QTL.bam"
+bsub -q week "samtools view -Shu LLM-QTL.sam > LLM-QTL.bam"
+
+#sort bam
+bsub -q week "samtools sort LLA-QTL.bam -o LLA-QTL.sort.bam"
+bsub -q week "samtools sort LLM-QTL.bam -o LLM-QTL.sort.bam"
+
+#index bam
+bsub -q week "samtools index LLA-QTL.sort.bam"
+bsub -q week "samtools index LLM-QTL.sort.bam"
+
+#remove duplicate reads
+bsub -M 50 -q week "java -jar picard.jar MarkDuplicates INPUT=LLA-QTL.sort.bam OUTPUT=LLA-QTL.sort.dedup.bam METRICS_FILE=LLA-QTL.metrics.txt MAX_FILE_HANDLES=1000"
+bsub -M 50 -q week "java -jar picard.jar MarkDuplicates INPUT=LLM-QTL.sort.bam OUTPUT=LLM-QTL.sort.dedup.bam METRICS_FILE=LLM-QTL.metrics.txt MAX_FILE_HANDLES=1000"
+
+#index bam
+bsub -q week "samtools index LLA-QTL.sort.dedup.bam"
+bsub -q week "samtools index LLM-QTL.sort.dedup.bam"
+
+#remake indexes for reference
+bsub -q week "samtools dict Cyprinodon_NW_noheader.fasta -o Cyprinodon_NW_noheader.dict"
+
+#samtools mpileup strategy
+bsub -q week "samtools mpileup -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -o LLAxLLM_f1_and_parents.vcf -v -u axmE1.sort.dedup.RG.split.bam axmE2.sort.dedup.RG.split.bam axmJ1.sort.dedup.RG.split.bam axmJ4.sort.dedup.RG.split.bam axmJ5.sort.dedup.RG.split.bam axmJ6.sort.dedup.RG.split.bam LLA-QTL.sort.dedup.bam LLM-QTL.sort.dedup.bam"
+
+#filter
+bsub -q week "vcftools --vcf LLAxLLM_f1_and_parents.vcf --max-missing 0.9 --remove-filtered-geno-all --max-missing-count 3 --minQ 20 --min-meanDP 10 --remove-filtered-all --remove-indels --recode --out LLAxLLM_f1_and_parents_filtered.vcf"
+
+
+#subset coding regions
+bsub -q week "vcftools --vcf LLAxLLM_f1_and_parents.vcf --bed /proj/cmarlab/users/joe/Cyprinodon/my.gtf.geneid.bed --recode --out LLAxLLM_f1_and_parents_coding_regions"
+
+#list individuals of a vcf
+bcftools query -l LLAxLLM_f1_and_parents.vcf
+
+
+#subset individuals into separate vcfs
+bsub -q week -M 50 "vcftools --vcf LLAxLLM_f1_and_parents_coding_regions.recode.vcf --indv axmJ1 --recode --out axmJ1_coding_snps"
+bsub -q week -M 50 "vcftools --vcf LLAxLLM_f1_and_parents_coding_regions.recode.vcf --indv axmJ4 --recode --out axmJ4_coding_snps"
+bsub -q week -M 50 "vcftools --vcf LLAxLLM_f1_and_parents_coding_regions.recode.vcf --indv axmJ5 --recode --out axmJ5_coding_snps"
+bsub -q week -M 50 "vcftools --vcf LLAxLLM_f1_and_parents_coding_regions.recode.vcf --indv axmJ6 --recode --out axmJ6_coding_snps"
+bsub -q week -M 50 "vcftools --vcf LLAxLLM_f1_and_parents_coding_regions.recode.vcf --indv LLA-QTL --recode --out LLA-QTL_coding_snps"
+bsub -q week -M 50 "vcftools --vcf LLAxLLM_f1_and_parents_coding_regions.recode.vcf --indv LLM-QTL --recode --out LLM-QTL_coding_snps"
+
+bsub -q week -M 50 "java -jar GenomeAnalysisTK.jar -T SelectVariants -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -restrictAllelesTo BIALLELIC -selectType SNP -V LLAxLLM_f1_and_parents_coding_regions.recode.vcf -o axmJ1_coding_snps_gatk -sn axmJ1"
+bsub -q week -M 50 "java -jar GenomeAnalysisTK.jar -T SelectVariants -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -restrictAllelesTo BIALLELIC -selectType SNP -V LLAxLLM_f1_and_parents_coding_regions.recode.vcf -o axmJ4_coding_snps_gatk -sn axmJ4"
+bsub -q week -M 50 "java -jar GenomeAnalysisTK.jar -T SelectVariants -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -restrictAllelesTo BIALLELIC -selectType SNP -V LLAxLLM_f1_and_parents_coding_regions.recode.vcf -o axmJ5_coding_snps_gatk -sn axmJ5"
+bsub -q week -M 50 "java -jar GenomeAnalysisTK.jar -T SelectVariants -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -restrictAllelesTo BIALLELIC -selectType SNP -V LLAxLLM_f1_and_parents_coding_regions.recode.vcf -o axmJ6_coding_snps_gatk -sn axmJ6"
+bsub -q week -M 50 "java -jar GenomeAnalysisTK.jar -T SelectVariants -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -restrictAllelesTo BIALLELIC -selectType SNP -V LLAxLLM_f1_and_parents_coding_regions.recode.vcf -o LLA-QTL_coding_snps_gatk -sn LLA-QTL"
+bsub -q week -M 50 "java -jar GenomeAnalysisTK.jar -T SelectVariants -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -restrictAllelesTo BIALLELIC -selectType SNP -V LLAxLLM_f1_and_parents_coding_regions.recode.vcf -o LLM-QTL_coding_snps_gatk -sn LLM-QTL"
+
+bsub -q week -M 50 java -jar GenomeAnalysisTK.jar -T VariantFiltration -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -V LLA-QTL_coding_snps.recode.vcf --genotypeFilterExpression "isHom == 1" --genotypeFilterName "HomSitesFilter" -o LLA-QTL_hom_coding_snps.recode.vcf
+bsub -q week -M 50 java -jar GenomeAnalysisTK.jar -T VariantFiltration -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -V LLM-QTL_coding_snps.recode.vcf --genotypeFilterExpression "isHom == 1" --genotypeFilterName "HomSitesFilter" -o LLM-QTL_hom_coding_snps.recode.vcf
+
+
+#count reads
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -U ALLOW_SEQ_DICT_INCOMPATIBILITY -o ./allele_counts/LLA-QTL_allele_counts_coding_sites_gatk.csv -I LLA-QTL.sort.dedup.bam -sites LLA-QTL_coding_snps_gatk.vcf"           
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -U ALLOW_SEQ_DICT_INCOMPATIBILITY -o ./allele_counts/LLM-QTL_allele_counts_coding_sites_gatk.csv -I LLM-QTL.sort.dedup.bam -sites LLM-QTL_coding_snps_gatk.vcf"      
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -U ALLOW_SEQ_DICT_INCOMPATIBILITY -o ./allele_counts/axmJ1_allele_counts_coding_sites_gatk.csv -I axmJ1.sort.dedup.RG.split.bam -sites axmJ1_coding_snps_gatk.vcf"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -U ALLOW_SEQ_DICT_INCOMPATIBILITY -o ./allele_counts/axmJ4_allele_counts_coding_sites_gatk.csv -I axmJ4.sort.dedup.RG.split.bam -sites axmJ4_coding_snps_gatk.vcf"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -U ALLOW_SEQ_DICT_INCOMPATIBILITY -o ./allele_counts/axmJ5_allele_counts_coding_sites_gatk.csv -I axmJ5.sort.dedup.RG.split.bam -sites axmJ5_coding_snps_gatk.vcf"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -U ALLOW_SEQ_DICT_INCOMPATIBILITY -o ./allele_counts/axmJ6_allele_counts_coding_sites_gatk.csv -I axmJ6.sort.dedup.RG.split.bam -sites axmJ6_coding_snps_gatk.vcf"
+
+awk '$2 != "NA"' FS='|' 
+   
+#make snp table for all sites
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ1_coding_snps.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ1_coding_snps_table.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ4_coding_snps.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ4_coding_snps_table.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ5_coding_snps.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ5_coding_snps_table.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ6_coding_snps.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ6_coding_snps_table.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V LLA-QTL_coding_snps.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/LLA-QTL_coding_snps.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V LLM-QTL_coding_snps.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/LLM-QTL_coding_snps.txt
+
+#VCF to PLINK
+bsub -q week "vcftools --vcf LLAxLLM_f1_and_parents_coding_regions.recode.vcf --plink --out LLAxLLM_f1_and_parents_coding_regions.recode.vcf.plink"
+
+#GENOTYPE OUTPUT
+bsub -q week "./plink.exe --file LLAxLLM_f1_and_parents_coding_regions.recode.vcf.plink  --allow-extra-chr --recode --out delete.txt"
+
+
+
+
+
+
+
+#### Drafts ##########################################################################
+
+#samtools mpileup strategy
+bsub -q week "samtools mpileup -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -o LLAxLLM_f1_and_parents.vcf -v -u axmE1.sort.dedup.RG.split.bam axmE2.sort.dedup.RG.split.bam axmJ1.sort.dedup.RG.split.bam axmJ4.sort.dedup.RG.split.bam axmJ5.sort.dedup.RG.split.bam axmJ6.sort.dedup.RG.split.bam LLA-QTL.sort.dedup.bam LLM-QTL.sort.dedup.bam"
+bsub -q week "samtools mpileup -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -o axmE1_pileup_raw.vcf -v -u axmE1.sort.dedup.RG.split.bam"
+bsub -q week "samtools mpileup -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -o axmE2_pileup_raw.vcf -v -u axmE2.sort.dedup.RG.split.bam"
+bsub -q week "samtools mpileup -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -o axmJ1_pileup_raw.vcf -v -u axmJ1.sort.dedup.RG.split.bam"
+bsub -q week "samtools mpileup -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -o axmJ4_pileup_raw.vcf -v -u axmJ4.sort.dedup.RG.split.bam"
+bsub -q week "samtools mpileup -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -o axmJ5_pileup_raw.vcf -v -u axmJ5.sort.dedup.RG.split.bam"
+bsub -q week "samtools mpileup -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -o axmJ6_pileup_raw.vcf -v -u axmJ6.sort.dedup.RG.split.bam"
+bsub -q week "samtools mpileup -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -o LLA-QTL_pileup_raw.vcf -v -u LLA-QTL.sort.dedup.bam"
+bsub -q week "samtools mpileup -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -o LLM-QTL_pileup_raw.vcf -v -u LLM-QTL.sort.dedup.bam"
+
+bsub -q week "samtools mpileup --redo-BAQ --min-BQ 20 --per-sample-mF --output-tags DP,AD -I -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta --BCF axmE1.sort.dedup.RG.split.bam | bcftools call --multiallelic-caller --variants-only -Ov > axmE1_pileup_multialleleic_no_indels.bcf"
+bsub -q week "samtools mpileup --redo-BAQ --min-BQ 20 --per-sample-mF --output-tags DP,AD -I -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta --BCF axmE2.sort.dedup.RG.split.bam | bcftools call --multiallelic-caller --variants-only -Ov > axmE2_pileup_multialleleic_no_indels.bcf"
+bsub -q week "samtools mpileup --redo-BAQ --min-BQ 20 --per-sample-mF --output-tags DP,AD -I -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta --BCF axmJ1.sort.dedup.RG.split.bam | bcftools call --multiallelic-caller --variants-only -Ov > axmJ1_pileup_multialleleic_no_indels.bcf"
+bsub -q week "samtools mpileup --redo-BAQ --min-BQ 20 --per-sample-mF --output-tags DP,AD -I -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta --BCF axmJ4.sort.dedup.RG.split.bam | bcftools call --multiallelic-caller --variants-only -Ov > axmJ4_pileup_multialleleic_no_indels.bcf"
+bsub -q week "samtools mpileup --redo-BAQ --min-BQ 20 --per-sample-mF --output-tags DP,AD -I -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta --BCF axmJ5.sort.dedup.RG.split.bam | bcftools call --multiallelic-caller --variants-only -Ov > axmJ5_pileup_multialleleic_no_indels.bcf"
+bsub -q week "samtools mpileup --redo-BAQ --min-BQ 20 --per-sample-mF --output-tags DP,AD -I -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta --BCF axmJ6.sort.dedup.RG.split.bam | bcftools call --multiallelic-caller --variants-only -Ov > axmJ6_pileup_multialleleic_no_indels.bcf"
+bsub -q week "samtools mpileup --redo-BAQ --min-BQ 20 --per-sample-mF --output-tags DP,AD -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta --BCF LLA-QTL.sort.dedup.bam | bcftools call --multiallelic-caller --variants-only -Ov > LLA-QTL_pileup_multialleleic.bcf"
+bsub -q week "samtools mpileup --redo-BAQ --min-BQ 20 --per-sample-mF --output-tags DP,AD -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta --BCF LLM-QTL.sort.dedup.bam | bcftools call --multiallelic-caller --variants-only -Ov > LLM-QTL_pileup_multialleleic.bcf"
+bsub -q week "samtools mpileup --redo-BAQ --min-BQ 20 --per-sample-mF --output-tags DP,AD -I -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta --BCF LLA-QTL.sort.dedup.bam | bcftools call --multiallelic-caller --variants-only -Ov > LLA-QTL_pileup_multialleleic_no_indels.bcf"
+bsub -q week "samtools mpileup --redo-BAQ --min-BQ 20 --per-sample-mF --output-tags DP,AD -I -f /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta --BCF LLM-QTL.sort.dedup.bam | bcftools call --multiallelic-caller --variants-only -Ov > LLM-QTL_pileup_multialleleic_no_indels.bcf"
+
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/LLA-QTL_allele_counts_multialleleic_no_indels_gatk.csv -I LLA-QTL.sort.dedup.bam -sites LLA-QTL_pileup_multialleleic_no_indels.bcf -U ALLOW_N_CIGAR_READS -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/LLM-QTL_allele_counts_multialleleic_no_indels_gatk.csv -I LLM-QTL.sort.dedup.bam -sites LLM-QTL_pileup_multialleleic_no_indels.bcf -U ALLOW_N_CIGAR_READS -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ1_allele_counts_coding_sites_gatk.csv -I axmJ1.sort.dedup.RG.split.bam -sites LLAxLLM_f1_and_parents_coding_regions.recode.vcf" 
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ4_allele_counts_coding_sites_gatk.csv -I axmJ4.sort.dedup.RG.split.bam -sites LLAxLLM_f1_and_parents_coding_regions.recode.vcf" 
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ5_allele_counts_coding_sites_gatk.csv -I axmJ5.sort.dedup.RG.split.bam -sites LLAxLLM_f1_and_parents_coding_regions.recode.vcf" 
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ6_allele_counts_coding_sites_gatk.csv -I axmJ6.sort.dedup.RG.split.bam -sites LLAxLLM_f1_and_parents_coding_regions.recode.vcf" 
+
+bsub -q week -M 50 "vcftools --vcf qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_filtered_snps.vcf --indv axmJ1 --recode --out axmJ1_filtered_snps"
+
+
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V LLA-QTL_pileup_multialleleic_no_indels.bcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/LLA-QTL_snp_table_multialleleic_no_indels.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V LLM-QTL_pileup_multialleleic_no_indels.bcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/LLM-QTL_snp_table_multialleleic_no_indels.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ1_pileup_multialleleic_no_indels.bcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ1_snp_table_multialleleic_no_indels.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ4_pileup_multialleleic_no_indels.bcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ4_snp_table_multialleleic_no_indels.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ5_pileup_multialleleic_no_indels.bcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ5_snp_table_multialleleic_no_indels.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/try_again/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ6_pileup_multialleleic_no_indels.bcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ6_snp_table_multialleleic_no_indels.txt
+
+ 
+#call raw variants #used longleaf 'variant_call_LLA.sh' for parents
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW_noheader.fasta -I LLA-QTL.sort.dedup.bam -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o ./variants/LLA-QTL_raw_variants.g.vcf" 
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW_noheader.fasta -I LLM-QTL.sort.dedup.bam -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o ./variants/LLM-QTL_raw_variants.g.vcf"
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW_noheader.fasta -I axmE1.sort.dedup.RG.split.bam  -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o ./variants/axmE1_raw_variants.g.vcf" 
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW_noheader.fasta -I axmE2.sort.dedup.RG.split.bam  -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o ./variants/axmE2_raw_variants.g.vcf"
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW_noheader.fasta -I axmJ1.sort.dedup.RG.split.bam  -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o ./variants/axmJ1_raw_variants.g.vcf"
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW_noheader.fasta -I axmJ4.sort.dedup.RG.split.bam  -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o ./variants/axmJ4_raw_variants.g.vcf"
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW_noheader.fasta -I axmJ5.sort.dedup.RG.split.bam  -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o ./variants/axmJ5_raw_variants.g.vcf"
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW_noheader.fasta -I axmJ6.sort.dedup.RG.split.bam  -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o ./variants/axmJ6_raw_variants.g.vcf"
+
+ 
+ 
+ 
+ 
+#old####################################################################################### 
+
+#concatenate trimmed fastqs from 2 lanes
+
+bsub -q week "cat LLA-QTLs6_1_val_1.fq LLA-QTLs7_1_val_1.fq > LLA-QTL_1_val_1.trimmed.fq"
+bsub -q week "cat LLA-QTLs6_2_val_2.fq LLA-QTLs7_2_val_2.fq > LLA-QTL_2_val_2.trimmed.fq"
+bsub -q week "cat LLM-QTLs6_1_val_1.fq LLM-QTLs7_1_val_1.fq > LLM-QTL_1_val_1.trimmed.fq"
+bsub -q week "cat LLM-QTLs6_2_val_2.fq LLM-QTLs7_2_val_2.fq > LLM-QTL_2_val_2.trimmed.fq"
+
+bsub -q week "wc -l LLA-QTL_1_val_1.trimmed.fq > lines_in_final_A1"
+bsub -q week "wc -l LLA-QTLs6_1_val_1.fq > lines_in_initial_A1s6"
+bsub -q week "wc -l LLA-QTLs7_1_val_1.fq > lines_in_initial_A1s7"
+
+1035059904 should be in lines_in_final_A1
+
+#create index for existing fasta file
+bwa index Cyprinodon_NW.fasta
+
+#align trimmed fastq to reference
+bsub -n 8 -R "span[hosts=1]" -M 50 -q whole_node 'bwa mem -aM -t 8 -R "@RG\tID:group1\tSM:LLA-QTL\tPL:illumina\tLB:lib1" /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW.fasta LLA-QTL_1_val_1.trimmed.fq LLA-QTL_2_val_2.trimmed.fq > LLA-QTL.sam'
+bsub -n 8 -R "span[hosts=1]" -M 50 -q whole_node 'bwa mem -aM -t 8 -R "@RG\tID:group1\tSM:LLM-QTL\tPL:illumina\tLB:lib1" /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW.fasta LLM-QTL_1_val_1.trimmed.fq LLM-QTL_2_val_2.trimmed.fq > LLM-QTL.sam'
+
+#compress sam to bam
+bsub -q week "samtools view -Shu LLA-QTL.sam > LLA-QTL.bam"
+bsub -q week "samtools view -Shu LLM-QTL.sam > LLM-QTL.bam"
+
+#sort bam
+bsub -q week "samtools sort LLA-QTL.bam -o LLA-QTL.sort.bam"
+bsub -q week "samtools sort LLM-QTL.bam -o LLM-QTL.sort.bam"
+
+#index bam
+bsub -q week "samtools index LLA-QTL.sort.bam"
+bsub -q week "samtools index LLM-QTL.sort.bam"
+
+#remove duplicate reads
+bsub -M 50 -q week "java -jar picard.jar MarkDuplicates INPUT=LLA-QTL.sort.bam OUTPUT=LLA-QTL.sort.dedup.bam METRICS_FILE=LLA-QTL.metrics.txt MAX_FILE_HANDLES=1000"
+bsub -M 50 -q week "java -jar picard.jar MarkDuplicates INPUT=LLM-QTL.sort.bam OUTPUT=LLM-QTL.sort.dedup.bam METRICS_FILE=LLM-QTL.metrics.txt MAX_FILE_HANDLES=1000"
+
+#index bam
+bsub -q week "samtools index LLA-QTL.sort.dedup.bam"
+bsub -q week "samtools index LLM-QTL.sort.dedup.bam"
+
+#remake indexes for reference
+bsub -q week "samtools dict Cyprinodon_NW.fasta -o Cyprinodon_NW.dict"
+
+#call raw variants #used longleaf 'variant_call_LLA.sh' for parents
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW.fasta -I LLA-QTL.sort.dedup.bam  -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o LLA-QTL_raw_variants.g.vcf" 
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW.fasta -I LLM-QTL.sort.dedup.bam  -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o LLM-QTL_raw_variants.g.vcf"
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW.fasta -I axmE1.sort.dedup.RG.split.bam  -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o ./variants/axmE1_raw_variants.g.vcf" 
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW.fasta -I axmE2.sort.dedup.RG.split.bam  -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o ./variants/axmE2_raw_variants.g.vcf"
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW.fasta -I axmJ1.sort.dedup.RG.split.bam  -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o ./variants/axmJ1_raw_variants.g.vcf"
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW.fasta -I axmJ4.sort.dedup.RG.split.bam  -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o ./variants/axmJ4_raw_variants.g.vcf"
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW.fasta -I axmJ5.sort.dedup.RG.split.bam  -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o ./variants/axmJ5_raw_variants.g.vcf"
+bsub -n 8 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -drf DuplicateRead -R /proj/cmarlab/users/joe/axm_rna/tmp/Cyprinodon_NW.fasta -I axmJ6.sort.dedup.RG.split.bam  -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 8 -o ./variants/axmJ6_raw_variants.g.vcf"
+
+
+bgzip axmE1_raw_variants.g.vcf
+bgzip axmE2_raw_variants.g.vcf
+bgzip axmJ1_raw_variants.g.vcf
+bgzip axmJ4_raw_variants.g.vcf
+bgzip axmJ5_raw_variants.g.vcf
+bgzip axmJ6_raw_variants.g.vcf
+bsub -q week "bgzip LLA-QTL_raw_variants_longleaf.g.vcf"
+bsub -q week "bgzip LLM-QTL_raw_variants_longleaf.g.vcf"
+
+bsub -q week "tabix -p vcf axmE1_raw_variants.g.vcf.gz"
+bsub -q week "tabix -p vcf axmE2_raw_variants.g.vcf.gz"
+bsub -q week "tabix -p vcf axmJ1_raw_variants.g.vcf.gz"
+bsub -q week "tabix -p vcf axmJ4_raw_variants.g.vcf.gz"
+bsub -q week "tabix -p vcf axmJ5_raw_variants.g.vcf.gz"
+bsub -q week "tabix -p vcf axmJ6_raw_variants.g.vcf.gz"
+bsub -q week "tabix -p vcf LLA-QTL_raw_variants_longleaf.g.vcf.gz"
+bsub -q week "tabix -p vcf LLM-QTL_raw_variants_longleaf.g.vcf.gz"
+
+bsub -q week -M 50 "vcf-merge axmE1_raw_variants.g.vcf.gz axmE2_raw_variants.g.vcf.gz axmJ1_raw_variants.g.vcf.gz axmJ4_raw_variants.g.vcf.gz axmJ5_raw_variants.g.vcf.gz axmJ6_raw_variants.g.vcf.gz LLA-QTL_raw_variants_longleaf.g.vcf.gz LLM-QTL_raw_variants_longleaf.g.vcf.gz > qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_raw_variants.vcf"
+
+bsub -n 1 -R "span[hosts=1]" -q whole_node "java -jar GenomeAnalysisTK.jar -T SelectVariants -U ALLOW_SEQ_DICT_INCOMPATIBILITY -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -V qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_raw_variants.vcf -selectType SNP -o qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_raw_snps.vcf" 
+
+#hard filter snps (no quotes)
+bsub -q week java -jar GenomeAnalysisTK.jar -T VariantFiltration -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -V qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_raw_snps.vcf --filterExpression "QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0" --filterName "standard_snp_filter" -o qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_filtered_snps.vcf
+
+##########filter (DID NOT FILTER BY --maf --max-missing)
+#########bsub -q week "vcftools --vcf filtered_snps.vcf --maf 0.05 --max-missing 0.9 --recode --out filtered_snps_jam"
+
+#########
+#########
+vcf stats
+#########
+#########
+
+#VCF to PLINK
+bsub -q week "vcftools --vcf qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_filtered_snps.vcf --plink --out qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_filtered_snps.plink"
+
+#GENOTYPE OUTPUT
+bsub -q week "./plink.exe --file qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_filtered_snps.plink --extract dlx6_galr2.txt --allow-extra-chr --recode --out delete.txt"
+
+#PCA
+bsub -q week "./plink.exe --file qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_filtered_snps.plink.ped --allow-extra-chr --pca tabs"
+
+
+#########
+#########
+heterozygotes
+#########
+#########
+
+scp martin-lab@bio-martin-syn.bio.unc.edu:/volume1/MartinLab/Joe/killdevil_backup_1_12_2018/joe/axm_rna/ /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/hybrid_variants_called_with_eletters_dataset
+There!sN0Spoon
+
+
+####################################################################################################
+# IMPORTANT NOTES!
+# everything below outlines a pipeline that will need to be converted to longleaf sbatch 
+# use these steps for new hybrid data
+# I AM USING SNPS CALLED IN PREVIOUS RNA SEQ DATASET (evolution letters individuals called with 6 LLAxLLM hybrids)
+# qtl parents snps called with 6 hybrids
+# hybrids --> phase vcf then convert to non-gi scaffolds with sed before find hets ; use Cyprinodon_NW_noheader.fasta to phase
+# parents --> subset snps in coding regions, phase, find hets. no sed replace for gi-scaffolds; use Cyprinodon_NW.fasta to phase
+
+bsub -q week -M 50 "vcftools --vcf qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_filtered_snps.vcf --indv axmJ1 --recode --out axmJ1_filtered_snps"
+bsub -q week -M 50 "vcftools --vcf qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_filtered_snps.vcf --indv axmJ4 --recode --out axmJ4_filtered_snps"
+bsub -q week -M 50 "vcftools --vcf qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_filtered_snps.vcf --indv axmJ5 --recode --out axmJ5_filtered_snps"
+bsub -q week -M 50 "vcftools --vcf qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_filtered_snps.vcf --indv axmJ6 --recode --out axmJ6_filtered_snps"
+bsub -q week -M 50 "vcftools --vcf qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_filtered_snps.vcf --indv LLA-QTL --recode --out LLA-QTL_filtered_snps"
+bsub -q week -M 50 "vcftools --vcf qtl_parents_LLA_LLM_gDNA_and_LLAxLLM_F1_cDNA_filtered_snps.vcf --indv LLM-QTL --recode --out LLM-QTL_filtered_snps"
+
+bsub -q week "samtools index axmE1.sort.dedup.bam"
+
+
+sed 's/gi...............//' axmJ1_filtered_snps.recode.vcf | sed 's/|//g' > axmJ1_filtered_snps_no_header.vcf
+sed 's/gi...............//' axmJ4_filtered_snps.recode.vcf | sed 's/|//g' > axmJ4_filtered_snps_no_header.vcf
+sed 's/gi...............//' axmJ5_filtered_snps.recode.vcf | sed 's/|//g' > axmJ5_filtered_snps_no_header.vcf
+sed 's/gi...............//' axmJ6_filtered_snps.recode.vcf | sed 's/|//g' > axmJ6_filtered_snps_no_header.vcf
+
+sbatch phase_axmJ1.sh
+java -jar GenomeAnalysisTK.jar -T ReadBackedPhasing -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -I axmJ1.sort.dedup.RG.split.bam --variant axmJ1_filtered_snps_no_header.vcf -o axmJ1_filtered_phased.vcf --phaseQualityThresh 20.0
+
+sbatch subset_hets_axmJ1.sh
+java -jar GenomeAnalysisTK.jar -T VariantFiltration -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -V axmJ1_filtered_phased.vcf --genotypeFilterExpression "isHet == 1" --genotypeFilterName "HetSitesFilter" -o axmJ1_het_variants.vcf
+
+
+# make bed file for feature intervals
+awk '{print $1, $4, $5}'  my.gtf.geneid > my.gtf.geneid.bed
+
+sbatch subset_coding_LLA-QTL.sh
+vcftools --vcf LLA-QTL_filtered_snps.recode.vcf --bed /proj/cmarlab/users/joe/Cyprinodon/my.gtf.geneid.bed --recode --out LLA-QTL_coding_snps
+
+
+sbatch phase_coding_LLM-QTL.sh
+java -jar GenomeAnalysisTK.jar -T ReadBackedPhasing -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -I LLM-QTL.sort.dedup.bam --variant LLM-QTL_coding_snps.recode.vcf -o LLM-QTL_phased_coding.vcf --phaseQualityThresh 20.0
+
+bsub -q week java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T VariantsToTable -V LLA-QTL_phased_coding.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/LLA-QTL_snp_table.txt
+bsub -q week java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T VariantsToTable -V LLM-QTL_phased_coding.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/LLM-QTL_snp_table.txt
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T ASEReadCounter -o ./allele_counts/LLA-QTL_allele_counts_gatk.csv -I LLA-QTL.sort.dedup.bam -sites LLA-QTL_phased_coding.vcf -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T ASEReadCounter -o ./allele_counts/LLM-QTL_allele_counts_gatk.csv -I LLM-QTL.sort.dedup.bam -sites LLM-QTL_phased_coding.vcf -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+sed 's/gi...............//' LLA-QTL_snp_table.txt | sed 's/|//g' > LLA-QTL_snp_table_nw.txt
+sed 's/gi...............//' LLM-QTL_snp_table.txt | sed 's/|//g' > LLM-QTL_snp_table_nw.txt
+sed 's/gi...............//' LLA-QTL_allele_counts_gatk.csv | sed 's/|//g' > LLA-QTL_allele_counts_gatk_nw.csv
+sed 's/gi...............//' LLM-QTL_allele_counts_gatk.csv | sed 's/|//g' > LLM-QTL_allele_counts_gatk_nw.csv
+bsub -q week java -jar GenomeAnalysisTK.jar -T VariantFiltration -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -V LLA-QTL_phased_coding.vcf --genotypeFilterExpression "isHomVar == 1" --genotypeFilterName "HomSitesFilter" -o LLA-QTL_phased_coding_hom_snps.vcf
+bsub -q week java -jar GenomeAnalysisTK.jar -T VariantFiltration -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -V LLM-QTL_phased_coding.vcf --genotypeFilterExpression "isHomVar == 1" --genotypeFilterName "HomSitesFilter" -o LLM-QTL_phased_coding_hom_snps.vcf
+bsub -q week java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T VariantsToTable -V LLA-QTL_phased_coding_hom_snps.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/LLA-QTL_hom_snp_table.txt
+bsub -q week java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T VariantsToTable -V LLM-QTL_phased_coding_hom_snps.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/LLM-QTL_hom_snp_table.txt
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T ASEReadCounter -o ./allele_counts/LLA-QTL_hom_allele_counts_gatk.csv -I LLA-QTL.sort.dedup.bam -sites LLA-QTL_phased_coding_hom_snps.vcf -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T ASEReadCounter -o ./allele_counts/LLM-QTL_hom_allele_counts_gatk.csv -I LLM-QTL.sort.dedup.bam -sites LLM-QTL_phased_coding_hom_snps.vcf -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+sed 's/gi...............//' LLA-QTL_hom_snp_table.txt | sed 's/|//g' > LLA-QTL_hom_snp_table_nw.txt
+sed 's/gi...............//' LLM-QTL_hom_snp_table.txt | sed 's/|//g' > LLM-QTL_hom_snp_table_nw.txt
+sed 's/gi...............//' LLA-QTL_hom_allele_counts_gatk.csv | sed 's/|//g' > LLA-QTL_hom_allele_counts_gatk_nw.csv
+sed 's/gi...............//' LLM-QTL_hom_allele_counts_gatk.csv | sed 's/|//g' > LLM-QTL_hom_allele_counts_gatk_nw.csv
+
+
+sbatch subset_hets_LLA-QTL.sh
+bsub -q week java -jar GenomeAnalysisTK.jar -T VariantFiltration -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -V LLA-QTL_phased_coding.vcf --genotypeFilterExpression "isHet == 1" --genotypeFilterName "HetSitesFilter" -o LLA-QTL_het_variants.vcf
+bsub -q week java -jar GenomeAnalysisTK.jar -T VariantFiltration -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -V LLM-QTL_phased_coding.vcf --genotypeFilterExpression "isHet == 1" --genotypeFilterName "HetSitesFilter" -o LLM-QTL_het_variants.vcf
+
+#keep only passing phased het sites (final before allele counting)
+bsub -q week "vcftools --vcf LLA-QTL_het_variants.vcf --remove-filtered-all --recode --out LLA-QTL_het_variants_pass"
+bsub -q week "vcftools --vcf LLM-QTL_het_variants.vcf --remove-filtered-all --recode --out LLM-QTL_het_variants_pass"
+bsub -q week "vcftools --vcf axmJ1_het_variants.vcf --remove-filtered-all --recode --out axmJ1_het_variants_pass"
+bsub -q week "vcftools --vcf axmJ4_het_variants.vcf --remove-filtered-all --recode --out axmJ4_het_variants_pass"
+bsub -q week "vcftools --vcf axmJ5_het_variants.vcf --remove-filtered-all --recode --out axmJ5_het_variants_pass"
+bsub -q week "vcftools --vcf axmJ6_het_variants.vcf --remove-filtered-all --recode --out axmJ6_het_variants_pass"
+
+
+#allele_counts
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T ASEReadCounter -o ./allele_counts/LLA-QTL_het_allele_counts_gatk.csv -I LLA-QTL.sort.dedup.bam -sites LLA-QTL_het_variants_pass.recode.vcf  -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T ASEReadCounter -o ./allele_counts/LLM-QTL_het_allele_counts_gatk.csv -I LLM-QTL.sort.dedup.bam -sites LLM-QTL_het_variants_pass.recode.vcf  -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ1_allele_counts_gatk.csv -I axmJ1.sort.dedup.RG.split.bam -sites axmJ1_het_variants_pass.recode.vcf -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ4_allele_counts_gatk.csv -I axmJ4.sort.dedup.RG.split.bam -sites axmJ4_het_variants_pass.recode.vcf -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ5_allele_counts_gatk.csv -I axmJ5.sort.dedup.RG.split.bam -sites axmJ5_het_variants_pass.recode.vcf -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ6_allele_counts_gatk.csv -I axmJ6.sort.dedup.RG.split.bam -sites axmJ6_het_variants_pass.recode.vcf -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+#solve trouble with counts not lining up with het sites
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T VariantsToTable -V LLA-QTL_coding_snps.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/LLA-QTL_coding_snps_table.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T VariantsToTable -V LLM-QTL_coding_snps.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/LLM-QTL_coding_snps_table.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ1_filtered_phased.vcf -F CHROM -F POS -GF GT -GF HP -o axmJ1_snp_table_filtered_snps.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ4_filtered_phased.vcf -F CHROM -F POS -GF GT -GF HP -o axmJ4_snp_table_filtered_snps.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ5_filtered_phased.vcf -F CHROM -F POS -GF GT -GF HP -o axmJ5_snp_table_filtered_snps.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ6_filtered_phased.vcf -F CHROM -F POS -GF GT -GF HP -o axmJ6_snp_table_filtered_snps.txt
+#bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T ASEReadCounter -o ./allele_counts/LLA-QTL_het_allele_counts_gatk.csv -I LLA-QTL.sort.dedup.bam -sites LLA-QTL_het_variants_pass.recode.vcf  -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+#bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T ASEReadCounter -o ./allele_counts/LLM-QTL_het_allele_counts_gatk.csv -I LLM-QTL.sort.dedup.bam -sites LLM-QTL_het_variants_pass.recode.vcf  -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ1_allele_counts_all_sites_gatk.csv -I axmJ1.sort.dedup.RG.split.bam -sites axmJ1_filtered_snps_no_header.vcf -U ALLOW_N_CIGAR_READS -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ4_allele_counts_all_sites_gatk.csv -I axmJ4.sort.dedup.RG.split.bam -sites axmJ4_filtered_snps_no_header.vcf -U ALLOW_N_CIGAR_READS -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ5_allele_counts_all_sites_gatk.csv -I axmJ5.sort.dedup.RG.split.bam -sites axmJ5_filtered_snps_no_header.vcf -U ALLOW_N_CIGAR_READS -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ6_allele_counts_all_sites_gatk.csv -I axmJ6.sort.dedup.RG.split.bam -sites axmJ6_filtered_snps_no_header.vcf -U ALLOW_N_CIGAR_READS -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ1_allele_counts_LLA_sites_gatk.csv -I axmJ1.sort.dedup.RG.split.bam -sites LLA-QTL_filtered_snps_no_header.vcf -U ALLOW_N_CIGAR_READS -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ4_allele_counts_LLA_sites_gatk.csv -I axmJ4.sort.dedup.RG.split.bam -sites LLA-QTL_filtered_snps_no_header.vcf -U ALLOW_N_CIGAR_READS -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ5_allele_counts_LLA_sites_gatk.csv -I axmJ5.sort.dedup.RG.split.bam -sites LLA-QTL_filtered_snps_no_header.vcf -U ALLOW_N_CIGAR_READS -drf DuplicateRead"
+bsub -q week "java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o ./allele_counts/axmJ6_allele_counts_LLA_sites_gatk.csv -I axmJ6.sort.dedup.RG.split.bam -sites LLA-QTL_filtered_snps_no_header.vcf -U ALLOW_N_CIGAR_READS -drf DuplicateRead"
+
+
+
+#snp_tables
+bsub -q week java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T VariantsToTable -V LLA-QTL_het_variants_pass.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/LLA-QTL_het_snp_table.txt
+bsub -q week java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/Cyprinodon_NW.fasta -T VariantsToTable -V LLM-QTL_het_variants_pass.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/LLM-QTL_het_snp_table.txt
+bsub -q week java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ1_het_variants_pass.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ1_snp_table.txt
+bsub -q week java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ4_het_variants_pass.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ4_snp_table.txt
+bsub -q week java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ5_het_variants_pass.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ5_snp_table.txt
+bsub -q week java -jar GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ6_het_variants_pass.recode.vcf -F CHROM -F POS -GF GT -GF HP -o ./allele_counts/axmJ6_snp_table.txt
+
+sed 's/gi...............//' LLA-QTL_coding_snps_table.txt | sed 's/|//g' > LLA-QTL_coding_snps_table_nw.txt
+sed 's/gi...............//' LLM-QTL_coding_snps_table.txt | sed 's/|//g' > LLM-QTL_coding_snps_table_nw.txt
+sed 's/gi...............//' LLA-QTL_het_allele_counts_gatk.csv | sed 's/|//g' > LLA-QTL_het_allele_counts_gatk_nw.csv
+sed 's/gi...............//' LLM-QTL_het_allele_counts_gatk.csv | sed 's/|//g' > LLM-QTL_het_allele_counts_gatk_nw.csv
+
+
+#######################################################################
+
+
+
+
+
+#using eletters vcfs to get het snps with phase information because of fasta mismatch in alignment and gi scaffolds nonsense
+
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -T VariantFiltration -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -V axmJ1_filtered_phased.vcf --genotypeFilterExpression "isHet == 1" --genotypeFilterName "HetSitesFilter" -o axmJ1_het_variants.vcf
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -T VariantFiltration -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -V axmJ4_filtered_phased.vcf --genotypeFilterExpression "isHet == 1" --genotypeFilterName "HetSitesFilter" -o axmJ4_het_variants.vcf
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -T VariantFiltration -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -V axmJ5_filtered_phased.vcf --genotypeFilterExpression "isHet == 1" --genotypeFilterName "HetSitesFilter" -o axmJ5_het_variants.vcf
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -T VariantFiltration -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -V axmJ6_filtered_phased.vcf --genotypeFilterExpression "isHet == 1" --genotypeFilterName "HetSitesFilter" -o axmJ6_het_variants.vcf
+
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ1_het_variants.vcf -F CHROM -F POS -GF GT -GF HP -o axmJ1_het_snp_table.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ4_het_variants.vcf -F CHROM -F POS -GF GT -GF HP -o axmJ4_het_snp_table.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ5_het_variants.vcf -F CHROM -F POS -GF GT -GF HP -o axmJ5_het_snp_table.txt
+bsub -q week java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T VariantsToTable -V axmJ6_het_variants.vcf -F CHROM -F POS -GF GT -GF HP -o axmJ6_het_snp_table.txt
+
+bsub -q week "java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o axmJ1_het_allele_counts_gatk.csv -I /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/axmJ1.sort.dedup.RG.split.bam -sites axmJ1_het_variants.vcf -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+bsub -q week "java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o axmJ4_het_allele_counts_gatk.csv -I /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/axmJ4.sort.dedup.RG.split.bam -sites axmJ4_het_variants.vcf -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+bsub -q week "java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o axmJ5_het_allele_counts_gatk.csv -I /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/axmJ5.sort.dedup.RG.split.bam -sites axmJ5_het_variants.vcf -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+bsub -q week "java -jar /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/GenomeAnalysisTK.jar -R /proj/cmarlab/users/joe/Cyprinodon/Cyprinodon_NW_noheader.fasta -T ASEReadCounter -o axmJ6_het_allele_counts_gatk.csv -I /proj/cmarlab/users/joe/AxM_high_cov_cross_trimmed_fastqs/axmJ6.sort.dedup.RG.split.bam -sites axmJ6_het_variants.vcf -U ALLOW_N_CIGAR_READS -minDepth 7 --minMappingQuality 10 --minBaseQuality 20 -drf DuplicateRead"
+
+DOWNSTREAM analysis with "qtl_parents_ase.R"

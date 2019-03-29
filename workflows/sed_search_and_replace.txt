@@ -1,0 +1,163 @@
+##SED##                                                       12926385 
+sed -n 159713,159715p gatk_filtered_snps_ejr_caribbean_pupfish.vcf.gz
+sed -n 9100,9300p test.vcf 
+sed -n 9300,9400p r_snps_star_rm_43.vcf 
+sed -n 9300,9400p r_snps.vcf
+sed -n 10657777,10657788p tester
+sed -n 9382p p_snps.vcf
+bsub -q week -M 10 "sed '"/,\\*/d"' r_snps.vcf.recode.vcf > r_snps_star_rm_43.vcf "
+bsub -q week "sed '"s/-[0-9].*/0/g"' vmxp_fst_genome.weir.fst > tester"
+bsub -q week "sed '"s/nan/0/g"' vmxp_fst_genome.weir.fst | sed '"s/-[0-9].*/0/g"' > tester"
+
+bsub -q week -M 10 "sed '"s/JPKM0//g"' all_fst | sed '"s/KL0//g"' > test.txt"
+bsub -q week -M 10 "sed '"s/JPKM//g"' test.txt | sed '"s/KL//g"' > test2.txt"
+bsub -q week -M 10 "sed '"s/nan/0/g"' all_vmri_fst > tester"
+
+bsub -q week -M 10 "sed '"s/0/1/g"' zeros > ones"
+sed "s/Aligned.out.sam//g" counts_first_run.txt > tester2
+sed "s/7955\.EN//g" danio_ppi_experimental > tester2
+
+sed -i '3765d' counts_my_gtf
+
+##AWK/PASTE##
+awk '$7 > 0' 7955.protein.links.detailed.v10.5.txt > tester
+
+bsub -q week 'awk '{print $3}'  vrixm_fst.txt.weir.fst > vrixm_fst'
+bsub -q week "awk "'{print $4}'" all_fst.txt > ap"
+bsub -q week "awk "'{print $5}'" all_fst.txt > mp" 
+bsub -q week "paste all_vmri_fst vmrxi_fst_delete1 vrixm_fst_delete1 > tester1"
+bsub -q week "awk "'{print $3}'" all_fst | paste scaff > test4.txt"
+
+awk '{sum+=$13} END { print "Average = ",sum/NR}' test_depth_delete
+samtools depth -r my.gtf.bed CPAE1.rna.sort.bam > test_depth_samtools
+
+samtools depth  CPAE1.rna.sort.bam  |  awk '{sum+=$3} END { print "Average = ",sum/NR}'
+
+awk '{print $1}' tester > p1
+awk '{print $2}' tester > p2
+awk '{print $7}' tester > ex
+awk '{print $10}' tester > cs
+paste p1 p2 ex cs > danio_ppi_experimental
+
+bsub -q week "perl ./continuous_axis.pl > continuous_plink"
+
+##sort##
+bsub -q week -M 10 "sort -k 1 -n continuous_axis_job.txt > test.txt"
+
+##GREP##
+amp_candidates
+bsub -q week "grep KL652632.1 af_pi.csv > KL652632.1.txt"
+bsub -q week "grep KL653302.1 af_pi.csv > KL653302.1.txt"
+bsub -q week "grep KL653062.1 af_pi.csv > KL653062.1.txt"
+bsub -q week "grep KL652617.1 af_pi.csv > KL652617.1.txt"
+bsub -q week "grep KL652786.1 af_pi.csv > KL652786.1.txt"
+bsub -q week "grep KL652758.1 af_pi.csv > KL652758.1.txt"
+bsub -q week "grep KL652527.1 af_pi.csv > KL652527.1.txt"
+bsub -q week "grep KL652868.1 af_pi.csv > KL652868.1.txt"
+bsub -q week "grep KL653214.1 af_pi.csv > KL653214.1.txt"
+bsub -q week "grep KL652632.1 af_pi.csv > KL652632.1.txt"
+bsub -q week "grep KL652632.1 af_pi.csv > KL652632.1.txt"
+bsub -q week "grep KL654513.1 af_pi.csv > KL654513.1.txt"
+bsub -q week "grep KL653356.1 af_pi.csv > KL653356.1.txt"
+
+vmir candidates
+bsub < ######
+
+#!/bin/bash
+#BSUB -q week
+grep KL653166.1 p_inv_stats > KL653166.1.txt
+grep KL652539.1 p_inv_stats > KL652539.1.txt
+grep KL653173.1 p_inv_stats > KL653173.1.txt
+grep KL653122.1 p_inv_stats > KL653122.1.txt
+grep KL652584.1 p_inv_stats > KL652584.1.txt
+grep KL652900.1 p_inv_stats > KL652900.1.txt
+grep KL652510.1 p_inv_stats > KL652510.1.txt
+grep KL653365.1 p_inv_stats > KL653365.1.txt
+grep KL652805.1 p_inv_stats > KL652805.1.txt
+grep KL652585.1 p_inv_stats > KL652585.1.txt
+grep KL653356.1 p_inv_stats > KL653356.1.txt
+grep KL653302.1 p_inv_stats > KL653302.1.txt
+grep KL652649.1 p_inv_stats > KL652649.1.txt
+grep KL653001.1 p_inv_stats > KL653001.1.txt
+grep KL652635.1 p_inv_stats > KL652635.1.txt
+grep KL652598.1 p_inv_stats > KL652598.1.txt
+
+
+
+bsub -q week "grep KL652500.1 filtered_snps.map  > longest_scaff_snps.txt" 
+
+
+
+
+bsub -q week "grep KL652527.1 out.ldepth.mean | grep  1146017 > KL652527.1_depth.txt"
+bsub -q week "grep KL652617.1 out.ldepth.mean | grep  31643   > KL652617.1_depth.txt"
+bsub -q week "grep KL652632.1 out.ldepth.mean | grep  883657  > KL652632.1_depth.txt"
+bsub -q week "grep KL652758.1 out.ldepth.mean | grep  528194  > KL652758.1_depth.txt"
+bsub -q week "grep KL652786.1 out.ldepth.mean | grep  853324  > KL652786.1_depth.txt"
+bsub -q week "grep KL653062.1 out.ldepth.mean | grep  213019  > KL653062.1_depth.txt"
+bsub -q week "grep KL653214.1 out.ldepth.mean | grep  62316   > KL653214.1_depth.txt"
+bsub -q week "grep KL653302.1 out.ldepth.mean | grep  212869  > KL653302.1_depth.txt"
+bsub -q week "grep KL654513.1 out.ldepth.mean | grep  19308   > KL654513.1_depth.txt"
+bsub -q week "grep KL653356.1 out.ldepth.mean | grep  100099  > KL653356.1_depth.txt"
+                                            
+bsub -q week "cat KL652527.1_depth.txt KL652617.1_depth.txt KL652632.1_depth.txt KL652758.1_depth.txt KL652786.1_depth.txt KL653062.1_depth.txt KL653214.1_depth.txt KL653302.1_depth.txt KL654513.1_depth.txt KL653356.1_depth.txt > mean_depth_candidates.txt"
+											
+											
+KL652527.1
+KL652617.1
+KL652632.1
+KL652758.1
+KL652786.1
+KL653062.1
+KL653214.1
+KL653302.1
+KL654513.1
+KL653356.1
+
+
+1146017
+31643
+883657
+528194
+853324
+213019
+62316
+212869
+19308
+100099
+
+awk '{print $2}' longest_scaff_r2.ld > bp_a_delete
+awk '{print $5}' longest_scaff_r2.ld > bp_b_delete
+awk '{print $7}' longest_scaff_r2.ld > r2_delete
+paste bp_a_delete bp_b_delete r2_delete > test.txt
+
+
+
+awk '{print $2}' axp_jaw_.8_overlap.csv  > axp_jaw_geneid
+awk '{print $3}' axp_jaw_.8_overlap.csv  > axp_jaw_ps
+awk '{print $2}' axp_embryo_.8_overlap.csv  > axp_embryo_geneid
+awk '{print $3}' axp_embryo_.8_overlap.csv  > axp_embryo_ps
+paste -d: axp_embryo_geneid axp_embryo_ps > axp_em_tag
+paste -d: axp_jaw_geneid axp_jaw_ps > axp_jaw_tag
+paste axp_jaw_.8_overlap.csv axp_jaw_tag > axp_jaw
+paste axp_embryo_.8_overlap.csv axp_em_tag > axp_embryo
+
+bsub -q week "clustalo --profile1 cyprinodon_dlx_clustal.txt --profile2 11_fish_dlx_locus.aln -o test.txt"
+
+bsub -q week -M 100 "clustalo -i notho_cyprinodon.fa --p1=11_fish_dlx_locus_sm.aln -o output_clustal.txt --outfmt=clu"
+
+bsub -q week -M 100 "clustalo -i notho_cyprinodon.fa --p1=11_fish_dlx_locus_sm_fasta.aln -o output_clustal.txt --outfmt=clu"
+bsub -q week -M 100 "clustalo -i notho_cyp_galr2.fa --p1=11_fish_galr2.fa -o galr2_aln_clustal.txt --outfmt=clu"
+bsub -q week -M 100 "clustalo -i notho_cyp_galr2_zoom.fa --p1=11_fish_galr2_zoom.fa -o galr2_aln_clustal_zoom.txt --outfmt=clu"
+bsub -q week -M 100 "clustalo -i cyp_human_dlx.fa --p1=11_fish_dlx_locus_sm_fasta.aln -o cyp_human_dlx_aln.txt --outfmt=clu"
+
+
+
+bsub -q week "./plink.exe --file filtered_snps --extract delete.txt --allow-extra-chr --recode --out galr2.txt"
+
+
+
+
+bsub -q week mpirun -np 8 -n 10 -R "span[hosts=1]" "clustalo -i notho_cyprinodon.fa --p1=11_fish_dlx_locus_sm.aln --threads=8 -o test.txt"
+
+bsub -q week -n 10 -R "span[hosts=1]" "clustalo -i notho_cyprinodon.fa --p1=11_fish_dlx_locus_sm.aln --threads=8 -o test.txt"

@@ -1,0 +1,279 @@
+OUTGROUP POPS## tar -xvzf  outgroup_raw_variant_vcf_files.tar.gz
+###############
+
+#fix the CRPM3 problem (CRPA3 was mislabeled as CRPM3)
+bsub -n 4 -R "span[hosts=1]" -q whole_node "java -Xmx10g -jar GenomeAnalysisTK.jar -T HaplotypeCaller -R Cyprinodon.fasta -I CRPM3.dedup.archive.bam --genotyping_mode DISCOVERY --emitRefConfidence GVCF -mmq 5 -nct 4 -o CRPM3_raw_variants.g.vcf" 
+
+bsub -M 50 -q week "java -Xmx50g -jar GenomeAnalysisTK.jar -T GenotypeGVCFs -R Cyprinodon.fasta \
+--variant ./variants/CPM2_raw_variants.g.vcf \
+--variant ./variants/CRPA1_raw_variants.g.vcf \
+--variant ./variants/CRPA3_raw_variants.g.vcf \
+--variant ./variants/CRPM1_raw_variants.g.vcf \
+--variant ./variants/CRPM3_raw_variants.g.vcf \
+--variant ./variants/CRPP2_raw_variants.g.vcf \
+--variant ./variants/CRPP3_raw_variants.g.vcf \
+--variant ./variants/CRPPQ_raw_variants.g.vcf \
+--variant ./variants/CUNA1_raw_variants.g.vcf \
+--variant ./variants/DIA54918_raw_variants.g.vcf \
+--variant ./variants/ETA1_raw_variants.g.vcf \
+--variant ./variants/GREA1_raw_variants.g.vcf \
+--variant ./variants/GREA2_raw_variants.g.vcf \
+--variant ./variants/GREP1_raw_variants.g.vcf \
+--variant ./variants/GREP2_raw_variants.g.vcf \
+--variant ./variants/LILA1_raw_variants.g.vcf \
+--variant ./variants/LILM3_raw_variants.g.vcf \
+--variant ./variants/LILM4_raw_variants.g.vcf \
+--variant ./variants/LILMQ_raw_variants.g.vcf \
+--variant ./variants/LILP3_raw_variants.g.vcf \
+--variant ./variants/LILP4_raw_variants.g.vcf \
+--variant ./variants/LILPQ_raw_variants.g.vcf \
+--variant ./variants/MAY1_raw_variants.g.vcf \
+--variant ./variants/ME2A1_raw_variants.g.vcf \
+--variant ./variants/ME2A2_raw_variants.g.vcf \
+--variant ./variants/ME2P1_raw_variants.g.vcf \
+--variant ./variants/MERA2_raw_variants.g.vcf \
+--variant ./variants/MERA3_raw_variants.g.vcf \
+--variant ./variants/MRKA1_raw_variants.g.vcf \
+--variant ./variants/MRKM1_raw_variants.g.vcf \
+--variant ./variants/MRKM2_raw_variants.g.vcf \
+--variant ./variants/OSPA1_raw_variants.g.vcf \
+--variant ./variants/OSPM1_raw_variants.g.vcf \
+--variant ./variants/OSPM2_raw_variants.g.vcf \
+--variant ./variants/OSPM3_raw_variants.g.vcf \
+--variant ./variants/OSPP1_raw_variants.g.vcf \
+--variant ./variants/OSPP2_raw_variants.g.vcf \
+--variant ./variants/OSPP3_raw_variants.g.vcf \
+--variant ./variants/OYSP1_raw_variants.g.vcf \
+--variant ./variants/OYSP3_raw_variants.g.vcf \
+--variant ./variants/PIGA1_raw_variants.g.vcf \
+--variant ./variants/PIGA2_raw_variants.g.vcf \
+--variant ./variants/SIM1_raw_variants.g.vcf \
+-o 43_pupfish_jam.vcf"
+
+
+#copy stuff to server
+scp file_name martin-lab@bio-martin-syn.bio.unc.edu:/volume1/MartinLab/Joe/BAM_files
+
+scp martin-lab@bio-martin-syn.bio.unc.edu:/volume1/MartinLab/Joe/BAM_files/uploads2/CRPM3.dedup.archive.bai /proj/cmarlab/users/joe/outgroups
+
+password: There!sN0Spoon
+
+#VCF to PLINK
+bsub -q week "vcftools --vcf 43_filtered_snps_nomaysim_jam.recode.vcf --plink --out 43_filtered_snps_nomaysim_jam.plink"
+
+#PCA
+bsub -q week "./plink.exe --file 43_filtered_snps_nomaysim_jam.plink --allow-extra-chr --pca tabs"
+
+
+#GENOTYPE OUTPUT
+bsub -q week "./plink.exe --file 43_filtered_snps_jam.plink --extract dlx6_galr2.txt --allow-extra-chr --recode --out delete.txt"
+
+#filter 
+bsub -q week "vcftools --vcf 43_pupfish_filtered_snps.vcf --maf 0.05 --max-missing 0.9 --recode --out 43_filtered_snps_jam"
+
+#filter 
+bsub -q week "vcftools --vcf 43_pupfish_filtered_snps.vcf --keep no_may_sim.txt --maf 0.05 --max-missing 0.9 --recode --out 43_filtered_snps_nomaysim_jam"
+bsub -q week "vcftools --vcf 43_pupfish_jam.vcf --keep no_may_sim.txt --recode --out 43_nomaysim_jam.vcf"
+bsub -q week "java -jar GenomeAnalysisTK.jar -T SelectVariants -R Cyprinodon.fasta -V 43_nomaysim_jam.vcf -selectType INDEL -o 43_nomaysim_indels_jam.vcf" 
+bsub -q week -M 50 java -jar GenomeAnalysisTK.jar -T VariantFiltration -R Cyprinodon.fasta -V 43_nomaysim_indels_jam.vcf --filterExpression "QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0" --filterName "my_indel_filter" -o 43_nomaysim_indels_filtered_jam.vcf
+
+
+#BED file showing location of indels (module load bedops)
+bsub -q week "vcf2bed --deletions < recombined_filtered_indels.vcf  > recombined_filtered_indels.bed"
+awk '$6 != $7' recombined_filtered_indels.bed > test.bed
+OR (this worked better)
+awk '! /\#/' 43_nomaysim_indels_filtered_jam.vcf | awk '{if(length($4) > length($5)) print $1"\t"($2-1)"\t"($2+length($4)-1); else print $1"\t"($2-1)"\t"($2+length($5)-1)}' > 43_nomaysim_indels_filtered_jam.bed
+
+PI
+bsub -q week -M 50 "vcftools --vcf 43_filtered_snps_nomaysim_jam.recode.vcf --keep v_indivs.txt --recode --out v_snps"
+bsub -q week -M 50 "vcftools --vcf 43_filtered_snps_nomaysim_jam.recode.vcf --keep m_indivs.txt --recode --out m_snps"
+bsub -q week -M 50 "vcftools --vcf 43_filtered_snps_nomaysim_jam.recode.vcf --keep r_indivs.txt --recode --out r_snps"
+bsub -q week -M 50 "vcftools --vcf 43_filtered_snps_nomaysim_jam.recode.vcf --keep i_indivs.txt --recode --out i_snps"
+bsub -q week "vcftools --vcf v_snps.recode.vcf --window-pi 10000 --out v_snps_pi"
+bsub -q week "vcftools --vcf m_snps.recode.vcf --window-pi 10000 --out m_snps_pi"
+bsub -q week "vcftools --vcf r_snps.recode.vcf --window-pi 10000 --out r_snps_pi"
+bsub -q week "vcftools --vcf i_snps.recode.vcf --window-pi 10000 --out i_snps_pi"
+                                   
+Tajima's D                         
+bsub -q week "vcftools --vcf v_snps.recode.vcf --TajimaD 10000 --out v_snps_taj"
+bsub -q week "vcftools --vcf m_snps.recode.vcf --TajimaD 10000 --out m_snps_taj"
+bsub -q week "vcftools --vcf r_snps.recode.vcf --TajimaD 10000 --out r_snps_taj"​
+bsub -q week "vcftools --vcf i_snps.recode.vcf --TajimaD 10000 --out i_snps_taj"​
+
+#OUTPUT VCF FIELDS IN TABLE
+bsub -q week -M 10 "java -jar GenomeAnalysisTK.jar -R Cyprinodon.fasta -T VariantsToTable -V 43_nomaysim_indels_filtered_jam.vcf -F CHROM -F POS -F ID -F REF -F ALT -F QUAL -F FILTER -F FORMAT -GF CPM2 CRPA1 CRPA3 CRPM1 CRPM3 CRPP2 CRPP3 CRPPQ CUNA1 DIA54918 ETA1 GREA1 GREA2 GREP1 GREP2 LILA1 LILM3 LILM4 LILMQ LILP3 LILP4 LILPQ ME2A1 ME2A2 ME2P1 MERA2 MERA3 MRKA1 MRKM1 MRKM2 OSPA1 OSPM1 OSPM2 OSPM3 OSPP1 OSPP2 OSPP3 OYSP1 OYSP3 PIGA1 PIGA2 -o 43_nomaysim_indels_filtered_jam.table"
+bsub -q week -M 10 "java -jar GenomeAnalysisTK.jar -R Cyprinodon.fasta -T VariantsToTable -V 43_nomaysim_indels_filtered_jam.vcf -F CHROM -F POS -F ID -F REF -F ALT -F QUAL -F FILTER -GF GT -o 43_nomaysim_indels_filtered_jam.table"
+
+#R ON THE CLUSTER
+module load r
+bsub -q week -M 50 "R CMD BATCH fixed_indels_cluster_r_2.R"
+bsub -q week -M 50 "R CMD BATCH fixed_indels_cluster_i_2.R"
+bsub -q week -M 50 "R CMD BATCH fixed_indels_cluster_m_2.R"
+bsub -q week -M 50 "R CMD BATCH fixed_indels_cluster_p_2.R"
+
+#GERP conserved regions Medaka
+bsub -q week -M50 "bedtools getfasta -fo medaka_gerp_test.fasta -fi Oryzias_latipes.MEDAKA1.dna_rm.toplevel.fa -bed medaka_gerp_test.bed" 
+blastn -query fasta.file -db database_name -outfmt 6 -num_alignments 1 -num_descriptions 1 -out output_file
+bsub -q week -M50 "blastn -query medaka_gerp_test.fasta -subject /proj/cmarlab/users/joe/outgroups/Cyprinodon.fasta -out cyp_blast_gerp_test.bed -outfmt 6"
+
+#Run blast on virtulabox/ubuntu to find homologs and gene symbols
+./blastp -query am_jaw_protein_accessions.txt -db nr -remote -entrez_query zebrafish[Organism] -out am_jaw_blast_hits -outfmt 6
+
+
+bsub -q week -M50 "sed 's/chr//g' gerp_constrained_elements.oryzias_latipes.bed > gerp_elements.oryzias_latipes_nochr.bed" 
+bsub -q week -M50 "bedtools getfasta -fo medaka_gerp.fasta -fi Oryzias_latipes.MEDAKA1.dna_rm.toplevel.fa -bed gerp_elements.oryzias_latipes_nochr.bed" 
+#blastn -query fasta.file -db database_name -outfmt 6 -num_alignments 1 -num_descriptions 1 -out output_file
+bsub -q week -M50 "blastn -query medaka_gerp.fasta -subject /proj/cmarlab/users/joe/outgroups/Cyprinodon.fasta -out cyp_blast_gerp.bed -outfmt 6"
+
+#CLUSTAL-OMEGA
+bsub -q week -M 100 "clustalo -i mef2c_nothocyp.fa --p1=mef2c_11_fish.fa -o mef2c_clustal.txt --outfmt=clu"
+bsub -q week -M 100 "clustalo -i notho_cyp_galr2.fa --p1=11_fish_galr2.fa -o galr2_aln_clustal.txt --outfmt=clu"
+bsub -q week -M 100 "clustalo -i notho_cyp_galr2_zoom.fa --p1=11_fish_galr2_zoom.fa -o galr2_aln_clustal_zoom.txt --outfmt=clu"
+bsub -q week -M 100 "clustalo -i cyp_human_dlx.fa --p1=11_fish_dlx_locus_sm_fasta.aln -o cyp_human_dlx_aln.txt --outfmt=clu"
+
+# Revised FST
+bsub -q week "vcftools --vcf 43_filtered_snps_jam.vcf  --keep p_indivs.txt --out rxi_fst --weir-fst-pop r_indivs.txt --weir-fst-pop i_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_jam.vcf  --keep goxp_indivs.txt --out goxp_fst --weir-fst-pop go_indivs.txt --weir-fst-pop p_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_jam.vcf  --keep goxm_indivs.txt --out goxm_fst --weir-fst-pop go_indivs.txt --weir-fst-pop m_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_jam.vcf  --keep gxc_indivs.txt --out gxc_fst --weir-fst-pop g_indivs.txt --weir-fst-pop c_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_jam.vcf  --keep sxo_indivs.txt --out sxo_fst --weir-fst-pop s_indivs.txt --weir-fst-pop o_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_jam.vcf  --keep vmp_indivs.txt --out vmixr_fst --weir-fst-pop vmi_indivs.txt --weir-fst-pop r_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_jam.vcf  --keep vmp_indivs.txt --out vmrxi_fst --weir-fst-pop vmr_indivs.txt --weir-fst-pop i_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_jam.vcf  --keep vmp_indivs.txt --out vmxp_fst --weir-fst-pop vm_indivs.txt --weir-fst-pop p_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_jam.vcf  --keep vmp_indivs.txt --out vpxm_fst --weir-fst-pop vp_indivs.txt --weir-fst-pop m_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_jam.vcf  --keep mp_indivs.txt --out mxp_fst --weir-fst-pop m_indivs.txt --weir-fst-pop p_indivs.txt"
+
+bsub -q week "vcftools --vcf 43_filtered_snps_nomaysim_jam.recode.vcf  --keep p_indivs.txt --out rxi_fst --weir-fst-pop r_indivs.txt --weir-fst-pop i_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_nomaysim_jam.recode.vcf  --keep goxp_indivs.txt --out goxp_fst --weir-fst-pop go_indivs.txt --weir-fst-pop p_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_nomaysim_jam.recode.vcf  --keep goxm_indivs.txt --out goxm_fst --weir-fst-pop go_indivs.txt --weir-fst-pop m_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_nomaysim_jam.recode.vcf  --keep gxc_indivs.txt --out gxc_fst --weir-fst-pop g_indivs.txt --weir-fst-pop c_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_nomaysim_jam.recode.vcf  --keep sxo_indivs.txt --out sxo_fst --weir-fst-pop s_indivs.txt --weir-fst-pop o_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_nomaysim_jam.recode.vcf  --keep vmp_indivs.txt --out vmixr_fst --weir-fst-pop vmi_indivs.txt --weir-fst-pop r_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_nomaysim_jam.recode.vcf  --keep vmp_indivs.txt --out vmrxi_fst --weir-fst-pop vmr_indivs.txt --weir-fst-pop i_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_nomaysim_jam.recode.vcf  --keep vmp_indivs.txt --out vmxp_fst --weir-fst-pop vm_indivs.txt --weir-fst-pop p_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_nomaysim_jam.recode.vcf  --keep vmp_indivs.txt --out vpxm_fst --weir-fst-pop vp_indivs.txt --weir-fst-pop m_indivs.txt"
+bsub -q week "vcftools --vcf 43_filtered_snps_nomaysim_jam.recode.vcf  --keep mp_indivs.txt --out mxp_fst --weir-fst-pop m_indivs.txt --weir-fst-pop p_indivs.txt"
+
+
+bsub -q week "sed '"s/-[0-9].*/0/g"' rxi_fst.weir.fst > rxi_fst_delete"
+bsub -q week "sed '"s/-[0-9].*/0/g"' goxp_fst.weir.fst > goxp_fst_delete"
+bsub -q week "sed '"s/-[0-9].*/0/g"' goxm_fst.weir.fst > goxm_fst_delete"
+bsub -q week "sed '"s/-[0-9].*/0/g"' gxc_fst.weir.fst > gxc_fst_delete"
+bsub -q week "sed '"s/-[0-9].*/0/g"' sxo_fst.weir.fst > sxo_fst_delete"
+bsub -q week "sed '"s/-[0-9].*/0/g"' vmixr_fst.weir.fst > vmixr_fst_delete"
+bsub -q week "sed '"s/-[0-9].*/0/g"' vmrxi_fst.weir.fst > vmrxi_fst_delete"
+bsub -q week "sed '"s/-[0-9].*/0/g"' vmxp_fst.weir.fst > vmxp_fst_delete"
+bsub -q week "sed '"s/-[0-9].*/0/g"' vpxm_fst.weir.fst > vpxm_fst_delete"
+bsub -q week "sed '"s/-[0-9].*/0/g"' mxp_fst.weir.fst > mxp_fst_delete"
+
+bsub -q week "sed '"s/nan/0/g"' rxi_fst_delete > rxi_2_delete"
+bsub -q week "sed '"s/nan/0/g"' goxp_fst_delete > goxp_2_delete"
+bsub -q week "sed '"s/nan/0/g"' goxm_fst_delete > goxm_2_delete"
+bsub -q week "sed '"s/nan/0/g"' gxc_fst_delete > gxc_2_delete"
+bsub -q week "sed '"s/nan/0/g"' sxo_fst_delete > sxo_2_delete"
+bsub -q week "sed '"s/nan/0/g"' vmixr_fst_delete > vmixr_2_delete"
+bsub -q week "sed '"s/nan/0/g"' vmrxi_fst_delete > vmrxi_2_delete"
+bsub -q week "sed '"s/nan/0/g"' vmxp_fst_delete > vmxp_2_delete"
+bsub -q week "sed '"s/nan/0/g"' vpxm_fst_delete > vpxm_2_delete"
+bsub -q week "sed '"s/nan/0/g"' mxp_fst_delete > mxp_2_delete"
+
+awk '{print $3}' rxi_2_delete > rxi_3_delete
+awk '{print $3}' goxp_2_delete > goxp_3_delete
+awk '{print $3}' goxm_2_delete > goxm_3_delete
+awk '{print $3}' gxc_2_delete > gxc_3_delete
+awk '{print $3}' sxo_2_delete > sxo_3_delete
+awk '{print $3}' vmixr_2_delete > vmixr_3_delete
+awk '{print $3}' vmrxi_2_delete > vmrxi_3_delete
+awk '{print $3}' vmxp_2_delete > vmxp_3_delete
+awk '{print $3}' vpxm_2_delete > vpxm_3_delete
+#awk '{print $3}' mxp_2_delete > mxp_3_delete
+
+bsub -q week "sed '"s/WEIR_AND_COCKERHAM_FST/rxi_fst/g"' rxi_3_delete > rxi_fst"
+bsub -q week "sed '"s/WEIR_AND_COCKERHAM_FST/goxp_fst/g"' goxp_3_delete > goxp_fst"
+bsub -q week "sed '"s/WEIR_AND_COCKERHAM_FST/goxm_fst/g"' goxm_3_delete > goxm_fst"
+bsub -q week "sed '"s/WEIR_AND_COCKERHAM_FST/gxc_fst/g"' gxc_3_delete > gxc_fst"
+bsub -q week "sed '"s/WEIR_AND_COCKERHAM_FST/sxo_fst/g"' sxo_3_delete > sxo_fst"
+bsub -q week "sed '"s/WEIR_AND_COCKERHAM_FST/vmixr_fst/g"' vmixr_3_delete > vmixr_fst"
+bsub -q week "sed '"s/WEIR_AND_COCKERHAM_FST/vmrxi_fst/g"' vmrxi_3_delete > vmrxi_fst"
+bsub -q week "sed '"s/WEIR_AND_COCKERHAM_FST/vmxp_fst/g"' vmxp_3_delete > vmxp_fst"
+bsub -q week "sed '"s/WEIR_AND_COCKERHAM_FST/vpxm_fst/g"' vpxm_3_delete > vpxm_fst"
+bsub -q week "sed '"s/WEIR_AND_COCKERHAM_FST/mxp_fst/g"' mxp_2_delete > mxp_fst"
+
+
+bsub -q week "paste mxp_fst vmixr_fst vmrxi_fst vmxp_fst vpxm_fst rxi_fst goxp_fst goxm_fst gxc_fst sxo_fst > tester"
+mv tester fst_43_no_maysim
+
+DELLY
+bsub -q week "delly call -t INV -o m_inversions.bcf -g Cyprinodon.fasta LILM3.dedup.bam CUNA1.dedup.bam"    -x hg19.ex
+bsub -q week "delly call -t INV -o p_inversions.bcf -g Cyprinodon.fasta LILP3.dedup.bam CUNA1.dedup.bam" 
+
+bsub -q week "samtools view CRPA1.dedup.bam -L unmasked_regions.bed -o test.bam"
+bsub -q week "bedtools bamtobed -i test.bam"
+
+bsub -q week "samtools merge genero.bam CRPA1.dedup.bam CRPA3.dedup.bam GREA1.dedup.bam GREA2.dedup.bam LILA1.dedup.bam ME2A1.dedup.bam ME2A2.dedup.bam MERA2.dedup.bam MERA3.dedup.bam MRKA1.dedup.bam OSPA1.dedup.bam PIGA1.dedup.bam PIGA2.dedup.bam CUNA1.dedup.bam MAY1.dedup.bam SIM1.dedup.bam ETA1.dedup.bam DIA54918.dedup.bam"
+bsub -q week "samtools merge v_pops.bam CRPA1.dedup.bam CRPA3.dedup.bam GREA1.dedup.bam GREA2.dedup.bam LILA1.dedup.bam ME2A1.dedup.bam ME2A2.dedup.bam MERA2.dedup.bam MERA3.dedup.bam MRKA1.dedup.bam OSPA1.dedup.bam PIGA1.dedup.bam PIGA2.dedup.bam"
+bsub -q week "samtools merge o_pops.bam CUNA1.dedup.bam DIA54918.dedup.bam MAY1.dedup.bam SIM1.dedup.bam ETA1.dedup.bam"
+bsub -q week "samtools merge m_pops.bam CRPM1.dedup.bam CRPM3.dedup.bam LILM3.dedup.bam LILM4.dedup.bam LILMQ.dedup.bam MRKM1.dedup.bam MRKM2.dedup.bam OSPM1.dedup.bam OSPM2.dedup.bam OSPM3.dedup.bam CPM2.dedup.bam"
+bsub -q week "samtools merge p_pops.bam CRPP2.dedup.bam CRPP3.dedup.bam OYSP3.dedup.bam OYSP1.dedup.bam CRPPQ.dedup.bam GREP1.dedup.bam GREP2.dedup.bam LILP3.dedup.bam LILP4.dedup.bam LILPQ.dedup.bam ME2P1.dedup.bam OSPP1.dedup.bam OSPP2.dedup.bam OSPP3.dedup.bam"
+bsub -q week "samtools merge i_pops.bam OYSP3.dedup.bam OYSP1.dedup.bam OSPP2.dedup.bam GREP1.dedup.bam GREP2.dedup.bam"
+bsub -q week "samtools merge r_pops.bam CRPP2.dedup.bam CRPP3.dedup.bam CRPPQ.dedup.bam LILP3.dedup.bam LILP4.dedup.bam LILPQ.dedup.bam ME2P1.dedup.bam OSPP1.dedup.bam OSPP3.dedup.bam"
+bsub -q week "samtools merge p_pops_masked.bam r_pops_masked.bam i_pops_masked.bam"
+
+bsub -q week "samtools view o_pops.bam -L unmasked_regions.bed -o o_pops_masked.bam"
+bsub -q week "samtools view i_pops.bam -L unmasked_regions.bed -o i_pops_masked.bam"
+bsub -q week "samtools view r_pops.bam -L unmasked_regions.bed -o r_pops_masked.bam"
+bsub -q week "samtools view m_pops.bam -L unmasked_regions.bed -o m_pops_masked.bam"
+bsub -q week "samtools view p_pops.bam -L unmasked_regions.bed -o p_pops_masked.bam"
+bsub -q week "samtools view v_pops.bam -L unmasked_regions.bed -o v_pops_masked.bam"
+bsub -q week "samtools view genero_pops.bam -L unmasked_regions.bed -o genero_pops_masked.bam"
+
+bsub -q week "samtools view CRPA1.dedup.bam -L unmasked_regions.bed -o CRPA1_masked.bam"
+bsub -q week "samtools view CRPM1.dedup.bam -L unmasked_regions.bed -o CRPM1_masked.bam"
+bsub -q week "samtools view CRPA3.dedup.bam -L unmasked_regions.bed -o CRPA3_masked.bam"
+bsub -q week "samtools view LILA1.dedup.bam -L unmasked_regions.bed -o LILA1_masked.bam"
+bsub -q week "samtools view CRPM3.dedup.bam -L unmasked_regions.bed -o CRPM3_masked.bam"
+bsub -q week "samtools view LILM3.dedup.bam -L unmasked_regions.bed -o LILM3_masked.bam"
+bsub -q week "samtools view CRPP2.dedup.bam -L unmasked_regions.bed -o CRPP2_masked.bam"
+bsub -q week "samtools view CRPP3.dedup.bam -L unmasked_regions.bed -o CRPP3_masked.bam"
+bsub -q week "samtools view LILP3.dedup.bam -L unmasked_regions.bed -o LILP3_masked.bam"
+bsub -q week "samtools view LILP4.dedup.bam -L unmasked_regions.bed -o LILP4_masked.bam"
+bsub -q week "samtools view CUNA1.dedup.bam -L unmasked_regions.bed -o CUNA1_masked.bam"
+bsub -q week "samtools view MAY1.dedup.bam -L unmasked_regions.bed -o MAY1_masked.bam"
+bsub -q week "samtools view SIM1.dedup.bam -L unmasked_regions.bed -o SIM1_masked.bam"
+bsub -q week "samtools view ETA1.dedup.bam -L unmasked_regions.bed -o ETA1_masked.bam"
+bsub -q week "samtools view DIA54918.dedup.bam -L unmasked_regions.bed -o DIA54918_masked.bam"
+
+bsub -q week "samtools index CRPM1_masked.bam"
+bsub -q week "samtools index CRPA1_masked.bam"
+bsub -q week "samtools index CRPA3_masked.bam"
+bsub -q week "samtools index LILA1_masked.bam"
+bsub -q week "samtools index CRPM3_masked.bam"
+bsub -q week "samtools index LILM3_masked.bam"
+bsub -q week "samtools index CRPP2_masked.bam"
+bsub -q week "samtools index CRPP3_masked.bam"
+bsub -q week "samtools index LILP3_masked.bam"
+bsub -q week "samtools index LILP4_masked.bam"
+bsub -q week "samtools index CUNA1_masked.bam"
+bsub -q week "samtools index MAY1_masked.bam"
+bsub -q week "samtools index SIM1_masked.bam"
+bsub -q week "samtools index ETA1_masked.bam"
+bsub -q week "samtools index DIA54918_masked.bam"
+
+#######
+
+#extract fasta for gene region from bam
+samtools view input.bam "Chr10:18000-45500" > output.bam
+bsub -q week "samtools fasta CPPE1.rna.sort.bam  > CPPE1.rna.fasta"
+bedtools getfasta -fi r.fasta -bed dlx6.bed -fo r_dlx6.fa
+
+samtools tview -p KL652598.1:1565922-1567754 -d T CPPE1.rna.sort.bam Cyprinodon_NW.fa
+KL652598.1
+
+bsub -q week "vcftools --vcf r_snps.vcf.recode.vcf --bed dlx6_KL.bed --out dlx6_KL.vcf --recode"
+
+java -Xmx2g -jar GenomeAnalysisTK.jar \
+-R Cyprinodon.fasta \
+-T FastaAlternateReferenceMaker \
+-L KL652598.1:1565922-1567754 \
+-o r_dlx_fasta \
+--variant r_snps.vcf.recode.vcf

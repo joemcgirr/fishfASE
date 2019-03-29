@@ -1,0 +1,19 @@
+mysql setup 
+
+sudo apt install mysql-server
+
+sudo mysql -u root -p
+Enter password: (press enter as no password is set)
+
+#make database
+GRANT ALL ON my_test_database.* TO 'root'@'localhost';
+CREATE DATABASE my_test_database;
+USE my_test_database
+CREATE TABLE 162_rna (chrom VARCHAR(20), position VARCHAR(20));
+
+# make a .bed file of variant sites from .vcf
+#sed  '/##/d' 162_rna_maf_0.5_maxmiss_0.9_snps.recode.vcf | cut -f1,2 > 162_rna_maf_0.5_maxmiss_0.9_snplist.bed
+
+LOAD DATA LOCAL INFILE '/home/joe/hostshare/162_rna_maf_0.5_maxmiss_0.9_snplist.bed' INTO TABLE 162_rna;
+
+SELECT * FROM 162_rna WHERE position = 340574;
