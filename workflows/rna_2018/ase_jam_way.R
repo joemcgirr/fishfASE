@@ -3040,12 +3040,42 @@ write.csv(Bmbodxy,paste("D:/Martin Lab/rna_2018/fst/dna/",crosses[i],"_popgen_dn
 ###############################################
 ############ top sweed hits ###################
 ###############################################
-ca_sweed <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/ca_sweed_95.csv", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
-cm_sweed <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/cm_sweed_95.csv", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
-cp_sweed <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/cp_sweed_95.csv", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
-oa_sweed <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/oa_sweed_95.csv", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
-om_sweed <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/om_sweed_95.csv", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
-op_sweed <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/op_sweed_95.csv", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
+require(data.table)
+library(reshape2)
+
+mrna <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/ase_data/mrna.saf", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mrna <- cbind(mrna, colsplit(mrna$GeneID, ";", c("related_accession", "gene_name")))
+mrna_table <- mrna
+colnames(mrna_table) <- c("GeneID","CHROM","START","END","Strand","related_accession", "gene_name")
+mrna_table$GeneID <- NULL
+mrna_table$START <- mrna_table$START -10000
+mrna_table$END <- mrna_table$END +10000
+setDT(mrna_table)
+setkey(mrna_table)
+
+pops <- c("ca","cm","cp","oa","om","op")
+
+for(pop in pops)
+{
+ 
+sweed <- read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/",pop,"_pop_bottle_58_sweeps_99_percentile.txt",sep = ""), header = F, stringsAsFactors = FALSE)
+colnames(sweed) <- c("CHROM","START","CLR","alpha")
+sweed$END <- sweed$START +1
+setDT(sweed)
+c <- foverlaps(sweed, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHROM", "START", "END"),type="any", nomatch=0L)
+c <- as.data.frame(c)
+rownames(c) <- NULL
+head(c)
+write.table(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/",pop,"_pop_bottle_58_sweeps_99_genes.txt",sep = ""), row.names = FALSE, quote = FALSE, sep = "\t")
+
+}
+
+ca_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/ca_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, stringsAsFactors = FALSE)
+cm_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/cm_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, stringsAsFactors = FALSE)
+cp_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/cp_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, stringsAsFactors = FALSE)
+oa_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/oa_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, stringsAsFactors = FALSE)
+om_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/om_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, stringsAsFactors = FALSE)
+op_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/op_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, stringsAsFactors = FALSE)
 ca_sweed <- unique(ca_sweed$related_accession)
 cm_sweed <- unique(cm_sweed$related_accession)
 cp_sweed <- unique(cp_sweed$related_accession)
@@ -3079,16 +3109,15 @@ intersect(intersect(cmxcp_8_ai ,cmxcp_sweed),intersect(cmxcp_dxy,cmxcp_fixed))
 intersect(intersect(omxop_48_ai,omxop_sweed),intersect(omxop_dxy,omxop_fixed))
 intersect(intersect(omxop_8_ai ,omxop_sweed),intersect(omxop_dxy,omxop_fixed))
 
+intersect(gem_cans,intersect(intersect(oaxom_8_ai ,om_sweed),intersect(oaxom_dxy,oaxom_fixed)))
+intersect(gem_cans,intersect(intersect(caxcp_8_ai ,cm_sweed),intersect(caxcp_dxy,caxcp_fixed)))
+intersect(gem_cans,intersect(intersect(oaxop_48_ai,op_sweed),intersect(oaxop_dxy,oaxop_fixed)))
+intersect(gem_cans,intersect(intersect(oaxop_8_ai ,op_sweed),intersect(oaxop_dxy,oaxop_fixed)))
+intersect(gem_cans,intersect(intersect(cmxcp_48_ai,cmxcp_sweed),intersect(cmxcp_dxy,cmxcp_fixed)))
+intersect(gem_cans,intersect(intersect(cmxcp_8_ai ,cmxcp_sweed),intersect(cmxcp_dxy,cmxcp_fixed)))
+intersect(gem_cans,intersect(intersect(omxop_48_ai,omxop_sweed),intersect(omxop_dxy,omxop_fixed)))
+intersect(gem_cans,intersect(intersect(omxop_8_ai ,omxop_sweed),intersect(omxop_dxy,omxop_fixed)))
 
-
-intersect(oaxom_8_ai , om_taj)
-intersect(caxcp_8_ai , cp_taj)
-intersect(oaxop_48_ai, op_taj)
-intersect(oaxop_8_ai , om_taj)
-intersect(cmxcp_48_ai, cmxcp_sweed)
-intersect(cmxcp_8_ai , cmxcp_taj)
-intersect(omxop_48_ai, omxop_sweed)
-intersect(omxop_8_ai , omxop_sweed)
 
 
 

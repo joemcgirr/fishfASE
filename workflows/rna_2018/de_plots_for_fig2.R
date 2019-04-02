@@ -193,8 +193,8 @@ for (i in c(1:nrow(cool_genes_comps)))
   taj_m_main <- na.omit(taj_m_main)
   taj_a_main <- na.omit(taj_a_main)
   taj_p_main <- na.omit(taj_p_main)
-  sweed_p1_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/",p1,"_pop_bottle_58_sweeps.txt", sep = ""), header = FALSE, stringsAsFactors = FALSE)
-  sweed_p2_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/",p2,"_pop_bottle_58_sweeps.txt", sep = ""), header = FALSE, stringsAsFactors = FALSE)
+  sweed_p1_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/SweeD_Report.",p1,"_pop_bottle_58_grid_500_sweeps.txt", sep = ""), header = FALSE, stringsAsFactors = FALSE)
+  sweed_p2_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/SweeD_Report.",p2,"_pop_bottle_58_grid_500_sweeps.txt", sep = ""), header = FALSE, stringsAsFactors = FALSE)
   
   cool_genes <- strsplit(cool_genes_comps$genes[i],";")[[1]]
   for (cool_gene in cool_genes)
@@ -204,19 +204,19 @@ for (i in c(1:nrow(cool_genes_comps)))
   sweed_p2 <- sweed_p2_main[which(sweed_p2_main$V1 ==gene_chrom$Chr[1]),]
   fst <- fst_main[which(fst_main$CHROM == gene_chrom$Chr[1]),]
   fixed <- fst[which(fst$WEIR_AND_COCKERHAM_FST == 1),]
-  smooth_fst <-   smooth.spline(fst$POS, fst$WEIR_AND_COCKERHAM_FST, spar = .5)
+  smooth_fst <-   smooth.spline(fst$POS, fst$WEIR_AND_COCKERHAM_FST, spar = .2)
   dxy <- dxy_main[which(dxy_main$scaffold == gene_chrom$Chr[1]),]
   
-  smooth_dxy <-   smooth.spline(dxy$start, dxy$corr_dxy, spar = .5)
-  smooth_p1_pi <- smooth.spline(dxy$start, dxy[,14], spar = .5)
-  smooth_p2_pi <- smooth.spline(dxy$start, dxy[,16], spar = .5)
+  smooth_dxy <-   smooth.spline(dxy$start, dxy$corr_dxy, spar = .2)
+  smooth_p1_pi <- smooth.spline(dxy$start, dxy[,14], spar = .2)
+  smooth_p2_pi <- smooth.spline(dxy$start, dxy[,16], spar = .2)
   
   tj_m <- taj_m_main[which(taj_m_main$CHROM == gene_chrom$Chr[1]),]
-  smooth_m <-   smooth.spline(tj_m$BIN_START, tj_m$TajimaD, spar = .5)
+  smooth_m <-   smooth.spline(tj_m$BIN_START, tj_m$TajimaD, spar = .1)
   tj_p <- taj_p_main[which(taj_p_main$CHROM == gene_chrom$Chr[1]),]
-  smooth_p <-   smooth.spline(tj_p$BIN_START, tj_p$TajimaD, spar = .5)
+  smooth_p <-   smooth.spline(tj_p$BIN_START, tj_p$TajimaD, spar = .1)
   tj_a <- taj_a_main[which(taj_a_main$CHROM == gene_chrom$Chr[1]),]
-  smooth_a <-   smooth.spline(tj_a$BIN_START, tj_a$TajimaD, spar = .5)
+  smooth_a <-   smooth.spline(tj_a$BIN_START, tj_a$TajimaD, spar = .1)
   
 
   plot(fixed$POS, fixed$WEIR_AND_COCKERHAM_FST,ylim = c(0,1),
@@ -242,18 +242,328 @@ for (i in c(1:nrow(cool_genes_comps)))
   lines(smooth_a, lwd = 2, col = red)
   rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
 
-  smooth_sweed_p1 <-   smooth.spline(sweed_p1$V2, sweed_p1$V4, spar = 0.3)
-  smooth_sweed_p2 <-   smooth.spline(sweed_p2$V2, sweed_p2$V4, spar = 0.3)
-  plot(sweed_p1$V2, sweed_p1$V4,xlab = "",ylab = "CLR",xlim = c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))
+  sweed_p1$mid <- sweed_p1$V2 + ((sweed_p1$V2[2]-sweed_p1$V2[1])/2)
+  sweed_p2$mid <- sweed_p2$V2 + ((sweed_p2$V2[2]-sweed_p2$V2[1])/2)
+  sweed_p1$norm_clr = (sweed_p1$V3-min(sweed_p1$V3))/(max(sweed_p1$V3)-min(sweed_p1$V3))
+  sweed_p2$norm_clr = (sweed_p2$V3-min(sweed_p2$V3))/(max(sweed_p2$V3)-min(sweed_p2$V3))
+  smooth_sweed_p1 <-   smooth.spline(sweed_p1$mid, sweed_p1$norm_clr, spar = 0.2)
+  smooth_sweed_p2 <-   smooth.spline(sweed_p2$mid, sweed_p2$norm_clr, spar = 0.2)
+  
+  plot(sweed_p1$mid, sweed_p1$norm_clr,xlab = "",ylab = "CLR",col = "white",xlim = c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))
   lines(smooth_sweed_p1, lwd = 2, col = red)
   rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
   rect(gene_chrom$Start[1], -1, gene_chrom$End[1], 1, border = NA, col = col2alpha(blu,0.2))
-  plot(sweed_p2$V2, sweed_p2$V4,xlab = "",ylab = "CLR",xlim = c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))
+  plot(sweed_p2$mid, sweed_p2$norm_clr,xlab = "",ylab = "CLR",col = "white",xlim = c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))
   lines(smooth_sweed_p2, lwd = 2, col = blu)
   rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
   rect(gene_chrom$Start[1], -1, gene_chrom$End[1], 1, border = NA, col = col2alpha(blu,0.2))
   
+  }
   
+}
+dev.off()
+
+cool_genes_comps <- read.table("D:/test_plots/ai_fst_dxy.txt", header = TRUE, stringsAsFactors = FALSE)
+i <- 1
+pdf(paste("D:/test_plots/tests_",cool_genes_comps$interesting_because[i],".pdf",sep = ""),width=7,height=5)
+for (i in c(1:nrow(cool_genes_comps)))
+{
+  cool_stage <- cool_genes_comps$stage[i]
+  pop_gen_comp <- cool_genes_comps$pops[i]
+  cool_p1 <- cool_genes_comps$p1[i]
+  cool_p2 <- cool_genes_comps$p2[i]
+  cool_h <- cool_genes_comps$h[i]
+  cool_cols <- c(gre,blu,grb)
+  
+  p1_inds <- master[which(master$f1 == cool_p1 & master$stage == cool_stage),]
+  p2_inds <- master[which(master$f1 == cool_p2 & master$stage == cool_stage),]
+  hy_inds <- master[which(master$f1 == cool_h & master$stage == cool_stage),]
+  p1_inds <- p1_inds$sample
+  p2_inds <- p2_inds$sample
+  hy_inds <- hy_inds$sample
+  
+  p1 <- strsplit(pop_gen_comp, "x")[[1]][1]
+  p2 <- strsplit(pop_gen_comp, "x")[[1]][2]
+  dxy_main <- read.csv(paste("D:/Martin Lab/rna_2018/fst/dna/",pop_gen_comp,"_popgen_dna_stats_corr_dxy.csv",sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  
+  fst_main <- read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",pop_gen_comp,"_fst",sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  fst_main <- fst_main[which(fst_main$WEIR_AND_COCKERHAM_FST >=0 & fst_main$WEIR_AND_COCKERHAM_FST <=1),]
+  lake <- strsplit(pop_gen_comp,split ="")[[1]][1]
+  taj_m_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",lake,"m_taj_d_20kb.txt.Tajima.D", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  taj_a_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",lake,"a_taj_d_20kb.txt.Tajima.D", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  taj_p_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",lake,"p_taj_d_20kb.txt.Tajima.D", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  taj_m_main <- na.omit(taj_m_main)
+  taj_a_main <- na.omit(taj_a_main)
+  taj_p_main <- na.omit(taj_p_main)
+  sweed_p1_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/SweeD_Report.",p1,"_pop_bottle_58_grid_500_sweeps.txt", sep = ""), header = FALSE, stringsAsFactors = FALSE)
+  sweed_p2_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/SweeD_Report.",p2,"_pop_bottle_58_grid_500_sweeps.txt", sep = ""), header = FALSE, stringsAsFactors = FALSE)
+  
+  cool_genes <- strsplit(cool_genes_comps$genes[i],";")[[1]]
+  for (cool_gene in cool_genes)
+  {
+    gene_chrom <- mrna[which(mrna$related_accession == cool_gene),]
+    sweed_p1 <- sweed_p1_main[which(sweed_p1_main$V1 ==gene_chrom$Chr[1]),]
+    sweed_p2 <- sweed_p2_main[which(sweed_p2_main$V1 ==gene_chrom$Chr[1]),]
+    fst <- fst_main[which(fst_main$CHROM == gene_chrom$Chr[1]),]
+    fixed <- fst[which(fst$WEIR_AND_COCKERHAM_FST == 1),]
+    smooth_fst <-   smooth.spline(fst$POS, fst$WEIR_AND_COCKERHAM_FST, spar = .2)
+    dxy <- dxy_main[which(dxy_main$scaffold == gene_chrom$Chr[1]),]
+    
+    smooth_dxy <-   smooth.spline(dxy$start, dxy$corr_dxy, spar = .2)
+    smooth_p1_pi <- smooth.spline(dxy$start, dxy[,14], spar = .2)
+    smooth_p2_pi <- smooth.spline(dxy$start, dxy[,16], spar = .2)
+    
+    tj_m <- taj_m_main[which(taj_m_main$CHROM == gene_chrom$Chr[1]),]
+    smooth_m <-   smooth.spline(tj_m$BIN_START, tj_m$TajimaD, spar = .1)
+    tj_p <- taj_p_main[which(taj_p_main$CHROM == gene_chrom$Chr[1]),]
+    smooth_p <-   smooth.spline(tj_p$BIN_START, tj_p$TajimaD, spar = .1)
+    tj_a <- taj_a_main[which(taj_a_main$CHROM == gene_chrom$Chr[1]),]
+    smooth_a <-   smooth.spline(tj_a$BIN_START, tj_a$TajimaD, spar = .1)
+    
+    
+    plot(fixed$POS, fixed$WEIR_AND_COCKERHAM_FST,ylim = c(0,1),
+         xlab = "", ylab = "fst", yaxt = 'n',xlim =c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)), main = paste(cool_p1, "vs", cool_p2,cool_gene, sep = " "))
+    axis(2,c(0,0.5,1))
+    lines(smooth_fst, lwd = 2, col = "black")
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    plot(dxy$start, dxy$corr_dxy,col = "white",
+         xlab = "", ylab = "dxy",xlim =c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))#, main = paste(cool_p1, "vs", cool_p2, sep = " "))
+    lines(smooth_dxy, lwd = 2, col = "grey")
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    plot(dxy$start, dxy[,14],col = "white",
+         xlab = "", ylab = "pi",xlim =c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))#, main = paste(cool_p1, "vs", cool_p2, sep = " "))
+    lines(smooth_p1_pi, lwd = 2, col = red)
+    lines(smooth_p2_pi, lwd = 2, col = blu)
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    
+    plot(tj_p$BIN_START, tj_p$TajimaD,ylab = "D",ylim = c(-2.5,2.5),xlab = "",
+         xlim = c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)),col = "white", yaxt = "n")
+    axis(2,c(-2,-1,0,1,2))
+    lines(smooth_m, lwd = 2, col = gre)
+    lines(smooth_p, lwd = 2, col = blu)
+    lines(smooth_a, lwd = 2, col = red)
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    
+    sweed_p1$mid <- sweed_p1$V2 + ((sweed_p1$V2[2]-sweed_p1$V2[1])/2)
+    sweed_p2$mid <- sweed_p2$V2 + ((sweed_p2$V2[2]-sweed_p2$V2[1])/2)
+    sweed_p1$norm_clr = (sweed_p1$V3-min(sweed_p1$V3))/(max(sweed_p1$V3)-min(sweed_p1$V3))
+    sweed_p2$norm_clr = (sweed_p2$V3-min(sweed_p2$V3))/(max(sweed_p2$V3)-min(sweed_p2$V3))
+    smooth_sweed_p1 <-   smooth.spline(sweed_p1$mid, sweed_p1$norm_clr, spar = 0.2)
+    smooth_sweed_p2 <-   smooth.spline(sweed_p2$mid, sweed_p2$norm_clr, spar = 0.2)
+    
+    plot(sweed_p1$mid, sweed_p1$norm_clr,xlab = "",ylab = "CLR",col = "white",xlim = c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))
+    lines(smooth_sweed_p1, lwd = 2, col = red)
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    rect(gene_chrom$Start[1], -1, gene_chrom$End[1], 1, border = NA, col = col2alpha(blu,0.2))
+    plot(sweed_p2$mid, sweed_p2$norm_clr,xlab = "",ylab = "CLR",col = "white",xlim = c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))
+    lines(smooth_sweed_p2, lwd = 2, col = blu)
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    rect(gene_chrom$Start[1], -1, gene_chrom$End[1], 1, border = NA, col = col2alpha(blu,0.2))
+    
+  }
+  
+}
+dev.off()
+
+cool_genes_comps <- read.table("D:/test_plots/pmp_fst_dxy_gemma.txt", header = TRUE, stringsAsFactors = FALSE)
+i <- 1
+pdf(paste("D:/test_plots/tests_",cool_genes_comps$interesting_because[i],".pdf",sep = ""),width=7,height=5)
+for (i in c(1:nrow(cool_genes_comps)))
+{
+  cool_stage <- cool_genes_comps$stage[i]
+  pop_gen_comp <- cool_genes_comps$pops[i]
+  cool_p1 <- cool_genes_comps$p1[i]
+  cool_p2 <- cool_genes_comps$p2[i]
+  cool_h <- cool_genes_comps$h[i]
+  cool_cols <- c(gre,blu,grb)
+  
+  p1_inds <- master[which(master$f1 == cool_p1 & master$stage == cool_stage),]
+  p2_inds <- master[which(master$f1 == cool_p2 & master$stage == cool_stage),]
+  hy_inds <- master[which(master$f1 == cool_h & master$stage == cool_stage),]
+  p1_inds <- p1_inds$sample
+  p2_inds <- p2_inds$sample
+  hy_inds <- hy_inds$sample
+  
+  p1 <- strsplit(pop_gen_comp, "x")[[1]][1]
+  p2 <- strsplit(pop_gen_comp, "x")[[1]][2]
+  dxy_main <- read.csv(paste("D:/Martin Lab/rna_2018/fst/dna/",pop_gen_comp,"_popgen_dna_stats_corr_dxy.csv",sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  
+  fst_main <- read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",pop_gen_comp,"_fst",sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  fst_main <- fst_main[which(fst_main$WEIR_AND_COCKERHAM_FST >=0 & fst_main$WEIR_AND_COCKERHAM_FST <=1),]
+  lake <- strsplit(pop_gen_comp,split ="")[[1]][1]
+  taj_m_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",lake,"m_taj_d_20kb.txt.Tajima.D", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  taj_a_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",lake,"a_taj_d_20kb.txt.Tajima.D", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  taj_p_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",lake,"p_taj_d_20kb.txt.Tajima.D", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  taj_m_main <- na.omit(taj_m_main)
+  taj_a_main <- na.omit(taj_a_main)
+  taj_p_main <- na.omit(taj_p_main)
+  sweed_p1_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/SweeD_Report.",p1,"_pop_bottle_58_grid_500_sweeps.txt", sep = ""), header = FALSE, stringsAsFactors = FALSE)
+  sweed_p2_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/SweeD_Report.",p2,"_pop_bottle_58_grid_500_sweeps.txt", sep = ""), header = FALSE, stringsAsFactors = FALSE)
+  
+  cool_genes <- strsplit(cool_genes_comps$genes[i],";")[[1]]
+  for (cool_gene in cool_genes)
+  {
+    gene_chrom <- mrna[which(mrna$related_accession == cool_gene),]
+    sweed_p1 <- sweed_p1_main[which(sweed_p1_main$V1 ==gene_chrom$Chr[1]),]
+    sweed_p2 <- sweed_p2_main[which(sweed_p2_main$V1 ==gene_chrom$Chr[1]),]
+    fst <- fst_main[which(fst_main$CHROM == gene_chrom$Chr[1]),]
+    fixed <- fst[which(fst$WEIR_AND_COCKERHAM_FST == 1),]
+    smooth_fst <-   smooth.spline(fst$POS, fst$WEIR_AND_COCKERHAM_FST, spar = .2)
+    dxy <- dxy_main[which(dxy_main$scaffold == gene_chrom$Chr[1]),]
+    
+    smooth_dxy <-   smooth.spline(dxy$start, dxy$corr_dxy, spar = .2)
+    smooth_p1_pi <- smooth.spline(dxy$start, dxy[,14], spar = .2)
+    smooth_p2_pi <- smooth.spline(dxy$start, dxy[,16], spar = .2)
+    
+    tj_m <- taj_m_main[which(taj_m_main$CHROM == gene_chrom$Chr[1]),]
+    smooth_m <-   smooth.spline(tj_m$BIN_START, tj_m$TajimaD, spar = .1)
+    tj_p <- taj_p_main[which(taj_p_main$CHROM == gene_chrom$Chr[1]),]
+    smooth_p <-   smooth.spline(tj_p$BIN_START, tj_p$TajimaD, spar = .1)
+    tj_a <- taj_a_main[which(taj_a_main$CHROM == gene_chrom$Chr[1]),]
+    smooth_a <-   smooth.spline(tj_a$BIN_START, tj_a$TajimaD, spar = .1)
+    
+    
+    plot(fixed$POS, fixed$WEIR_AND_COCKERHAM_FST,ylim = c(0,1),
+         xlab = "", ylab = "fst", yaxt = 'n',xlim =c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)), main = paste(cool_p1, "vs", cool_p2,cool_gene, sep = " "))
+    axis(2,c(0,0.5,1))
+    lines(smooth_fst, lwd = 2, col = "black")
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    plot(dxy$start, dxy$corr_dxy,col = "white",
+         xlab = "", ylab = "dxy",xlim =c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))#, main = paste(cool_p1, "vs", cool_p2, sep = " "))
+    lines(smooth_dxy, lwd = 2, col = "grey")
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    plot(dxy$start, dxy[,14],col = "white",
+         xlab = "", ylab = "pi",xlim =c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))#, main = paste(cool_p1, "vs", cool_p2, sep = " "))
+    lines(smooth_p1_pi, lwd = 2, col = red)
+    lines(smooth_p2_pi, lwd = 2, col = blu)
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    
+    plot(tj_p$BIN_START, tj_p$TajimaD,ylab = "D",ylim = c(-2.5,2.5),xlab = "",
+         xlim = c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)),col = "white", yaxt = "n")
+    axis(2,c(-2,-1,0,1,2))
+    lines(smooth_m, lwd = 2, col = gre)
+    lines(smooth_p, lwd = 2, col = blu)
+    lines(smooth_a, lwd = 2, col = red)
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    
+    sweed_p1$mid <- sweed_p1$V2 + ((sweed_p1$V2[2]-sweed_p1$V2[1])/2)
+    sweed_p2$mid <- sweed_p2$V2 + ((sweed_p2$V2[2]-sweed_p2$V2[1])/2)
+    sweed_p1$norm_clr = (sweed_p1$V3-min(sweed_p1$V3))/(max(sweed_p1$V3)-min(sweed_p1$V3))
+    sweed_p2$norm_clr = (sweed_p2$V3-min(sweed_p2$V3))/(max(sweed_p2$V3)-min(sweed_p2$V3))
+    smooth_sweed_p1 <-   smooth.spline(sweed_p1$mid, sweed_p1$norm_clr, spar = 0.2)
+    smooth_sweed_p2 <-   smooth.spline(sweed_p2$mid, sweed_p2$norm_clr, spar = 0.2)
+    
+    plot(sweed_p1$mid, sweed_p1$norm_clr,xlab = "",ylab = "CLR",col = "white",xlim = c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))
+    lines(smooth_sweed_p1, lwd = 2, col = red)
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    rect(gene_chrom$Start[1], -1, gene_chrom$End[1], 1, border = NA, col = col2alpha(blu,0.2))
+    plot(sweed_p2$mid, sweed_p2$norm_clr,xlab = "",ylab = "CLR",col = "white",xlim = c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))
+    lines(smooth_sweed_p2, lwd = 2, col = blu)
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    rect(gene_chrom$Start[1], -1, gene_chrom$End[1], 1, border = NA, col = col2alpha(blu,0.2))
+    
+  }
+  
+}
+dev.off()
+
+cool_genes_comps <- read.table("D:/test_plots/pmp_fst_dxy.txt", header = TRUE, stringsAsFactors = FALSE)
+i <- 1
+pdf(paste("D:/test_plots/tests_",cool_genes_comps$interesting_because[i],".pdf",sep = ""),width=7,height=5)
+for (i in c(1:nrow(cool_genes_comps)))
+{
+  cool_stage <- cool_genes_comps$stage[i]
+  pop_gen_comp <- cool_genes_comps$pops[i]
+  cool_p1 <- cool_genes_comps$p1[i]
+  cool_p2 <- cool_genes_comps$p2[i]
+  cool_h <- cool_genes_comps$h[i]
+  cool_cols <- c(gre,blu,grb)
+  
+  p1_inds <- master[which(master$f1 == cool_p1 & master$stage == cool_stage),]
+  p2_inds <- master[which(master$f1 == cool_p2 & master$stage == cool_stage),]
+  hy_inds <- master[which(master$f1 == cool_h & master$stage == cool_stage),]
+  p1_inds <- p1_inds$sample
+  p2_inds <- p2_inds$sample
+  hy_inds <- hy_inds$sample
+  
+  p1 <- strsplit(pop_gen_comp, "x")[[1]][1]
+  p2 <- strsplit(pop_gen_comp, "x")[[1]][2]
+  dxy_main <- read.csv(paste("D:/Martin Lab/rna_2018/fst/dna/",pop_gen_comp,"_popgen_dna_stats_corr_dxy.csv",sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  
+  fst_main <- read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",pop_gen_comp,"_fst",sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  fst_main <- fst_main[which(fst_main$WEIR_AND_COCKERHAM_FST >=0 & fst_main$WEIR_AND_COCKERHAM_FST <=1),]
+  lake <- strsplit(pop_gen_comp,split ="")[[1]][1]
+  taj_m_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",lake,"m_taj_d_20kb.txt.Tajima.D", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  taj_a_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",lake,"a_taj_d_20kb.txt.Tajima.D", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  taj_p_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",lake,"p_taj_d_20kb.txt.Tajima.D", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  taj_m_main <- na.omit(taj_m_main)
+  taj_a_main <- na.omit(taj_a_main)
+  taj_p_main <- na.omit(taj_p_main)
+  sweed_p1_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/SweeD_Report.",p1,"_pop_bottle_58_grid_500_sweeps.txt", sep = ""), header = FALSE, stringsAsFactors = FALSE)
+  sweed_p2_main <-    read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/SweeD_Report.",p2,"_pop_bottle_58_grid_500_sweeps.txt", sep = ""), header = FALSE, stringsAsFactors = FALSE)
+  
+  cool_genes <- strsplit(cool_genes_comps$genes[i],";")[[1]]
+  for (cool_gene in cool_genes)
+  {
+    gene_chrom <- mrna[which(mrna$related_accession == cool_gene),]
+    sweed_p1 <- sweed_p1_main[which(sweed_p1_main$V1 ==gene_chrom$Chr[1]),]
+    sweed_p2 <- sweed_p2_main[which(sweed_p2_main$V1 ==gene_chrom$Chr[1]),]
+    fst <- fst_main[which(fst_main$CHROM == gene_chrom$Chr[1]),]
+    fixed <- fst[which(fst$WEIR_AND_COCKERHAM_FST == 1),]
+    smooth_fst <-   smooth.spline(fst$POS, fst$WEIR_AND_COCKERHAM_FST, spar = .2)
+    dxy <- dxy_main[which(dxy_main$scaffold == gene_chrom$Chr[1]),]
+    
+    smooth_dxy <-   smooth.spline(dxy$start, dxy$corr_dxy, spar = .2)
+    smooth_p1_pi <- smooth.spline(dxy$start, dxy[,14], spar = .2)
+    smooth_p2_pi <- smooth.spline(dxy$start, dxy[,16], spar = .2)
+    
+    tj_m <- taj_m_main[which(taj_m_main$CHROM == gene_chrom$Chr[1]),]
+    smooth_m <-   smooth.spline(tj_m$BIN_START, tj_m$TajimaD, spar = .1)
+    tj_p <- taj_p_main[which(taj_p_main$CHROM == gene_chrom$Chr[1]),]
+    smooth_p <-   smooth.spline(tj_p$BIN_START, tj_p$TajimaD, spar = .1)
+    tj_a <- taj_a_main[which(taj_a_main$CHROM == gene_chrom$Chr[1]),]
+    smooth_a <-   smooth.spline(tj_a$BIN_START, tj_a$TajimaD, spar = .1)
+    
+    
+    plot(fixed$POS, fixed$WEIR_AND_COCKERHAM_FST,ylim = c(0,1),
+         xlab = "", ylab = "fst", yaxt = 'n',xlim =c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)), main = paste(cool_p1, "vs", cool_p2,cool_gene, sep = " "))
+    axis(2,c(0,0.5,1))
+    lines(smooth_fst, lwd = 2, col = "black")
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    plot(dxy$start, dxy$corr_dxy,col = "white",
+         xlab = "", ylab = "dxy",xlim =c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))#, main = paste(cool_p1, "vs", cool_p2, sep = " "))
+    lines(smooth_dxy, lwd = 2, col = "grey")
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    plot(dxy$start, dxy[,14],col = "white",
+         xlab = "", ylab = "pi",xlim =c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))#, main = paste(cool_p1, "vs", cool_p2, sep = " "))
+    lines(smooth_p1_pi, lwd = 2, col = red)
+    lines(smooth_p2_pi, lwd = 2, col = blu)
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    
+    plot(tj_p$BIN_START, tj_p$TajimaD,ylab = "D",ylim = c(-2.5,2.5),xlab = "",
+         xlim = c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)),col = "white", yaxt = "n")
+    axis(2,c(-2,-1,0,1,2))
+    lines(smooth_m, lwd = 2, col = gre)
+    lines(smooth_p, lwd = 2, col = blu)
+    lines(smooth_a, lwd = 2, col = red)
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    
+    sweed_p1$mid <- sweed_p1$V2 + ((sweed_p1$V2[2]-sweed_p1$V2[1])/2)
+    sweed_p2$mid <- sweed_p2$V2 + ((sweed_p2$V2[2]-sweed_p2$V2[1])/2)
+    sweed_p1$norm_clr = (sweed_p1$V3-min(sweed_p1$V3))/(max(sweed_p1$V3)-min(sweed_p1$V3))
+    sweed_p2$norm_clr = (sweed_p2$V3-min(sweed_p2$V3))/(max(sweed_p2$V3)-min(sweed_p2$V3))
+    smooth_sweed_p1 <-   smooth.spline(sweed_p1$mid, sweed_p1$norm_clr, spar = 0.2)
+    smooth_sweed_p2 <-   smooth.spline(sweed_p2$mid, sweed_p2$norm_clr, spar = 0.2)
+    
+    plot(sweed_p1$mid, sweed_p1$norm_clr,xlab = "",ylab = "CLR",col = "white",xlim = c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))
+    lines(smooth_sweed_p1, lwd = 2, col = red)
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    rect(gene_chrom$Start[1], -1, gene_chrom$End[1], 1, border = NA, col = col2alpha(blu,0.2))
+    plot(sweed_p2$mid, sweed_p2$norm_clr,xlab = "",ylab = "CLR",col = "white",xlim = c((gene_chrom$Start[1] -500000),(gene_chrom$End[1] +500000)))
+    lines(smooth_sweed_p2, lwd = 2, col = blu)
+    rect(gene_chrom$Start[1], -1000, gene_chrom$End[1], 1000, border = NA, col = col2alpha(blu,0.2))
+    rect(gene_chrom$Start[1], -1, gene_chrom$End[1], 1, border = NA, col = col2alpha(blu,0.2))
+    
   }
   
 }
