@@ -2866,6 +2866,23 @@ plt + theme_classic() +scale_color_manual(values = cols) +labs(x = "\ngenome-wid
 ############ GO analyses ######################
 ###############################################
 
+#overlap GO genes with candidates
+go_genes <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/skeletal_system_morphogenesis_GO_0048705.txt", stringsAsFactors = FALSE, header = FALSE, sep = "\t")
+go_genes <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/cranial_skeletal_system_development_GO_1904888.txt", stringsAsFactors = FALSE, header = FALSE, sep = "\t")
+go_genes <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/digestive_tract_development_GO_0048565.txt", stringsAsFactors = FALSE, header = FALSE, sep = "\t")
+go_genes <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/digestive_tract_morphogenesis_GO_0048557.txt", stringsAsFactors = FALSE, header = FALSE, sep = "\t")
+go_genes <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/odontogenesis_GO_0042476.txt", stringsAsFactors = FALSE, header = FALSE, sep = "\t")
+
+ai_fst_dxy_table <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/ai_fst_dxy_searched_genes.txt", stringsAsFactors = FALSE, header = TRUE, sep = "\t")
+pmp_me_table <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/pmp_me_all_searched_genes.txt", stringsAsFactors = FALSE, header = TRUE, sep = "\t")
+
+head(go_genes)
+go_genes <- tolower(go_genes$V1)
+intersect(ai_fst_dxy_table$searched_name,go_genes)
+intersect(pmp_me_table$searched_name,go_genes)
+
+
+
 # shinygo http://bioinformatics.sdstate.edu/go/
 library(pals)
 library(RColorBrewer)
