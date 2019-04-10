@@ -414,12 +414,12 @@ cmxcp_fixed <- unique(cmxcp_fixed$related_accession)
 omxop_fixed <- unique(omxop_fixed$related_accession)
 
 #load genes showing selection sweed
-ca_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/ca_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
-cm_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/cm_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
-cp_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/cp_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
-oa_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/oa_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
-om_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/om_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
-op_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/op_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
+ca_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/ca_pop_bottle_58_sweeps_90_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
+cm_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/cm_pop_bottle_58_sweeps_90_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
+cp_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/cp_pop_bottle_58_sweeps_90_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
+oa_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/oa_pop_bottle_58_sweeps_90_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
+om_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/om_pop_bottle_58_sweeps_90_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
+op_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/op_pop_bottle_58_sweeps_90_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
 ca_sweed <- unique(ca_sweed$related_accession)
 cm_sweed <- unique(cm_sweed$related_accession)
 cp_sweed <- unique(cp_sweed$related_accession)
@@ -489,6 +489,14 @@ ai_fst_dxy <- unique(c(intersect(oaxom_8_ai ,intersect(oaxom_dxy,oaxom_fixed)),
                 intersect(cmxcp_8_ai ,intersect(cmxcp_dxy,cmxcp_fixed)),
                 intersect(omxop_48_ai,intersect(omxop_dxy,omxop_fixed)),
                 intersect(omxop_8_ai ,intersect(omxop_dxy,omxop_fixed))))
+ai_fst_dxy_sweed <- unique(c(intersect(intersect(oaxom_8_ai ,intersect(oaxom_dxy,oaxom_fixed)),om_taj),
+                             intersect(intersect(caxcp_8_ai ,intersect(caxcp_dxy,caxcp_fixed)),cp_taj),
+                             intersect(intersect(oaxop_48_ai,intersect(oaxop_dxy,oaxop_fixed)),op_taj),
+                             intersect(intersect(oaxop_8_ai ,intersect(oaxop_dxy,oaxop_fixed)),op_taj),
+                             intersect(intersect(cmxcp_48_ai,intersect(cmxcp_dxy,cmxcp_fixed)),cmxcp_taj),
+                             intersect(intersect(cmxcp_8_ai ,intersect(cmxcp_dxy,cmxcp_fixed)),cmxcp_taj),
+                             intersect(intersect(omxop_48_ai,intersect(omxop_dxy,omxop_fixed)),omxop_taj),
+                             intersect(intersect(omxop_8_ai ,intersect(omxop_dxy,omxop_fixed)),omxop_taj)))
 xm_to_gene(intersect(oaxom_8_ai ,intersect(oaxom_dxy,oaxom_fixed)))
 xm_to_gene(intersect(caxcp_8_ai ,intersect(caxcp_dxy,caxcp_fixed)))
 xm_to_gene(intersect(oaxop_48_ai,intersect(oaxop_dxy,oaxop_fixed)))
@@ -531,19 +539,24 @@ intersect(intersect(pmp_c_8 ,cmxcp_8_ME),intersect(pmp_o_8 ,opxom_8_ME))
 intersect(intersect(pmp_c_48 ,cmxcp_48_ME),intersect(pmp_o_48 ,opxom_48_ME))
 
 # pmp ME fst_dxy
-pmp_me_fst_dxy <- c(intersect(intersect(pmp_c_8 ,cmxcp_8_ME) ,intersect(cmxcp_dxy,cmxcp_fixed)), 
-                intersect(intersect(pmp_o_8 ,opxom_8_ME) ,intersect(omxop_dxy,omxop_fixed)), 
-                intersect(intersect(pmp_c_48,cmxcp_48_ME),intersect(cmxcp_dxy,cmxcp_fixed)), 
-                intersect(intersect(pmp_o_48,opxom_48_ME),intersect(omxop_dxy,omxop_fixed)))
+pmp_me_fst_dxy <- unique(c(intersect(intersect(pmp_c_8 ,cmxcp_8_ME) ,intersect(cmxcp_dxy,cmxcp_fixed)), 
+                           intersect(intersect(pmp_o_8 ,opxom_8_ME) ,intersect(omxop_dxy,omxop_fixed)), 
+                           intersect(intersect(pmp_c_48,cmxcp_48_ME),intersect(cmxcp_dxy,cmxcp_fixed)), 
+                           intersect(intersect(pmp_o_48,opxom_48_ME),intersect(omxop_dxy,omxop_fixed))))
+pmp_me_fst_dxy_sweed <- unique(c(intersect(intersect(intersect(pmp_c_8 ,cmxcp_8_ME) ,intersect(cmxcp_dxy,cmxcp_fixed)),cmxcp_taj), 
+                                 intersect(intersect(intersect(pmp_o_8 ,opxom_8_ME) ,intersect(omxop_dxy,omxop_fixed)),omxop_taj), 
+                                 intersect(intersect(intersect(pmp_c_48,cmxcp_48_ME),intersect(cmxcp_dxy,cmxcp_fixed)),cmxcp_taj), 
+                                 intersect(intersect(intersect(pmp_o_48,opxom_48_ME),intersect(omxop_dxy,omxop_fixed)),omxop_taj)))
 intersect(intersect(pmp_c_8 ,cmxcp_8_ME) ,intersect(cmxcp_dxy,cmxcp_fixed)) 
 intersect(intersect(pmp_o_8 ,opxom_8_ME) ,intersect(omxop_dxy,omxop_fixed)) 
 intersect(intersect(pmp_c_48,cmxcp_48_ME),intersect(cmxcp_dxy,cmxcp_fixed)) 
 intersect(intersect(pmp_o_48,opxom_48_ME),intersect(omxop_dxy,omxop_fixed)) 
 # pmp ME fst_dxy_gemma
 pmp_fst_dxy_gemma <- unique(c(intersect(gem_cans,intersect(intersect(pmp_c_8 ,cmxcp_8_ME) ,intersect(cmxcp_dxy,cmxcp_fixed))), 
-                intersect(gem_cans,intersect(intersect(pmp_o_8 ,opxom_8_ME) ,intersect(omxop_dxy,omxop_fixed))), 
-                intersect(gem_cans,intersect(intersect(pmp_c_48,cmxcp_48_ME),intersect(cmxcp_dxy,cmxcp_fixed))), 
-                intersect(gem_cans,intersect(intersect(pmp_o_48,opxom_48_ME),intersect(omxop_dxy,omxop_fixed)))))
+                              intersect(gem_cans,intersect(intersect(pmp_o_8 ,opxom_8_ME) ,intersect(omxop_dxy,omxop_fixed))), 
+                              intersect(gem_cans,intersect(intersect(pmp_c_48,cmxcp_48_ME),intersect(cmxcp_dxy,cmxcp_fixed))), 
+                              intersect(gem_cans,intersect(intersect(pmp_o_48,opxom_48_ME),intersect(omxop_dxy,omxop_fixed)))))
+
 intersect(gem_cans,intersect(intersect(pmp_c_8 ,cmxcp_8_ME) ,intersect(cmxcp_dxy,cmxcp_fixed))) 
 intersect(gem_cans,intersect(intersect(pmp_o_8 ,opxom_8_ME) ,intersect(omxop_dxy,omxop_fixed))) 
 intersect(gem_cans,intersect(intersect(pmp_c_48,cmxcp_48_ME),intersect(cmxcp_dxy,cmxcp_fixed))) 
