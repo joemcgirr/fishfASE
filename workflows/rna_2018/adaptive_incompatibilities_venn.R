@@ -414,12 +414,12 @@ cmxcp_fixed <- unique(cmxcp_fixed$related_accession)
 omxop_fixed <- unique(omxop_fixed$related_accession)
 
 #load genes showing selection sweed
-ca_sweed <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/ca_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
-cm_sweed <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/cm_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
-cp_sweed <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/cp_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
-oa_sweed <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/oa_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
-om_sweed <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/om_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
-op_sweed <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/op_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
+ca_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/ca_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
+cm_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/cm_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
+cp_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/cp_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
+oa_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/oa_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
+om_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/om_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
+op_sweed <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/op_pop_bottle_58_sweeps_95_genes.txt", header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
 ca_sweed <- unique(ca_sweed$related_accession)
 cm_sweed <- unique(cm_sweed$related_accession)
 cp_sweed <- unique(cp_sweed$related_accession)
@@ -464,6 +464,10 @@ oaxom_dxy <- unique(oaxom_dxy$related_accession)
 oaxop_dxy <- unique(oaxop_dxy$related_accession)
 cmxcp_dxy <- unique(cmxcp_dxy$related_accession)
 omxop_dxy <- unique(omxop_dxy$related_accession)
+
+
+
+
 
 
 # number of genes filtered through pipline
@@ -523,6 +527,9 @@ intersect(pmp_c_8 ,cmxcp_8_ME)
 intersect(pmp_o_8 ,opxom_8_ME)
 intersect(pmp_c_48,cmxcp_48_ME)
 intersect(pmp_o_48,opxom_48_ME)
+intersect(intersect(pmp_c_8 ,cmxcp_8_ME),intersect(pmp_o_8 ,opxom_8_ME))
+intersect(intersect(pmp_c_48 ,cmxcp_48_ME),intersect(pmp_o_48 ,opxom_48_ME))
+
 # pmp ME fst_dxy
 pmp_me_fst_dxy <- c(intersect(intersect(pmp_c_8 ,cmxcp_8_ME) ,intersect(cmxcp_dxy,cmxcp_fixed)), 
                 intersect(intersect(pmp_o_8 ,opxom_8_ME) ,intersect(omxop_dxy,omxop_fixed)), 
@@ -543,7 +550,7 @@ intersect(gem_cans,intersect(intersect(pmp_c_48,cmxcp_48_ME),intersect(cmxcp_dxy
 intersect(gem_cans,intersect(intersect(pmp_o_48,opxom_48_ME),intersect(omxop_dxy,omxop_fixed))) 
 
 out_table <- mrna[mrna$related_accession %in% pmp_me_fst_dxy, ]
-write.table(out_table,"C:/Users/jmcgirr/Documents/all_2018_samples/GO/pmp_me_fst_dxy_genes.txt", row.names = FALSE, quote = FALSE, sep = "\t")
+#write.table(out_table,"C:/Users/jmcgirr/Documents/all_2018_samples/GO/pmp_me_fst_dxy_genes.txt", row.names = FALSE, quote = FALSE, sep = "\t")
 
 
 "XM_015398227.1" %in% intersect(oaxom_8_ai ,intersect(oaxom_dxy,oaxom_fixed))
@@ -730,7 +737,10 @@ venn(list(pmp_c_48=pmp_c_48,cmxcp_48_ME=cmxcp_48_ME),
 length(unique(c(intersect(pmp_o_8,opxom_8_ME),intersect(pmp_c_8,cmxcp_8_ME),intersect(pmp_o_48,opxom_48_ME),
                 intersect(pmp_c_48,cmxcp_48_ME))))
 #tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/parallel_mse_pie.tiff", width = 4, height = 4, units = 'in', res = 1000)
-pie(c(0.9626866,0.0373134), labels = c("",""), col = c("#B2C4D2",blu))
+pie(c(0.9626866,0.0373134), labels = c("",""), col = c(grb,"#BC1F8A"))
+#dev.off()
+#tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/parallel_pie.tiff", width = 4, height = 4, units = 'in', res = 1000)
+pie(c(43/1249,45/1249,1161/1249), labels = c("",""), col = c(grb,"#BC1F8A",yel))
 #dev.off()
 
 #####
@@ -1211,8 +1221,13 @@ for (i in c(1:12))
   
 }
 
+#png("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/de_me_venns/ap_both_de_me.png", width = 5, height = 5, units = 'in', res = 500,bg = "transparent")
 
-
+VennDiag <- euler(c("A" = 84, "B" = 72, "A&B" = 3), counts=TRUE)
+plt <- plot(VennDiag, alpha=1, lty = 1, col = "black",counts = TRUE,quantities = FALSE,
+            fill=c("#BC1F8A","#BC1F8A"), labels = c("",""))#, main = comp_names[i])
+plt
+#dev.off()
 
 
 ###############################################################################################

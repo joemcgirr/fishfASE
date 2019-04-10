@@ -50,6 +50,7 @@ whi <- "#ffffff"
 lir <- "#F14CC1"
 
 
+
 #####
 ###############################################################################################
 ###############################################################################################
@@ -3030,14 +3031,13 @@ kelly()
 ###############################################
 ############ correct dxy ######################
 ###############################################
-crosses <- c("caxcm","caxcp","oaxom", "oaxop", "cmxcp", "opxom")
-
+crosses <- c("caxcm","caxcp","oaxom", "oaxop", "cmxcp", "opxom","axm","axp","mxp")
+crosses <- c("axm","axp","mxp")
 i <- 1
 for (i in c(1:length(crosses)))
 {
 Bmbodxy <- read.csv(paste("D:/Martin Lab/rna_2018/fst/dna/",crosses[i],"_popgen_dna_stats.csv",sep=""), header = TRUE,stringsAsFactors = FALSE)
 head(Bmbodxy)
-
 #correct avg dxy in a window given that it should be a weighted average since we dont factor in the non-variant sites where dxy is 0
 
 Bmbodxy$total_length<-(Bmbodxy$end-Bmbodxy$start)

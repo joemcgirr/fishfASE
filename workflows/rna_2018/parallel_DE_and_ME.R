@@ -375,24 +375,24 @@ for (i in c(1:4))
   nrow(opp_dir_m_dn)
   intersect(am_dn$related_accession, ap_dn$related_accession)
   
-  #tiff(paste("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/parallel_",comp_names[i],".tiff", sep = ""), width = 4, height = 4, units = 'in', res = 1000)
-  #VennDiag <- euler(c("A" = ai, "B" = cans, "A&B" = bo), counts=TRUE)
-  #plt <- plot(VennDiag, alpha=0.5, lty = 1, col = "black",counts = TRUE, quantities = list(fontsize = 20),
-  #            fill=c(gre,blu), labels = c("",""))#, main = comp_names[i])
-  #print(plt)
-  #dev.off()
+  tiff(paste("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/parallel_",comp_names[i],".tiff", sep = ""), width = 4, height = 4, units = 'in', res = 1000)
+  VennDiag <- euler(c("A" = ai, "B" = cans, "A&B" = bo), counts=TRUE)
+  plt <- plot(VennDiag, alpha=1, lty = 1, col = "black",counts = TRUE, quantities = list(fontsize = 20, col = "white"),
+              fill=c(gre,blu), labels = c("",""))#, main = comp_names[i])
+  print(plt)
+  dev.off()
   bars <- c(nrow(same_dir_up)+nrow(same_dir_dn),nrow(opp_dir_m_up)+nrow(opp_dir_m_dn))
   #png(paste("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/parallel_bars_",comp_names[i],".png", sep = ""), width = 4, height = 4, units = 'in', res = 1000)
   
-  barplot(bars,names.arg =c("same","opposite"), col = "lightgrey", 
-          ylim = c(0,max(bars)+(max(bars)*0.1)),cex.axis = 1.5,cex.names = 1.5)
+  #barplot(bars,names.arg =c("same","opposite"), col = "lightgrey", 
+  #        ylim = c(0,max(bars)+(max(bars)*0.1)),cex.axis = 1.5,cex.names = 1.5)
   #dev.off()
   same_dirs <- c(same_dirs,same_dir_up$related_accession,same_dir_dn$related_accession)
   opp_dirs <- c(opp_dirs, opp_dir_m_up$related_accession,opp_dir_m_dn$related_accession)
   parallel_mp <- rbind(same_dir_up, same_dir_dn)
   parallel_mp$name.x <- NULL
   parallel_mp$name.y <- NULL
-  write.table(parallel_mp,paste("C:/Users/jmcgirr/Documents/all_2018_samples/parallel/parallel_same_dir_",comp_names[i],".csv",sep = ""), sep = ",",quote = FALSE, row.names = FALSE)
+  #write.table(parallel_mp,paste("C:/Users/jmcgirr/Documents/all_2018_samples/parallel/parallel_same_dir_",comp_names[i],".csv",sep = ""), sep = ",",quote = FALSE, row.names = FALSE)
   
 }
 
@@ -402,6 +402,37 @@ length(unique(opp_dirs))
 #tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/parallel_pie.tiff", width = 4, height = 4, units = 'in', res = 1000)
 pie(c(0.9655725,0.0344275), labels = c("",""), col = c("#B2C4D2",lir))
 #dev.off()
+
+
+# generic read counts for parallel expression
+tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/parallel_bars.tiff", width = 2.8, height = 2.8, units = 'in', res = 1000)
+x <- c(10,30,30)
+par(mfrow=c(2,2))
+par(mai=c(0.2,0.4,0.2,0))
+barplot(x, ylab = "", col = c(red,gre,blu), yaxt = "n")
+abline(v=0.06, lwd = 1.5)
+title(ylab="read counts", line=0.5, cex.lab=1)
+par(mai=c(0.2,0.2,0.2,0.2))
+x <- c(20,10,30)
+par(mai=c(0.2,0.4,0.2,0))
+barplot(x, ylab = "", col = c(red,gre,blu), yaxt = "n")
+abline(v=0.06, lwd = 1.5)
+par(mai=c(0.4,0.4,0,0))
+x <- c(30,10,10)
+par(mai=c(0.2,0.4,0.2,0))
+barplot(x, ylab = "", col = c(red,gre,blu), yaxt = "n")
+abline(v=0.06, lwd = 1.5)
+title(ylab="read counts", line=0.5, cex.lab=1)
+par(mai=c(0.4,0.2,0,0.2))
+x <- c(20,30,10)
+par(mai=c(0.2,0.4,0.2,0))
+barplot(x, ylab = "", col = c(red,gre,blu), yaxt = "n")
+abline(v=0.06, lwd = 1.5)
+dev.off()
+
+
+
+
 
 pmp_c_48 <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/parallel/parallel_same_dir_mp_crp_48.csv", header = TRUE, stringsAsFactors = FALSE)
 pmp_c_8 <-  read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/parallel/parallel_same_dir_mp_crp_8.csv", header = TRUE, stringsAsFactors = FALSE)
@@ -464,4 +495,6 @@ all_ai <- c(oaxom_8_ai,
             omxop_8_ai )
 
 intersect(all_pmp,all_ai)
+
+
 
