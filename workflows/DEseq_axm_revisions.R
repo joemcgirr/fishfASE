@@ -2163,8 +2163,179 @@ write.table(final_samples, "D:/Martin Lab/RNA-seq/axm/post_reviews/table_maker_t
 
 
 #####
+########################################
+########################################
+##### danio genes overlap ##############
+########################################
+library(reshape2)
+a <- read.delim("C:/Users/jmcgirr/Desktop/Danio_rerio.GRCz11.96.gtf", header = FALSE, sep = ";")
+head(a)
+b <- as.data.frame(a$V3)
+b$biotype <- a$V5
+b <- cbind(b, colsplit(b$biotype, "gene_biotype ", c("j", "type")))
+b <- cbind(b, colsplit(b[,1], "gene_name ", c("j2", "gene")))
+head(b)
+b <- b[which(b$type == "protein_coding"),]
+c <- unique(b$gene)
+length(c)
+zeb <- tolower(c)
+pup <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/ase_data/genes.saf", header = TRUE, stringsAsFactors = FALSE)
+head(pup)
+nrow(pup)
+pup<- cbind(pup, colsplit(pup$GeneID, ";", c("j2", "gene")))
+pup <- tolower(pup$gene)
+length(intersect(pup,zeb))
 
 
+
+#####
+########################################
+########################################
+##### MBASED ASE #######################
+########################################
+
+## all h no p ase
+##h_jaw_ase 
+#ase_files<- c("axmJ1_mbased_ase_unphased.txt","axmJ4_mbased_ase_unphased.txt","axmJ5_mbased_ase_unphased.txt","axmJ6_mbased_ase_unphased.txt")
+#ase <- read.table(paste("D:/Martin Lab/RNA-seq/axm/plosOne/",ase_files[1], sep = ""), header = TRUE, stringsAsFactors = FALSE)
+#sig <- ase[which(ase$pValueASE <= 0.05),]
+#sig_ase <-sig$geneID
+#for (i in c(2:length(ase_files)))
+#{
+#ase <- read.table(paste("D:/Martin Lab/RNA-seq/axm/plosOne/",ase_files[i], sep = ""), header = TRUE, stringsAsFactors = FALSE)
+#sig <- ase[which(ase$pValueASE <= 0.05),]
+#sig_ase <-intersect(sig_ase, sig$geneID) 
+#
+#}
+##p_jaw_ase 
+#ase_files<- c("CPAJ1_mbased_ase_unphased.txt","CPAJ2_mbased_ase_unphased.txt","CPAJ3_mbased_ase_unphased.txt","CPMJ1_mbased_ase_unphased.txt","CPMJ2_mbased_ase_unphased.txt","CPMJ3_mbased_ase_unphased.txt","LLAJ1_mbased_ase_unphased.txt","LLAJ2_mbased_ase_unphased.txt","LLAJ3_mbased_ase_unphased.txt","LLMJ1_mbased_ase_unphased.txt","LLMJ2_mbased_ase_unphased.txt","LLMJ3_mbased_ase_unphased.txt")
+#sig_ase_p <-c()
+#for (ase_file in ase_files)
+#{
+#  ase <- read.table(paste("D:/Martin Lab/RNA-seq/axm/plosOne/",ase_file, sep = ""), header = TRUE, stringsAsFactors = FALSE)
+#  sig <- ase[which(ase$pValueASE <= 0.05),]
+#  sig_ase_p <-c(sig_ase_p,ase$geneID) 
+#  
+#}
+#
+#length(setdiff(sig_ase, sig_ase_p))
+#
+##h_emb2_ase 
+#ase_files<- c("OUE1_mbased_ase_unphased.txt","OUE3_mbased_ase_unphased.txt","OUE4_mbased_ase_unphased.txt")
+#ase <- read.table(paste("D:/Martin Lab/RNA-seq/axm/plosOne/",ase_files[1], sep = ""), header = TRUE, stringsAsFactors = FALSE)
+#sig <- ase[which(ase$pValueASE <= 0.05),]
+#sig_ase <-sig$geneID
+#for (i in c(2:length(ase_files)))
+#{
+#  ase <- read.table(paste("D:/Martin Lab/RNA-seq/axm/plosOne/",ase_files[i], sep = ""), header = TRUE, stringsAsFactors = FALSE)
+#  sig <- ase[which(ase$pValueASE <= 0.05),]
+#  sig_ase <-intersect(sig_ase, sig$geneID) 
+#  
+#}
+##p_emb_ase  
+##ase_files<- c("CPAE1_mbased_ase_unphased.txt","CPAE2_mbased_ase_unphased.txt","CPAE3_mbased_ase_unphased.txt","CPME1_mbased_ase_unphased.txt","CPME2_mbased_ase_unphased.txt","CPME3_mbased_ase_unphased.txt","LLAE1_mbased_ase_unphased.txt","LLAE2_mbased_ase_unphased.txt","LLAE3_mbased_ase_unphased.txt","LLME1_mbased_ase_unphased.txt","LLME2_mbased_ase_unphased.txt","LLME3_mbased_ase_unphased.txt")
+##p_emb2_ase 
+#ase_files<- c("CAE1_mbased_ase_unphased.txt","CAE2_mbased_ase_unphased.txt","CAE3_mbased_ase_unphased.txt","CME1_mbased_ase_unphased.txt","CME2_mbased_ase_unphased.txt","CME5_mbased_ase_unphased.txt","OAE2_mbased_ase_unphased.txt","OAE3_mbased_ase_unphased.txt","OAE4_mbased_ase_unphased.txt","OME1_mbased_ase_unphased.txt","OME2_mbased_ase_unphased.txt","OME3_mbased_ase_unphased.txt")
+#sig_ase_p <-c()
+#for (ase_file in ase_files)
+#{
+#  ase <- read.table(paste("D:/Martin Lab/RNA-seq/axm/plosOne/",ase_file, sep = ""), header = TRUE, stringsAsFactors = FALSE)
+#  sig <- ase[which(ase$pValueASE <= 0.05),]
+#  sig_ase_p <-c(sig_ase_p,ase$geneID) 
+#  
+#}
+#
+#length(setdiff(sig_ase, sig_ase_p))
+
+
+# all h no all p
+
+#h_jaw_ase 
+ase_files<- c("axmJ1_mbased_ase_unphased.txt","axmJ4_mbased_ase_unphased.txt","axmJ5_mbased_ase_unphased.txt","axmJ6_mbased_ase_unphased.txt")
+ase <- read.table(paste("D:/Martin Lab/RNA-seq/axm/plosOne/",ase_files[1], sep = ""), header = TRUE, stringsAsFactors = FALSE)
+ase <- cbind(ase, colsplit(ase$geneID, ":", c("gene", "other")))
+sig <- ase[which(ase$pValueASE <= 0.05),]
+sig_ase <-sig$gene
+for (i in c(2:length(ase_files)))
+{
+  ase <- read.table(paste("D:/Martin Lab/RNA-seq/axm/plosOne/",ase_files[i], sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  ase <- cbind(ase, colsplit(ase$geneID, ":", c("gene", "other")))
+  sig <- ase[which(ase$pValueASE <= 0.05),]
+  sig_ase <-intersect(sig_ase, sig$gene) 
+  
+}
+#p_jaw_ase 
+ase_files<- c("CPAJ1_mbased_ase_unphased.txt","CPAJ2_mbased_ase_unphased.txt","CPAJ3_mbased_ase_unphased.txt","CPMJ1_mbased_ase_unphased.txt","CPMJ2_mbased_ase_unphased.txt","CPMJ3_mbased_ase_unphased.txt","LLAJ1_mbased_ase_unphased.txt","LLAJ2_mbased_ase_unphased.txt","LLAJ3_mbased_ase_unphased.txt","LLMJ1_mbased_ase_unphased.txt","LLMJ2_mbased_ase_unphased.txt","LLMJ3_mbased_ase_unphased.txt")
+ase <- read.table(paste("D:/Martin Lab/RNA-seq/axm/plosOne/",ase_files[1], sep = ""), header = TRUE, stringsAsFactors = FALSE)
+ase <- cbind(ase, colsplit(ase$geneID, ":", c("gene", "other")))
+sig <- ase[which(ase$pValueASE <= 0.05),]
+sig_ase_p <-sig$gene
+for (i in c(2:length(ase_files)))
+{
+  ase <- read.table(paste("D:/Martin Lab/RNA-seq/axm/plosOne/",ase_files[i], sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  ase <- cbind(ase, colsplit(ase$geneID, ":", c("gene", "other")))
+  sig <- ase[which(ase$pValueASE <= 0.05),]
+  sig_ase_p <-intersect(sig_ase_p, sig$gene) 
+  
+}
+
+length(setdiff(sig_ase, sig_ase_p))
+
+#h_emb2_ase 
+ase_files<- c("OUE1_mbased_ase_unphased.txt","OUE3_mbased_ase_unphased.txt","OUE4_mbased_ase_unphased.txt")
+ase <- read.table(paste("D:/Martin Lab/RNA-seq/axm/plosOne/",ase_files[1], sep = ""), header = TRUE, stringsAsFactors = FALSE)
+ase <- cbind(ase, colsplit(ase$geneID, ":", c("gene", "other")))
+sig <- ase[which(ase$pValueASE <= 0.05),]
+sig_ase <-sig$gene
+for (i in c(2:length(ase_files)))
+{
+  ase <- read.table(paste("D:/Martin Lab/RNA-seq/axm/plosOne/",ase_files[i], sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  ase <- cbind(ase, colsplit(ase$geneID, ":", c("gene", "other")))
+  sig <- ase[which(ase$pValueASE <= 0.05),]
+  sig_ase <-intersect(sig_ase, sig$gene) 
+  
+}
+#p_emb_ase  
+#ase_files<- c("CPAE1_mbased_ase_unphased.txt","CPAE2_mbased_ase_unphased.txt","CPAE3_mbased_ase_unphased.txt","CPME1_mbased_ase_unphased.txt","CPME2_mbased_ase_unphased.txt","CPME3_mbased_ase_unphased.txt","LLAE1_mbased_ase_unphased.txt","LLAE2_mbased_ase_unphased.txt","LLAE3_mbased_ase_unphased.txt","LLME1_mbased_ase_unphased.txt","LLME2_mbased_ase_unphased.txt","LLME3_mbased_ase_unphased.txt")
+#p_emb2_ase 
+ase_files<- c("CAE1_mbased_ase_unphased.txt","CAE2_mbased_ase_unphased.txt","CAE3_mbased_ase_unphased.txt","CME1_mbased_ase_unphased.txt","CME2_mbased_ase_unphased.txt","CME5_mbased_ase_unphased.txt","OAE2_mbased_ase_unphased.txt","OAE3_mbased_ase_unphased.txt","OAE4_mbased_ase_unphased.txt","OME1_mbased_ase_unphased.txt","OME2_mbased_ase_unphased.txt","OME3_mbased_ase_unphased.txt")
+ase <- read.table(paste("D:/Martin Lab/RNA-seq/axm/plosOne/",ase_files[1], sep = ""), header = TRUE, stringsAsFactors = FALSE)
+ase <- cbind(ase, colsplit(ase$geneID, ":", c("gene", "other")))
+sig <- ase[which(ase$pValueASE <= 0.05),]
+sig_ase_p <-sig$gene
+for (i in c(2:length(ase_files)))
+{
+  ase <- read.table(paste("D:/Martin Lab/RNA-seq/axm/plosOne/",ase_files[i], sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  sig <- ase[which(ase$pValueASE <= 0.05),]
+  ase <- cbind(ase, colsplit(ase$geneID, ":", c("gene", "other")))
+  sig_ase_p <-intersect(sig_ase_p, sig$gene) 
+  
+}
+
+length(setdiff(sig_ase, sig_ase_p))
+
+mis <- read.csv("D:/Martin Lab/RNA-seq/axm/post_reviews/conditions/DE_(CRPA1_&_LILA_&_CRPM1_&_LILM)_vs_(LAxLM)_17dpf_genes.csv", header = TRUE, stringsAsFactors = FALSE)
+am <- read.csv("D:/Martin Lab/RNA-seq/axm/post_reviews/conditions/DE_(CRPA1)_vs_(LILA)_17dpf_genes.csv", header = TRUE, stringsAsFactors = FALSE)
+mis <- read.csv("D:/Martin Lab/RNA-seq/axm/post_reviews/conditions/DE_(OSPA_&_OSPM)_vs_(OAxOM)_8dpf_genes.csv", header = TRUE, stringsAsFactors = FALSE)
+am <- read.csv("D:/Martin Lab/RNA-seq/axm/post_reviews/conditions/DE_(OSPA)_vs_(OSPM)_8dpf_genes.csv", header = TRUE, stringsAsFactors = FALSE)
+
+am <- am[which(am$padj >0.05),]
+mis <- mis[which(mis$padj <0.05),]
+comp <- intersect(am$symbol,setdiff(sig_ase, sig_ase_p))
+comp_mis <- intersect(comp, mis$symbol)
+length(comp)
+length(comp_mis)
+
+inheritance_and_ase_8dpf  <- read.csv("D:/Martin Lab/RNA-seq/axm/post_reviews/inheritance_patterns/inheritance_and_ase_8.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+inheritance_and_ase_17dpf  <- read.csv("D:/Martin Lab/RNA-seq/axm/post_reviews/inheritance_patterns/inheritance_and_ase_17.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+comp <- inheritance_and_ase_17dpf[which(inheritance_and_ase_17dpf$ase_in_hybrids_not_parents == "yes" &
+                                        inheritance_and_ase_17dpf$padj_p1p2 > 0.05),]
+nrow(comp)
+comp_mis <- intersect(comp$symbol, mis$symbol)
+length(comp_mis)
+
+
+#####
 
 
 

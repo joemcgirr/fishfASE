@@ -23,7 +23,7 @@ head(param)
 param <- param[order(param$beta, decreasing = FALSE),]
 head(param)
 
-quantile(param$gamma,.95)
+quantile(param$gamma,.99)
 
 candidates_99 <- param[which(param$gamma >= 0.00175),]
 #candidates_95 <- param[which(param$gamma >= 0.00118),]
@@ -39,11 +39,11 @@ param$effect_size <- param$beta * param$gamma
 col.topo <- c("black","darkgrey")
 palette(col.topo)
 family <- as.factor(param$V1)
-png("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/gemma_pip.png", width = 6.7, height = 3.2, units = 'in', res = 1000)
+png("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/supp/gemma_pip.png", width = 9, height = 4, units = 'in', res = 1000)
 plot(param$x_ax, param$gamma, col = family, pch = 16, 
-     xaxt = 'n', ylab="", xlab = "", yaxt = "n", ylim = c(0,0.11))
+     xaxt = 'n', ylab="PIP", xlab = "scaffolds", yaxt = "n", ylim = c(0,0.11))
 axis(side=2, at=c(0,0.05,0.1), labels = TRUE)
-#abline(h=0.0016, lty = 2, col = red)
+abline(h=0.00175, lty = 2, col = red)
 dev.off()
 
 
@@ -59,6 +59,7 @@ length(setdiff(candidates_95_low$V4, candidates_95_up$V4))
 iters <- c(2:10)
 hyp1 <- read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/GEMMA/output_58/gemma_",trait_name,
                         "_1.hyp.txt",sep = ""), header=T, stringsAsFactors = F)
+png("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/supp/gemma_pve.png", width = 4, height = 4, units = 'in', res = 1000)
 plot(density(hyp1$pve), xlab="PVE", ylab="density", main=NA, lty = 1, lwd = 2, 
      col = blu, cex.axis = 1.5, cex.lab = 1.5, ylim = c(0,80))
 for(i in iters)
@@ -68,6 +69,8 @@ for(i in iters)
   lines(density(hyp$pve), col = blu)
   
 }
+dev.off()
+png("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/supp/gemma_pge.png", width = 4, height = 4, units = 'in', res = 1000)
 plot(density(hyp1$pge), xlab="PGE", ylab="density", main=NA, lty = 1, lwd = 2, col = blu, cex.axis = 1.5, cex.lab = 1.5)
 for(i in iters)
 {
@@ -76,6 +79,8 @@ for(i in iters)
   lines(density(hyp$pge), col = blu)
   
 }
+dev.off()
+png("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/supp/gemma_nsnp.png", width = 4, height = 4, units = 'in', res = 1000)
 plot(density(hyp1$n_gamma), xlab="n-SNP", ylab="density", main=NA, lty = 1, lwd = 2, col = blu, cex.axis = 1.5, cex.lab = 1.5)
 for(i in iters)
 {
@@ -84,6 +89,7 @@ for(i in iters)
   lines(density(hyp$n_gamma), col = blu)
   
 }
+dev.off()
 
 head(hyp)
 plot(density(hyp$pve), xlab="PVE", ylab="density", main=NA, lty = 1, lwd = 2, col = "blue4", cex.axis = 1.5, cex.lab = 1.5)
@@ -228,26 +234,41 @@ l <- l[which(l$V7 == "YES" & is.na(l$lowerjawlength)),]
 #write.table(l, "C:/Users/jmcgirr/Documents/all_2018_samples/GEMMA/lop/mar_2019/need_measures.txt", quote=FALSE, row.names = FALSE, sep = "\t")
 
 
-traits <- read.table("D:/Martin Lab/lots_of_pups_project/measures_matched_to_vcf.txt", header=T, stringsAsFactors = F, sep = "\t")
+traits <- read.table("D:/Martin Lab/lots_of_pups_project/measures_matched_to_vcf_nose_pigment_jaw.txt", header=T, stringsAsFactors = F, sep = "\t")
 nrow(traits)
 traits$log_std_len <- log(traits$standard_length)
 traits$log_low_jaw <- log(traits$lowerjawlength)
+traits$log_nose_length <- log((traits$nose_length +1))
+traits$log_nose_height <- log(traits$nose_height)
 low_jaw_lm <- lm(traits$log_low_jaw~traits$log_std_len)
+nose_length_lm  <- lm(traits$log_nose_length~traits$log_std_len)
+nose_height_lm  <- lm(traits$log_nose_height~traits$log_std_len)
 traits$resid_low_jaw <- data.frame(low_jaw_lm$residuals)[,1]
+traits[names(nose_length_lm$residuals),"resid_nose_length"]<-nose_length_lm$residuals
+traits[names(nose_height_lm$residuals),"resid_nose_height"]<-nose_height_lm$residuals
+
 head(traits)
 
-plot(traits$log_std_len, traits$log_low_jaw, col= c("red", "forestgreen", "blue","lightblue")[as.numeric(traits$speciesID)], 
+pdf("D:/Martin Lab/lots_of_pups_project/transformed_traits.pdf",width=6,height=6)
+plot(traits$log_std_len, traits$log_low_jaw, col= c("red", "forestgreen", "blue")[as.factor(traits$species)], 
      xlab = "log body length", ylab = "log lower jaw length", main = "Standardized Jaw Measurements", cex = 3, pch = 16)
 abline(low_jaw_lm)
+plot(traits$log_std_len, traits$log_nose_length, col= c("red", "forestgreen", "blue","lightblue")[as.factor(traits$species)], 
+     xlab = "log body length", ylab = "log nose length", main = "Standardized Nose Measurements", cex = 3, pch = 16)
+abline(nose_length_lm)
+plot(traits$log_std_len, traits$log_nose_height, col= c("red", "forestgreen", "blue","lightblue")[as.factor(traits$species)], 
+     xlab = "log body length", ylab = "log nose height", main = "Standardized Nose Measurements", cex = 3, pch = 16)
+abline(nose_height_lm)
+dev.off()
 
-#fam <- read.table("D:/Martin Lab/lots_of_pups_project/GEMMA/SSI.BAV.CUN.GEO.NCC.VEN.ART.Q20.MAF0.05.MAXMISS0.9.recode.vcf.plink.fam.original", header=FALSE, stringsAsFactors = F)
-#fam$vcf_label <- fam$V1
-#fam <- merge(fam, traits,all = TRUE, by = c("vcf_label"))
-#fam <- fam[c("vcf_label","V1","V3","V4","V5","V6","resid_low_jaw")]
+fam <- read.table("D:/Martin Lab/lots_of_pups_project/GEMMA/all_pupfish_SSI_filtered.Q20.MAF0.05.MAXMISS0.9.Carib_filtered.Q20.MAF0.05.MAXMISS0.5.fam.original", header=FALSE, stringsAsFactors = F)
+fam$vcf_label <- fam$V1
+fam <- merge(fam, traits,all = TRUE, by = c("vcf_label"))
+fam <- fam[c("vcf_label","V1","V3","V4","V5","V6","caudal_lightness_average","resid_low_jaw", "resid_nose_length", "resid_nose_height")]
+# -n 2 = pigment 3 = low jaw 4 = nose length 5 = nose height
+#write.table(fam,"D:/Martin Lab/lots_of_pups_project/GEMMA/all_pupfish_SSI_filtered.Q20.MAF0.05.MAXMISS0.9.Carib_filtered.Q20.MAF0.05.MAXMISS0.5.fam",col.names = FALSE, row.names = FALSE, quote = FALSE)
 
-#write.table(fam,"D:/Martin Lab/lots_of_pups_project/GEMMA/SSI.BAV.CUN.GEO.NCC.VEN.ART.Q20.MAF0.05.MAXMISS0.9.recode.vcf.plink.fam",col.names = FALSE, row.names = FALSE, quote = FALSE)
-
-
+traits[which(traits$log_nose_length < -4),]
 
 
 

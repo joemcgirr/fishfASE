@@ -395,9 +395,17 @@ setDT(gem)
 setkey(mrna_table)
 c <- foverlaps(gem, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHROM", "START", "END"),type="any", nomatch=0L)
 c <- as.data.frame(c)
-c <- c[order(c$PIP, decreasing = TRUE),]
-rownames(c) <- NULL
-gem_cans <- unique(c$related_accession)
+gem_cans_table <- c[order(c$PIP, decreasing = TRUE),]
+rownames(gem_cans_table) <- NULL
+gem_cans <- unique(gem_cans_table$related_accession)
+#gem <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GEMMA/output_58/mean_parameters_upjaw_all.txt", header = TRUE, stringsAsFactors = FALSE)
+#setDT(gem)
+#setkey(mrna_table)
+#c <- foverlaps(gem, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHROM", "START", "END"),type="any", nomatch=0L)
+#c <- as.data.frame(c)
+#gem_cans_table <- c[order(c$gamma, decreasing = TRUE),]
+#rownames(gem_cans_table) <- NULL
+#write.table(gem_cans_table,"C:/Users/jmcgirr/Documents/all_2018_samples/GEMMA/output_58/mean_parameters_upjaw_all_genes.txt", row.names = FALSE, quote = FALSE, sep = "\t")
 
 #load genes with fixed snps
 caxcm_fixed <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/caxcm_fixed_snp_genes.csv", header = TRUE, row.names = NULL,stringsAsFactors = FALSE)
@@ -469,7 +477,32 @@ omxop_dxy <- unique(omxop_dxy$related_accession)
 
 
 
-
+all_me_8 <- c(caxcm_8_ME,
+              cmxca_8_ME,
+              oaxom_8_ME,
+              omxoa_8_ME,
+              caxcp_8_ME,
+              oaxop_8_ME,
+              opxoa_8_ME,
+              cmxcp_8_ME,
+              opxom_8_ME)
+all_de_8 <- c(caxcm_8_DE,
+              oaxom_8_DE,
+              caxcp_8_DE,
+              oaxop_8_DE,
+              cmxcp_8_DE,
+              omxop_8_DE)
+feats <- read.delim("D:/Cyprinodon/GCF_000732505.1_C_variegatus-1.0_feature_table.txt", header = TRUE,stringsAsFactors = FALSE)
+feats <- feats[which(feats$feature == "gene" | feats$feature == "mRNA"),]
+all_me_8 <-  feats[feats$product_accession %in% all_me_8, ]
+length(unique(all_me_8$symbol))
+length(unique(all_me_8$product_accession))
+all_de_8 <-  feats[feats$product_accession %in% all_de_8, ]
+length(unique(all_de_8$symbol))
+length(unique(all_de_8$product_accession))
+all_pmp <- feats[feats$product_accession %in% pmp_genes, ]
+length(unique(all_pmp$symbol))
+length(unique(all_pmp$product_accession))
 # number of genes filtered through pipline
 # ai 
 all_ai <- unique(c(oaxom_8_ai, 
@@ -489,14 +522,14 @@ ai_fst_dxy <- unique(c(intersect(oaxom_8_ai ,intersect(oaxom_dxy,oaxom_fixed)),
                 intersect(cmxcp_8_ai ,intersect(cmxcp_dxy,cmxcp_fixed)),
                 intersect(omxop_48_ai,intersect(omxop_dxy,omxop_fixed)),
                 intersect(omxop_8_ai ,intersect(omxop_dxy,omxop_fixed))))
-ai_fst_dxy_sweed <- unique(c(intersect(intersect(oaxom_8_ai ,intersect(oaxom_dxy,oaxom_fixed)),om_taj),
-                             intersect(intersect(caxcp_8_ai ,intersect(caxcp_dxy,caxcp_fixed)),cp_taj),
-                             intersect(intersect(oaxop_48_ai,intersect(oaxop_dxy,oaxop_fixed)),op_taj),
-                             intersect(intersect(oaxop_8_ai ,intersect(oaxop_dxy,oaxop_fixed)),op_taj),
-                             intersect(intersect(cmxcp_48_ai,intersect(cmxcp_dxy,cmxcp_fixed)),cmxcp_taj),
-                             intersect(intersect(cmxcp_8_ai ,intersect(cmxcp_dxy,cmxcp_fixed)),cmxcp_taj),
-                             intersect(intersect(omxop_48_ai,intersect(omxop_dxy,omxop_fixed)),omxop_taj),
-                             intersect(intersect(omxop_8_ai ,intersect(omxop_dxy,omxop_fixed)),omxop_taj)))
+ai_fst_dxy_sweed <- unique(c(intersect(intersect(oaxom_8_ai ,intersect(oaxom_dxy,oaxom_fixed)),intersect(oaxom_sweed,oaxom_taj)),
+                             intersect(intersect(caxcp_8_ai ,intersect(caxcp_dxy,caxcp_fixed)),intersect(caxcp_sweed,caxcp_taj)),
+                             intersect(intersect(oaxop_48_ai,intersect(oaxop_dxy,oaxop_fixed)),intersect(oaxop_sweed,oaxop_taj)),
+                             intersect(intersect(oaxop_8_ai ,intersect(oaxop_dxy,oaxop_fixed)),intersect(oaxop_sweed,oaxop_taj)),
+                             intersect(intersect(cmxcp_48_ai,intersect(cmxcp_dxy,cmxcp_fixed)),intersect(cmxcp_sweed,cmxcp_taj)),
+                             intersect(intersect(cmxcp_8_ai ,intersect(cmxcp_dxy,cmxcp_fixed)),intersect(cmxcp_sweed,cmxcp_taj)),
+                             intersect(intersect(omxop_48_ai,intersect(omxop_dxy,omxop_fixed)),intersect(omxop_sweed,omxop_taj)),
+                             intersect(intersect(omxop_8_ai ,intersect(omxop_dxy,omxop_fixed)),intersect(omxop_sweed,omxop_taj))))
 xm_to_gene(intersect(oaxom_8_ai ,intersect(oaxom_dxy,oaxom_fixed)))
 xm_to_gene(intersect(caxcp_8_ai ,intersect(caxcp_dxy,caxcp_fixed)))
 xm_to_gene(intersect(oaxop_48_ai,intersect(oaxop_dxy,oaxop_fixed)))
@@ -508,13 +541,13 @@ xm_to_gene(intersect(omxop_8_ai ,intersect(omxop_dxy,omxop_fixed)))
 
 # ai_fst_gemma
 ai_fst_dxy_gemma <- unique(c(intersect(gem_cans,intersect(oaxom_8_ai ,intersect(oaxom_dxy,oaxom_fixed))),
-                intersect(gem_cans,intersect(caxcp_8_ai ,intersect(caxcp_dxy,caxcp_fixed))),
-                intersect(gem_cans,intersect(oaxop_48_ai,intersect(oaxop_dxy,oaxop_fixed))),
-                intersect(gem_cans,intersect(oaxop_8_ai ,intersect(oaxop_dxy,oaxop_fixed))),
-                intersect(gem_cans,intersect(cmxcp_48_ai,intersect(cmxcp_dxy,cmxcp_fixed))),
-                intersect(gem_cans,intersect(cmxcp_8_ai ,intersect(cmxcp_dxy,cmxcp_fixed))),
-                intersect(gem_cans,intersect(omxop_48_ai,intersect(omxop_dxy,omxop_fixed))),
-                intersect(gem_cans,intersect(omxop_8_ai ,intersect(omxop_dxy,omxop_fixed)))))
+                             intersect(gem_cans,intersect(caxcp_8_ai ,intersect(caxcp_dxy,caxcp_fixed))),
+                             intersect(gem_cans,intersect(oaxop_48_ai,intersect(oaxop_dxy,oaxop_fixed))),
+                             intersect(gem_cans,intersect(oaxop_8_ai ,intersect(oaxop_dxy,oaxop_fixed))),
+                             intersect(gem_cans,intersect(cmxcp_48_ai,intersect(cmxcp_dxy,cmxcp_fixed))),
+                             intersect(gem_cans,intersect(cmxcp_8_ai ,intersect(cmxcp_dxy,cmxcp_fixed))),
+                             intersect(gem_cans,intersect(omxop_48_ai,intersect(omxop_dxy,omxop_fixed))),
+                             intersect(gem_cans,intersect(omxop_8_ai ,intersect(omxop_dxy,omxop_fixed)))))
 
 intersect(gem_cans,intersect(oaxom_8_ai ,intersect(oaxom_dxy,oaxom_fixed)))
 intersect(gem_cans,intersect(caxcp_8_ai ,intersect(caxcp_dxy,caxcp_fixed)))
@@ -543,10 +576,10 @@ pmp_me_fst_dxy <- unique(c(intersect(intersect(pmp_c_8 ,cmxcp_8_ME) ,intersect(c
                            intersect(intersect(pmp_o_8 ,opxom_8_ME) ,intersect(omxop_dxy,omxop_fixed)), 
                            intersect(intersect(pmp_c_48,cmxcp_48_ME),intersect(cmxcp_dxy,cmxcp_fixed)), 
                            intersect(intersect(pmp_o_48,opxom_48_ME),intersect(omxop_dxy,omxop_fixed))))
-pmp_me_fst_dxy_sweed <- unique(c(intersect(intersect(intersect(pmp_c_8 ,cmxcp_8_ME) ,intersect(cmxcp_dxy,cmxcp_fixed)),cmxcp_taj), 
-                                 intersect(intersect(intersect(pmp_o_8 ,opxom_8_ME) ,intersect(omxop_dxy,omxop_fixed)),omxop_taj), 
-                                 intersect(intersect(intersect(pmp_c_48,cmxcp_48_ME),intersect(cmxcp_dxy,cmxcp_fixed)),cmxcp_taj), 
-                                 intersect(intersect(intersect(pmp_o_48,opxom_48_ME),intersect(omxop_dxy,omxop_fixed)),omxop_taj)))
+pmp_me_fst_dxy_sweed <- unique(c(intersect(intersect(intersect(pmp_c_8 ,cmxcp_8_ME) ,intersect(cmxcp_dxy,cmxcp_fixed)),intersect(cmxcp_sweed,cmxcp_taj)), 
+                                 intersect(intersect(intersect(pmp_o_8 ,opxom_8_ME) ,intersect(omxop_dxy,omxop_fixed)),intersect(omxop_sweed,omxop_taj)), 
+                                 intersect(intersect(intersect(pmp_c_48,cmxcp_48_ME),intersect(cmxcp_dxy,cmxcp_fixed)),intersect(cmxcp_sweed,cmxcp_taj)), 
+                                 intersect(intersect(intersect(pmp_o_48,opxom_48_ME),intersect(omxop_dxy,omxop_fixed)),intersect(omxop_sweed,omxop_taj))))
 intersect(intersect(pmp_c_8 ,cmxcp_8_ME) ,intersect(cmxcp_dxy,cmxcp_fixed)) 
 intersect(intersect(pmp_o_8 ,opxom_8_ME) ,intersect(omxop_dxy,omxop_fixed)) 
 intersect(intersect(pmp_c_48,cmxcp_48_ME),intersect(cmxcp_dxy,cmxcp_fixed)) 
@@ -562,6 +595,248 @@ intersect(gem_cans,intersect(intersect(pmp_o_8 ,opxom_8_ME) ,intersect(omxop_dxy
 intersect(gem_cans,intersect(intersect(pmp_c_48,cmxcp_48_ME),intersect(cmxcp_dxy,cmxcp_fixed))) 
 intersect(gem_cans,intersect(intersect(pmp_o_48,opxom_48_ME),intersect(omxop_dxy,omxop_fixed))) 
 
+### make candidates table with misregulated genes showing strong selection
+
+#oaxom_8      <- intersect(intersect(oaxom_8_ai ,intersect(oaxom_dxy,oaxom_fixed)),intersect(oaxom_sweed,oaxom_taj))
+caxcp_8      <- intersect(intersect(caxcp_8_ai ,intersect(caxcp_dxy,caxcp_fixed)),intersect(cp_sweed,cp_taj))
+oaxop_48      <- intersect(intersect(oaxop_48_ai,intersect(oaxop_dxy,oaxop_fixed)),intersect(op_sweed,op_taj))
+#oaxop_8      <- intersect(intersect(oaxop_8_ai ,intersect(oaxop_dxy,oaxop_fixed)),intersect(oaxop_sweed,oaxop_taj))
+#cmxcp_48      <- intersect(intersect(cmxcp_48_ai,intersect(cmxcp_dxy,cmxcp_fixed)),intersect(cmxcp_sweed,cmxcp_taj))
+cmxcp_8      <- intersect(intersect(cmxcp_8_ai ,intersect(cmxcp_dxy,cmxcp_fixed)),intersect(cmxcp_sweed,cmxcp_taj))
+omxop_48      <- intersect(intersect(omxop_48_ai,intersect(omxop_dxy,omxop_fixed)),intersect(omxop_sweed,omxop_taj))
+#omxop_8      <- intersect(intersect(omxop_8_ai ,intersect(omxop_dxy,omxop_fixed)),intersect(omxop_sweed,omxop_taj))
+ 
+#cmxcp_8_pmp  <- intersect(intersect(intersect(pmp_c_8 ,cmxcp_8_ME)  ,intersect(cmxcp_dxy,cmxcp_fixed)),intersect(cmxcp_sweed,cmxcp_taj))
+omxop_8_pmp  <- intersect(intersect(intersect(pmp_o_8 ,opxom_8_ME)  ,intersect(omxop_dxy,omxop_fixed)),intersect(omxop_sweed,omxop_taj))
+#cmxcp_48_pmp  <- intersect(intersect(intersect(pmp_c_48,cmxcp_48_ME),intersect(cmxcp_dxy,cmxcp_fixed)),intersect(cmxcp_sweed,cmxcp_taj)) 
+#omxop_48_pmp  <- intersect(intersect(intersect(pmp_o_48,opxom_48_ME),intersect(omxop_dxy,omxop_fixed)),intersect(omxop_sweed,omxop_taj))
+all_comps <- list(caxcp_8,oaxop_48, cmxcp_8,omxop_48, omxop_8_pmp)
+comp_names <- c("caxcp_8",
+                "oaxop_48",
+                "cmxcp_8",
+                "omxop_48",
+                "omxop_8_pmp")
+
+### make candidates table with misregulated genes showing jaw association
+
+caxcp_8  <- intersect(gem_cans,intersect(caxcp_8_ai ,intersect(caxcp_dxy,caxcp_fixed)))
+oaxop_48 <- intersect(gem_cans,intersect(oaxop_48_ai,intersect(oaxop_dxy,oaxop_fixed)))
+oaxop_8  <- intersect(gem_cans,intersect(oaxop_8_ai ,intersect(oaxop_dxy,oaxop_fixed)))
+cmxcp_48 <- intersect(gem_cans,intersect(cmxcp_48_ai,intersect(cmxcp_dxy,cmxcp_fixed)))
+cmxcp_8  <- intersect(gem_cans,intersect(cmxcp_8_ai ,intersect(cmxcp_dxy,cmxcp_fixed)))
+omxop_8_pmp  <- intersect(gem_cans,intersect(intersect(pmp_o_8 ,opxom_8_ME) ,intersect(omxop_dxy,omxop_fixed)))
+cmxcp_48_pmp <- intersect(gem_cans,intersect(intersect(pmp_c_48,cmxcp_48_ME),intersect(cmxcp_dxy,cmxcp_fixed)))
+all_comps <- list(caxcp_8 ,oaxop_48,oaxop_8 ,cmxcp_48,cmxcp_8,omxop_8_pmp,cmxcp_48_pmp)
+comp_names <- c("caxcp_8 ",
+                "oaxop_48",
+                "oaxop_8 ",
+                "cmxcp_48",
+                "cmxcp_8" ,
+                "omxop_8_pmp", 
+                "cmxcp_48_pmp")
+
+gem_cans_table <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GEMMA/output_58/mean_parameters_upjaw_all_genes.txt", header = TRUE, stringsAsFactors = FALSE)
+#load tables # change ME tables for candidate type 
+{
+  DE_genes_dir <- "C:/Users/jmcgirr/Documents/all_2018_samples/conditions/"
+  venn_dir <- "C:/Users/jmcgirr/Documents/all_2018_samples/mse_venns/"
+  stage <- "8dpf"
+  # load misexpressed
+  {
+    # am crosses
+    caxcm <- read.csv(paste(DE_genes_dir,"DE_CRPA_and_CRPM_vs_CAxCM_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    cmxca <- read.csv(paste(DE_genes_dir,"DE_CRPM_and_CRPA_vs_CMxCA_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    oaxom <- read.csv(paste(DE_genes_dir,"DE_OSPA_and_OSPM_vs_OAxOM_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    omxoa <- read.csv(paste(DE_genes_dir,"DE_OSPM_and_OSPA_vs_OMxOA_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    # ap crosses
+    caxcp <- read.csv(paste(DE_genes_dir,"DE_CRPA_and_CRPP_vs_CAxCP_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    oaxop <- read.csv(paste(DE_genes_dir,"DE_OSPA_and_OSPP_vs_OAxOP_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    opxoa <- read.csv(paste(DE_genes_dir,"DE_OSPP_and_OSPA_vs_OPxOA_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    # specialist crosses
+    cmxcp <- read.csv(paste(DE_genes_dir,"DE_CRPM_and_CRPP_vs_CMxCP_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    opxom <- read.csv(paste(DE_genes_dir,"DE_OSPM_and_OSPP_vs_OPxOM_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    # outgroup crosses
+    naxca <-  read.csv(paste(DE_genes_dir,"DE_CRPA_and_NCA_vs_NAxCA_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    upxca <-  read.csv(paste(DE_genes_dir,"DE_CRPA_and_UPxUA_vs_UPxCA_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    # lake crosses
+    oaxca <- read.csv(paste(DE_genes_dir,"DE_CRPA_and_OSPA_vs_OAxCA_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    caxoa <- read.csv(paste(DE_genes_dir,"DE_CRPA_and_OSPA_vs_CAxOA_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    cmxom <- read.csv(paste(DE_genes_dir,"DE_CRPM_and_OSPM_vs_CMxOM_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    opxcp <- read.csv(paste(DE_genes_dir,"DE_CRPP_and_OSPP_vs_OPxCP_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    
+    # sig misexpressed
+    caxcm_8_ME <- caxcm[which(caxcm$padj <= 0.05),] 
+    cmxca_8_ME <- cmxca[which(cmxca$padj <= 0.05),] 
+    oaxom_8_ME <- oaxom[which(oaxom$padj <= 0.05),] 
+    omxoa_8_ME <- omxoa[which(omxoa$padj <= 0.05),] 
+    caxcp_8_ME <- caxcp[which(caxcp$padj <= 0.05),] 
+    oaxop_8_ME <- oaxop[which(oaxop$padj <= 0.05),] 
+    opxoa_8_ME <- opxoa[which(opxoa$padj <= 0.05),] 
+    cmxcp_8_ME <- cmxcp[which(cmxcp$padj <= 0.05),] 
+    opxom_8_ME <- opxom[which(opxom$padj <= 0.05),] 
+    naxca_8_ME <- naxca[which(naxca$padj <= 0.05),] 
+    upxca_8_ME <- upxca[which(upxca$padj <= 0.05),] 
+    oaxca_8_ME <- oaxca[which(oaxca$padj <= 0.05),] 
+    caxoa_8_ME <- caxoa[which(caxoa$padj <= 0.05),] 
+    cmxom_8_ME <- cmxom[which(cmxom$padj <= 0.05),] 
+    opxcp_8_ME <- opxcp[which(opxcp$padj <= 0.05),] 
+    
+  }
+
+  stage <- "48hpf"
+  # load misexpressed
+  {
+    # am crosses
+    caxcm <- read.csv(paste(DE_genes_dir,"DE_CRPA_and_CRPM_vs_CAxCM_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    cmxca <- read.csv(paste(DE_genes_dir,"DE_CRPM_and_CRPA_vs_CMxCA_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    oaxom <- read.csv(paste(DE_genes_dir,"DE_OSPA_and_OSPM_vs_OAxOM_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    omxoa <- read.csv(paste(DE_genes_dir,"DE_OSPM_and_OSPA_vs_OMxOA_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    # ap crosses
+    caxcp <- read.csv(paste(DE_genes_dir,"DE_CRPA_and_CRPP_vs_CAxCP_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    oaxop <- read.csv(paste(DE_genes_dir,"DE_OSPA_and_OSPP_vs_OAxOP_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    opxoa <- read.csv(paste(DE_genes_dir,"DE_OSPP_and_OSPA_vs_OPxOA_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    # specialist crosses
+    cmxcp <- read.csv(paste(DE_genes_dir,"DE_CRPM_and_CRPP_vs_CMxCP_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    opxom <- read.csv(paste(DE_genes_dir,"DE_OSPM_and_OSPP_vs_OPxOM_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    # outgroup crosses
+    naxca <-  read.csv(paste(DE_genes_dir,"DE_CRPA_and_NCA_vs_NAxCA_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    upxca <-  read.csv(paste(DE_genes_dir,"DE_CRPA_and_UPxUA_vs_UPxCA_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    # lake crosses
+    oaxca <- read.csv(paste(DE_genes_dir,"DE_CRPA_and_OSPA_vs_OAxCA_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    caxoa <- read.csv(paste(DE_genes_dir,"DE_CRPA_and_OSPA_vs_CAxOA_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    cmxom <- read.csv(paste(DE_genes_dir,"DE_CRPM_and_OSPM_vs_CMxOM_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    opxcp <- read.csv(paste(DE_genes_dir,"DE_CRPP_and_OSPP_vs_OPxCP_",stage,"_genes.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+    
+    # sig misexpressed
+    caxcm_48_ME <- caxcm[which(caxcm$padj <= 0.05),] 
+    cmxca_48_ME <- cmxca[which(cmxca$padj <= 0.05),] 
+    oaxom_48_ME <- oaxom[which(oaxom$padj <= 0.05),] 
+    omxoa_48_ME <- omxoa[which(omxoa$padj <= 0.05),] 
+    caxcp_48_ME <- caxcp[which(caxcp$padj <= 0.05),] 
+    oaxop_48_ME <- oaxop[which(oaxop$padj <= 0.05),] 
+    opxoa_48_ME <- opxoa[which(opxoa$padj <= 0.05),] 
+    cmxcp_48_ME <- cmxcp[which(cmxcp$padj <= 0.05),] 
+    opxom_48_ME <- opxom[which(opxom$padj <= 0.05),] 
+    naxca_48_ME <- naxca[which(naxca$padj <= 0.05),] 
+    upxca_48_ME <- upxca[which(upxca$padj <= 0.05),] 
+    oaxca_48_ME <- oaxca[which(oaxca$padj <= 0.05),] 
+    caxoa_48_ME <- caxoa[which(caxoa$padj <= 0.05),] 
+    cmxom_48_ME <- cmxom[which(cmxom$padj <= 0.05),] 
+    opxcp_48_ME <- opxcp[which(opxcp$padj <= 0.05),] 
+    
+    omxop_8_ME <- opxom_8_ME
+    omxop_48_ME <- opxom_48_ME
+    #ME_tables <- list(caxcp_8_ME,
+    #                  oaxop_48_ME,
+    #                  cmxcp_8_ME,
+    #                  omxop_48_ME,
+    #                  omxop_8_ME)
+    ME_tables <- list(caxcp_8_ME,
+                      oaxop_48_ME,
+                      oaxop_8_ME,
+                      cmxcp_48_ME,
+                      cmxcp_8_ME,
+                      omxop_8_ME,
+                      cmxcp_48_ME)
+
+  }
+
+  
+}
+
+comp_s   <- c() 
+stage_s  <- c() 
+lfc_s    <- c() 
+padj_s   <- c() 
+taj_p1_s <- c() 
+taj_p2_s <- c() 
+clr_p1_s <- c() 
+clr_p2_s <- c() 
+pip_s    <- c() 
+alpha_s  <- c() 
+beta_s   <- c() 
+gene_s   <- c()
+symbol_s <- c()
+effect_s <- c()
+fixed_s   <- c()
+for (comp_num in c(1:length(comp_names)))
+{
+  #comp_name <- "caxcp_8"
+  comp_name <- comp_names[comp_num]
+  comp <- strsplit(comp_name, "_")[[1]][1]
+  stage <- strsplit(comp_name, "_")[[1]][2]
+  p1 <- strsplit(comp,"x")[[1]][1]
+  p2 <- strsplit(comp,"x")[[1]][2]
+  
+  ME <- ME_tables[[comp_num]]
+  fixed    <- read.csv(paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",comp,"_fixed_snp_genes.csv",sep = ""), header = TRUE, row.names = NULL,stringsAsFactors = FALSE)
+  sweed_p1 <- read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/SweeD_Report.",p1,"_pop_bottle_58_grid_500_sweeps_genes.txt",sep = ""), header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
+  sweed_p2 <- read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/SweeD_Report.",p2,"_pop_bottle_58_grid_500_sweeps_genes.txt",sep = ""), header = TRUE, row.names = NULL, stringsAsFactors = FALSE)
+  taj_p1   <- read.csv(paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",p1,"_taj_genes.csv",sep = ""), header = TRUE,row.names = NULL, stringsAsFactors = FALSE)
+  taj_p2   <- read.csv(paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",p2,"_taj_genes.csv",sep = ""), header = TRUE,row.names = NULL, stringsAsFactors = FALSE)
+  
+  cool_genes <- all_comps[[comp_num]]
+  for (gene in cool_genes) 
+  {
+  #gene <- "XM_015398227.1" 
+  fixed_g    <- fixed    [which(fixed$related_accession    == gene),]  
+  sweed_p1_g <- sweed_p1 [which(sweed_p1 $related_accession== gene),]
+  sweed_p2_g <- sweed_p2 [which(sweed_p2 $related_accession== gene),]
+  sweed_p1_g <- sweed_p1_g [order(sweed_p1_g$CLR, decreasing = TRUE),]
+  sweed_p2_g <- sweed_p2_g [order(sweed_p2_g$CLR, decreasing = TRUE),]
+  taj_p1_g   <- taj_p1   [which(taj_p1   $related_accession== gene),]
+  taj_p2_g   <- taj_p2   [which(taj_p2   $related_accession== gene),]
+  taj_p1_g <- taj_p1_g [order(taj_p1_g$TajimaD, decreasing = FALSE),]
+  taj_p2_g <- taj_p2_g [order(taj_p2_g$TajimaD, decreasing = FALSE),]
+  ME_g <- ME[which(ME$related_accession == gene),]
+  gem_g <- gem_cans_table[which(gem_cans_table$related_accession == gene),]
+  gem_g <- gem_g [order(gem_g$gamma, decreasing = TRUE),][1,]
+  effect_size <- gem_g$alpha[1] +(gem_g$beta[1]*gem_g$gamma[1])
+  
+  comp_s    <- c(comp_s    ,comp)
+  stage_s   <- c(stage_s   ,stage)
+  gene_s    <- c(gene_s, gene)
+  symbol_s  <- c(symbol_s, ME_g$symbol[1])
+  lfc_s     <- c(lfc_s     ,ME_g$log2FoldChange[1])
+  padj_s    <- c(padj_s    ,ME_g$padj[1])
+  fixed_s   <- c(fixed_s, nrow(fixed_g))
+  taj_p1_s  <- c(taj_p1_s  ,taj_p1_g$TajimaD[1])
+  taj_p2_s  <- c(taj_p2_s  ,taj_p2_g$TajimaD[1])
+  clr_p1_s  <- c(clr_p1_s     ,sweed_p1_g$CLR[1])
+  clr_p2_s  <- c(clr_p2_s     ,sweed_p2_g$CLR[1])
+  pip_s     <- c(pip_s     ,gem_g$gamma)
+  alpha_s   <- c(alpha_s     ,gem_g$alpha)
+  beta_s    <- c(beta_s     ,gem_g$beta)
+  effect_s  <- c(effect_s,effect_size)
+
+  }
+  
+}
+
+cans_info <- data.frame(comp_s    = comp_s    ,
+                                  stage_s   = stage_s   ,
+                                  gene_s    = gene_s    ,
+                                  symbol_s  = symbol_s  ,
+                                  lfc_s     = lfc_s     ,
+                                  padj_s    = padj_s    ,
+                                  fixed_s   = fixed_s   ,
+                                  taj_p1_s  = taj_p1_s  ,
+                                  taj_p2_s  = taj_p2_s  ,
+                                  clr_p1_s  = clr_p1_s  ,
+                                  clr_p2_s  = clr_p2_s  ,
+                                  pip_s     = pip_s     ,
+                                  alpha_s   = alpha_s   ,
+                                  beta_s    = beta_s    ,
+                                  effect_s  = effect_s  ,
+                                  stringsAsFactors = FALSE)
+
+#write.table(cans_info,"C:/Users/jmcgirr/Documents/all_2018_samples/GO/cranial_candidates.txt", row.names = FALSE, quote = FALSE, sep = "\t")
+
+
+
+all_eil <- unique(c(ai_fst_dxy,pmp_me_fst_dxy))
+eil_gemma <- intersect(all_eil, gem_cans)
+xm_to_gene(eil_gemma)
 out_table <- mrna[mrna$related_accession %in% pmp_me_fst_dxy, ]
 #write.table(out_table,"C:/Users/jmcgirr/Documents/all_2018_samples/GO/pmp_me_fst_dxy_genes.txt", row.names = FALSE, quote = FALSE, sep = "\t")
 
@@ -752,9 +1027,9 @@ length(unique(c(intersect(pmp_o_8,opxom_8_ME),intersect(pmp_c_8,cmxcp_8_ME),inte
 #tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/parallel_mse_pie.tiff", width = 4, height = 4, units = 'in', res = 1000)
 pie(c(0.9626866,0.0373134), labels = c("",""), col = c(grb,"#BC1F8A"))
 #dev.off()
-#tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/parallel_pie.tiff", width = 4, height = 4, units = 'in', res = 1000)
-pie(c(43/1249,45/1249,1161/1249), labels = c("",""), col = c(grb,"#BC1F8A",yel))
-#dev.off()
+tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/parallel_pie.tiff", width = 4, height = 4, units = 'in', res = 1000)
+pie(c(43/1249,45/1249,1161/1249), labels = c("",""), col = c("#FFDAE0","#BC1F8A",yel))
+dev.off()
 
 #####
 
@@ -1307,53 +1582,50 @@ for (i in c(1:length(crosses)))
   c <- foverlaps(taj_p1, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHROM", "START", "END"),type="any", nomatch=0L)
   c <- as.data.frame(c)
   rownames(c) <- NULL
-  #thresh <- mean(taj_p1$TajimaD, na.rm = TRUE) - sd(taj_p1$TajimaD, na.rm = TRUE)
   thresh <- quantile(na.omit(taj_p1$TajimaD), 0.1)
-  #thresh <- -0.5
-  c <- c[which(c$TajimaD <= thresh),]
-  neg_taj_p1 <- c$related_accession
+  #c <- c[which(c$TajimaD <= thresh),]
+  #neg_taj_p1 <- c$related_accession
   c <- merge(c,final_features,all.x = TRUE, by = c("related_accession"))
   c<- merge(c, blast_key,all.x = TRUE, by = c("product_accession"))
   c$name <- NULL
   c$tag <- NULL
   
-  write.csv(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",p1,"_taj_90.csv",sep=""), row.names = FALSE, quote = FALSE)
+  write.csv(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",p1,"_taj_genes.csv",sep=""), row.names = FALSE, quote = FALSE)
   
   setDT(taj_p2)
   setkey(mrna_table)
   c <- foverlaps(taj_p2, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHROM", "START", "END"),type="any", nomatch=0L)
   c <- as.data.frame(c)
   rownames(c) <- NULL
-  thresh <- quantile(na.omit(taj_p2$TajimaD), 0.1)
-  c <- c[which(c$TajimaD <= thresh),]
-  neg_taj_p2 <- c$related_accession
+  #thresh <- quantile(na.omit(taj_p2$TajimaD), 0.1)
+  #c <- c[which(c$TajimaD <= thresh),]
+  #neg_taj_p2 <- c$related_accession
   c <- merge(c,final_features,all.x = TRUE, by = c("related_accession"))
   c<- merge(c, blast_key,all.x = TRUE, by = c("product_accession"))
   c$name <- NULL
   c$tag <- NULL
   
-  write.csv(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",p2,"_taj_90.csv",sep=""), row.names = FALSE, quote = FALSE)
+  write.csv(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",p2,"_taj_genes.csv",sep=""), row.names = FALSE, quote = FALSE)
   
-  neg_taj_p1_or_p2 <- unique(c(neg_taj_p1,neg_taj_p2))
+  #neg_taj_p1_or_p2 <- unique(c(neg_taj_p1,neg_taj_p2))
   
+  #fst <- read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",cross,"_fst",sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  #fst$START <- fst$POS 
+  #fst$END <- fst$POS + 1
+  #fst <- fst[which(fst$WEIR_AND_COCKERHAM_FST == 1),]
   
-  fst <- read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",cross,"_fst",sep = ""), header = TRUE, stringsAsFactors = FALSE)
-  fst$START <- fst$POS 
-  fst$END <- fst$POS + 1
-  fst <- fst[which(fst$WEIR_AND_COCKERHAM_FST == 1),]
+  #setDT(fst)
+  #setkey(mrna_table)
+  #c <- foverlaps(fst, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHROM", "START", "END"),type="any", nomatch=0L)
+  #c <- as.data.frame(c)
+  #rownames(c) <- NULL
+  #fixed <- c$related_accession
+  #c <- merge(c,final_features,all.x = TRUE, by = c("related_accession"))
+  #c<- merge(c, blast_key,all.x = TRUE, by = c("product_accession"))
+  #c$name <- NULL
+  #c$tag <- NULL
   
-  setDT(fst)
-  setkey(mrna_table)
-  c <- foverlaps(fst, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHROM", "START", "END"),type="any", nomatch=0L)
-  c <- as.data.frame(c)
-  rownames(c) <- NULL
-  fixed <- c$related_accession
-  c <- merge(c,final_features,all.x = TRUE, by = c("related_accession"))
-  c<- merge(c, blast_key,all.x = TRUE, by = c("product_accession"))
-  c$name <- NULL
-  c$tag <- NULL
-  
-  write.csv(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",cross,"_fixed_snp_genes.csv",sep=""), row.names = FALSE, quote = FALSE)
+  #write.csv(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",cross,"_fixed_snp_genes.csv",sep=""), row.names = FALSE, quote = FALSE)
 
   
   #ai <- data.frame(ai_genes[cross])
@@ -1363,24 +1635,24 @@ for (i in c(1:length(crosses)))
   #venn(list(ai_genes=ai[,1],near_fixed_snp=fixed,gemma=gem_cans,sig_sweed_p1_or_p2=sig_sweed_p1_or_p2), 
   #     ilabels = TRUE, cexsn = 0.70, zcolor = "style", cexil = 0.85, title = cross)
   
-  dxy <- read.csv(paste("D:/Martin Lab/rna_2018/fst/dna/",cross,"_popgen_dna_stats_corr_dxy.csv",sep=""), header = TRUE, stringsAsFactors = FALSE)
-  colnames(dxy)[colnames(dxy )=="start"] <- "START"
-  colnames(dxy)[colnames(dxy )=="end"] <- "END"
-  colnames(dxy)[colnames(dxy )=="scaffold"] <- "CHROM"
+  #dxy <- read.csv(paste("D:/Martin Lab/rna_2018/fst/dna/",cross,"_popgen_dna_stats_corr_dxy.csv",sep=""), header = TRUE, stringsAsFactors = FALSE)
+  #colnames(dxy)[colnames(dxy )=="start"] <- "START"
+  #colnames(dxy)[colnames(dxy )=="end"] <- "END"
+  #colnames(dxy)[colnames(dxy )=="scaffold"] <- "CHROM"
 
-  setDT(dxy)
-  setkey(mrna_table)
-  c <- foverlaps(dxy, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHROM", "START", "END"),type="any", nomatch=0L)
-  c <- as.data.frame(c)
-  rownames(c) <- NULL
-  thresh <- quantile(na.omit(dxy$corr_dxy), 0.90)
-  c <- c[which(c$corr_dxy >= thresh),]
-  c <- merge(c,final_features,all.x = TRUE, by = c("related_accession"))
-  c<- merge(c, blast_key,all.x = TRUE, by = c("product_accession"))
-  c$name <- NULL
-  c$tag <- NULL
+  #setDT(dxy)
+  #setkey(mrna_table)
+  #c <- foverlaps(dxy, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHROM", "START", "END"),type="any", nomatch=0L)
+  #c <- as.data.frame(c)
+  #rownames(c) <- NULL
+  #thresh <- quantile(na.omit(dxy$corr_dxy), 0.90)
+  #c <- c[which(c$corr_dxy >= thresh),]
+  #c <- merge(c,final_features,all.x = TRUE, by = c("related_accession"))
+  #c<- merge(c, blast_key,all.x = TRUE, by = c("product_accession"))
+  #c$name <- NULL
+  #c$tag <- NULL
   
-  write.csv(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",cross,"_corr_dxy_90.csv",sep=""), row.names = FALSE, quote = FALSE)
+  #write.csv(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/interesting_genes_tables/",cross,"_corr_dxy_90.csv",sep=""), row.names = FALSE, quote = FALSE)
   
 
 }

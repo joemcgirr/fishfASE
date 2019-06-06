@@ -13,16 +13,14 @@ head(gem)
 gem_main <- cbind(gem, colsplit(gem[,3], "\\|", c("end", "pip")))
 
 cool_genes_out_dir <- "C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/fig_5_can_genes/"
-cool_gene_name <- "mpp1"
+cool_gene_name <- "sema6c"
 
 
-cool_gene <- "XM_015371309.1"
-pop_gen_comp <- "caxcp"
+cool_gene <- "XM_015375570.1"
+pop_gen_comp <- "omxop"
 cool_stage <- "8dpf"
-p1_col <- red
+p1_col <- gre
 p2_col <- blu
-p1_species <- "a"
-p2_species <- "p"
 
 #load pop comp
 {
@@ -61,7 +59,7 @@ p2_species <- "p"
   
 }
 
-#tiff(paste(cool_genes_out_dir,cool_gene_name,"_counts_focal.tiff", sep = ""), width = 6.5, height = 4, units = 'in', res = 1000)
+#tiff(paste(cool_genes_out_dir,cool_gene_name,"_counts_focal.tiff", sep = ""), width = 3, height = 3, units = 'in', res = 1000)
 #plot counts
 {
 
@@ -89,10 +87,20 @@ cross_counts <- c("CRPA",
                   "CMxCA",
                   "CAxCP",
                   "CMxCP")
+
+cross_counts <- c("OSPA",
+                  "OSPM",
+                  "OSPP",
+                  #"OAxOM",
+                  #"OMxOA",
+                  #"OAxOP",
+                  #"OPxOA",
+                  "OPxOM")
   
   
   #cool_cols <- c(red,red,gre,gre,blu,blu,yel,yel,yel,yel,pur,pur,pur,grb,grb,"white","black")
-  cool_cols <- c(red,gre,blu,yel,yel,pur,grb,"white","black")
+  cool_cols <- c(red,gre,blu,yel,yel,pur,pur,grb)
+  cool_cols <- c(red,gre,blu,grb)
   
   type_inds <- c()
   inds <- c()
@@ -120,24 +128,27 @@ cross_counts <- c("CRPA",
   #tiff(paste(cool_gene_out, "_gene_counts.tiff", sep = ""), width = 6.2, height = 5, units = 'in', res = 1000)
   plot(plot_counts$type_ind,plot_counts$cts, ylab = "normalized counts", border = "white",
        cex.axis = 0.5, cex.names = 1.1,cex.lab = 1.2, yaxt = "n")
-  axis(2, cex.axis = 1.0, at = NULL)
+  axis(2, cex.axis = 1.2, at = NULL)
   
   for (j in c(1,2,3))
   {
   p1_cts <- plot_counts[which(plot_counts$type_ind == cross_counts[j]),]
-  points(jitter(rep(j,nrow(p1_cts)),3), p1_cts$cts, pch = 21,bg =cool_cols[j],  col = "black", cex = 2)
+  points(jitter(rep(j,nrow(p1_cts)),1), p1_cts$cts, pch = 21,bg =cool_cols[j],  col = "black", cex = 2)
   }
-  for (j in c(4,5,6,7))
+  #for (j in c(4,5,6,7,8))
+  for (j in c(4))
   {
     p1_cts <- plot_counts[which(plot_counts$type_ind == cross_counts[j]),]
-    points(jitter(rep(j,nrow(p1_cts)),3), p1_cts$cts, pch = 21,bg =cool_cols[j],  col = "black", cex = 2)
+    points(jitter(rep(j,nrow(p1_cts)),1), p1_cts$cts, pch = 22,bg =cool_cols[j],  col = "black", cex = 2)
   }
   
 }
 #dev.off()
   
-#tiff(paste(cool_genes_out_dir,cool_gene_name,"_popgen.tiff", sep = ""), width = 4.8, height = 6.8, units = 'in', res = 1000)
-xrange <- c(470000,775000)
+
+
+#tiff(paste(cool_genes_out_dir,cool_gene_name,"_popgen.tiff", sep = ""), width = 3, height = 5, units = 'in', res = 1000)
+xrange <- c(3460000,4200000)
 par(mfrow = c(5,1),
     oma = c(5,4,0,0) + 0.1,
     mar = c(0,0,1,1) + 0.1)
@@ -152,9 +163,9 @@ par(mfrow = c(5,1),
   dxy <- dxy_main[which(dxy_main$scaffold == gene_chrom$Chr[1]),]
   
 
-  smooth_dxy <-   smooth.spline(dxy$end, dxy$corr_dxy, spar = .2)
-  smooth_p1_pi <- smooth.spline(dxy$end, dxy[,14], spar = .2)
-  smooth_p2_pi <- smooth.spline(dxy$end, dxy[,16], spar = .2)
+  smooth_dxy <-   smooth.spline(dxy$start, dxy$corr_dxy, spar = .2)
+  smooth_p1_pi <- smooth.spline(dxy$start, dxy[,14], spar = .2)
+  smooth_p2_pi <- smooth.spline(dxy$start, dxy[,16], spar = .2)
   
   tj_m <- taj_m_main[which(taj_m_main$CHROM == gene_chrom$Chr[1]),]
   smooth_m <-   smooth.spline(tj_m$BIN_START, tj_m$TajimaD, spar = .1)
@@ -199,13 +210,13 @@ par(mfrow = c(5,1),
   #smooth_p2_pi <- smooth.spline(dxy$start, dxy[,16], spar = .2)
   #lines(smooth_p1_pi, lwd = 2, col = p1_col, lty = 2)
   #lines(smooth_p2_pi, lwd = 2, col = p2_col, lty = 2)
-  
-  plot(tj_p$BIN_START, tj_p$TajimaD,ylab = "D",ylim = c(-2,3),xlab = "",
+
+  plot(tj_p$BIN_START, tj_p$TajimaD,ylab = "D",ylim = c(-2,2.5),xlab = "",
        xlim = xrange,col = "white", yaxt = "n", xaxt = "n")
   axis(2,labels = c(-1,0,1,2),at = c(-1,0,1,2),cex.axis=1.2)
-  #lines(smooth_m, lwd = 2, col = gre)
+  lines(smooth_m, lwd = 2, col = gre)
   lines(smooth_p, lwd = 2, col = blu)
-  lines(smooth_a, lwd = 2, col = red)
+  #lines(smooth_a, lwd = 2, col = red)
   #tj_m <- taj_m_species_main[which(taj_m_species_main$CHROM == gene_chrom$Chr[1]),]
   #smooth_m <-   smooth.spline(tj_m$BIN_START, tj_m$TajimaD, spar = .1)
   #tj_p <- taj_p_species_main[which(taj_p_species_main$CHROM == gene_chrom$Chr[1]),]
@@ -221,8 +232,8 @@ par(mfrow = c(5,1),
   sweed_p2$mid <- sweed_p2$V2 + ((sweed_p2$V2[2]-sweed_p2$V2[1])/2)
   sweed_p1$norm_clr = (sweed_p1$V3-min(sweed_p1$V3))/(max(sweed_p1$V3)-min(sweed_p1$V3))
   sweed_p2$norm_clr = (sweed_p2$V3-min(sweed_p2$V3))/(max(sweed_p2$V3)-min(sweed_p2$V3))
-  smooth_sweed_p1 <-   smooth.spline(sweed_p1$V2, sweed_p1$norm_clr, spar = 0.1)
-  smooth_sweed_p2 <-   smooth.spline(sweed_p2$V2, sweed_p2$norm_clr, spar = 0.1)
+  smooth_sweed_p1 <-   smooth.spline(sweed_p1$mid, sweed_p1$norm_clr, spar = 0.1)
+  smooth_sweed_p2 <-   smooth.spline(sweed_p2$mid, sweed_p2$norm_clr, spar = 0.1)
   
   plot(sweed_p1$mid, sweed_p1$norm_clr,xlab = "",ylab = "CLR",xlim = xrange, pch = 16,yaxt = "n",
        col = "white", cex.axis = 1.2, xaxt = "n")
@@ -242,12 +253,12 @@ par(mfrow = c(5,1),
   rect(gene_chrom$Start[1], -10, gene_chrom$End[1], 10, border = NA, col = col2alpha(blu,0.2))
   
   gem <- gem_main[which(gem_main$V1 ==gene_chrom$Chr[1]),]
-  smooth_gem <-   smooth.spline(gem$end, gem$pip, spar = .1)
+  smooth_gem <-   smooth.spline(gem$V2, gem$pip, spar = .1)
   options(scipen=999)
   plot(gem$V2, gem$pip,xlab = "",ylab = "PIP",xlim = xrange, 
-       col = "white", xaxt = "n",cex.axis=1.2, yaxt = "n", ylim = c(0,0.003))
+       col = "white", xaxt = "n",cex.axis=1.2, yaxt = "n", ylim = c(0,0.0025))
   lines(smooth_gem, lwd = 2, col = pur)
-  axis(2, at=c(0,0.0015,0.003), labels=c(0,0.0015,0.003),cex.axis=1.2)
+  axis(2, at=c(0,0.001,0.002), labels=c(0,0.001,0.002),cex.axis=1.2)
   axis(1,cex.axis=1.2)
   rect(gene_chrom$Start[1], -1, gene_chrom$End[1], 1, border = NA, col = col2alpha(blu,0.2))
   #plot(gem$V2, gem$pip,xlab = "",ylab = "PIP", 
@@ -257,6 +268,9 @@ par(mfrow = c(5,1),
 }
 #dev.off()
 
+cool_p1<- "OSPP"
+cool_p2<- "OSPM"
+cool_h <- "OPxOM"
 
 
 
@@ -303,44 +317,3 @@ par(mfrow = c(5,1),
 }
 
 
-mpp1 <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/ase_data/mpp1_8dpf_avg_caxcp.txt", header= TRUE, stringsAsFactors = FALSE)
-head(mpp1)
-
-tiff(paste(cool_genes_out_dir,cool_gene_name,"_ase.tiff", sep = ""), width = 6, height = 4.2, units = 'in', res = 1000)
-
-plot(mpp1$position, mpp1$dad_avg,axes = FALSE,
-     xlim = c(min(exons$V4)-300,max(exons$V5)+300),col = "white",xlab = "" ,ylab = "", xaxt = 'n',
-     ylim = c(145,245))#, main = plot_title)
-axis(2, cex.axis = 1)
-#axis(1, labels = FALSE, lwd.tick=0)
-points(mpp1$position, mpp1$mom_avg, pch = 21,bg =red,  col = "black", cex = 1.3)
-points(mpp1$position, mpp1$dad_avg, pch = 21,bg =blu,  col = "black", cex = 1.3)
-abline(h =145,col = col2alpha(blu,0.2), lwd = 2)
-
-for(i in c(1:nrow(exons)))
-{
-  rect(exons$V4[i], 141, exons$V5[i], 149, border = NA, col = col2alpha(blu,0.2))
-}
-dev.off()
-
-
-
-
-mpp1 <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/ase_data/mpp1_8dpf_avg_caxcp.txt", header= TRUE, stringsAsFactors = FALSE)
-head(mpp1)
-
-tiff(paste(cool_gene_out,"_",ind, "_allele_counts.tiff", sep = ""), width = 7.8, height = 6, units = 'in', res = 1000)
-
-plot(mpp1$position, mpp1$dad_avg,ylim = c(min(mpp1$mom_avg)-30,max(mpp1$dad_avg)),axes = FALSE,
-     xlim = c(min(exons$V4)-300,max(exons$V5)+300),col = "white",xlab = "" ,ylab = "", xaxt = 'n')#, main = plot_title)
-axis(2, cex.axis = 1.05)
-#axis(1, labels = FALSE, lwd.tick=0)
-points(mpp1$position, mpp1$mom_avg, pch = 21,bg =cool_cols[1],  col = "black", cex = 1.8)
-points(mpp1$position, mpp1$dad_avg, pch = 21,bg =cool_cols[2],  col = "black", cex = 1.8)
-abline(h =125,col = col2alpha(blu,0.2), lwd = 2)
-
-for(i in c(1:nrow(exons)))
-{
-  rect(exons$V4[i], 115, exons$V5[i], 130, border = NA, col = col2alpha(blu,0.2))
-}
-dev.off()

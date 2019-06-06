@@ -414,6 +414,93 @@ plot(jitter(all_8$distance_branchlength), jitter((all_8$prop_DE)*100),pch = c(21
 
 
 
+## PGLS phylogenetic least squares ##https://www.r-phylo.org/wiki/HowTo/PGLS
+## DE
+all_48 <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/mse_v_distance/de_v_crpa_48hpf.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+all_8 <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/mse_v_distance/de_v_crpa_8dpf.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+row.names(all_48) <- all_48$tree_tip
+row.names(all_8) <- all_8$tree_tip
+all_48_de <- all_48
+all_8_de <- all_8
+
+# ME
+all_48 <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/mse_v_distance/mse_v_crpa_48hpf.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+all_8 <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/mse_v_distance/mse_v_crpa_8dpf.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+tree <- read.tree("D:/Martin Lab/rna_2018/raxml/second_try_dna/RAxML_bestTree.58_dna_no_missing")
+distances <- c(cophenetic(tree)["CAF1","CPF1"],cophenetic(tree)["CAF1","CMF1"],0,
+               cophenetic(tree)["CAF1","CUNP"],cophenetic(tree)["CAF1","NAF1"])
+all_48$distance_branch <- distances
+all_8$distance_branch <- distances
+row.names(all_48) <- all_48$tree_tip
+row.names(all_8) <- all_8$tree_tip
+all_48_me <- all_48
+all_8_me <- all_8
+
+all_48_de$prop_DE_vs_CRPA_scaled <- all_48_de$prop_DE_vs_CRPA *100
+all_8_de$prop_DE_vs_CRPA_scaled <- all_8_de$prop_DE_vs_CRPA *100
+all_48_me$prop_DE_vs_CRPA_scaled <- all_48_me$prop_DE_vs_CRPA *100
+all_8_me$prop_DE_vs_CRPA_scaled <- all_8_me$prop_DE_vs_CRPA *100
+
+## plot km on x axis
+{
+
+par(mfrow=c(2,2))
+
+comps <-read.table("C:/Users/jmcgirr/Documents/all_2018_samples/prop_DE_CRPA_crosses.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+all_48 <- comps[which(comps$stage == "48hpf"),]
+all_8 <- comps[which(comps$stage == "8dpf"),]
+points_pch <- c(21,21,21,21,1,1,1,1,1,21)
+sep_cols <- c("black","black",yel,blu,"black","black","black","black","black", red)
+
+#tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/de_me_48_8_shapes.tiff", width = 5, height = 5, units = 'in', res = 1000)
+par(mfrow=c(2,2))
+par(mai=c(0.2,0.4,0.2,0))
+
+plot(jitter(all_48$distance_km,50), all_48$prop_DE*100,col = "black",pch = points_pch,bg = sep_cols,
+     cex = 2.3, ylim = c(0,31),xlab = "", ylab = "",xaxt ="n",cex.axis=1.5, yaxt = "n", xlim = c(-50,1200))
+axis(side=2, at=c(0,10,20,30), labels = TRUE, cex.axis= 1.3)
+pglsModel <- gls(prop_DE_vs_CRPA_scaled ~ distance_km, correlation = corBrownian(phy = all_tree),
+                 data = all_48_de, method = "ML")
+#summary(pglsModel)
+abline(a = coef(pglsModel)[1], b = coef(pglsModel)[2], lty = 3)
+
+par(mai=c(0.2,0.2,0.2,0.2))
+plot(jitter(all_8$distance_km,50), all_8$prop_DE*100,col = "black",pch = points_pch,bg = sep_cols,
+     cex = 2.3, ylim = c(0,31),xlab = "", ylab = "",xaxt ="n",cex.axis=1.5, yaxt = "n", xlim = c(-50,1200))
+pglsModel <- gls(prop_DE_vs_CRPA_scaled ~ distance_km, correlation = corBrownian(phy = all_tree),
+                 data = all_8_de, method = "ML")
+#summary(pglsModel)
+#abline(a = coef(pglsModel)[1], b = coef(pglsModel)[2], lty = 3)
+
+comps <-read.table("C:/Users/jmcgirr/Documents/all_2018_samples/prop_ME_CRPA_crosses.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+head(comps)
+all_48 <- comps[which(comps$stage == "48hpf"),]
+all_8 <- comps[which(comps$stage == "8dpf"),]
+sep_cols <- c("grey","grey",gre,grb,"grey","grey","grey","grey","grey", lir)
+
+par(mai=c(0.4,0.4,0,0))
+plot(jitter(all_48$distance_km,50), all_48$prop_DE*100,col = "black",pch = points_pch,bg = sep_cols,
+     cex = 2.3, ylim = c(0,31),xlab = "", ylab = "",cex.axis=1.5, yaxt = "n", xlim = c(-50,1200), xaxt = "n")
+axis(side=2, at=c(0,10,20,30), labels = TRUE, cex.axis= 1.3)
+axis(side=1, at=c(0,250,500,750,1000), labels = c(0,250,500,750,1000), cex.axis= 1)
+
+pglsModel <- gls(prop_DE_vs_CRPA_scaled ~ distance_km, correlation = corBrownian(phy = all_tree),
+                 data = all_48_me, method = "ML")
+#summary(pglsModel)
+#abline(a = coef(pglsModel)[1], b = coef(pglsModel)[2], lty = 3)
+
+par(mai=c(0.4,0.2,0,0.2))
+plot(jitter(all_8$distance_km,50), all_8$prop_DE*100,col = "black",pch = points_pch,bg = sep_cols,
+     cex = 2.3, ylim = c(0,31),xlab = "", ylab = "",cex.axis=1.5, yaxt = "n", xlim = c(-50,1200), xaxt = "n")
+axis(side=1, at=c(0,250,500,750,1000), labels = c(0,250,500,750,1000), cex.axis= 1)
+pglsModel <- gls(prop_DE_vs_CRPA_scaled ~ distance_km, correlation = corBrownian(phy = all_tree),
+                 data = all_8_me, method = "ML")
+#summary(pglsModel)
+#abline(a = coef(pglsModel)[1], b = coef(pglsModel)[2], lty = 3)
+#dev.off()
+}
+
+
 
 
 
@@ -430,15 +517,15 @@ plot(all_8$distance_km, all_8$prop_DE)
 
 
 #plot(generalists_48$distance_branchlength, generalists_48$prop_DE)
-tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/de_48.tiff", width = 4.5, height = 5, units = 'in', res = 1000)
+#tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/de_48.tiff", width = 4.5, height = 5, units = 'in', res = 1000)
 plot(jitter(all_48$distance_branchlength), jitter((all_48$prop_DE)*100),pch = c(21,24)[as.factor(all_48$point_shape)],
      bg =sep_cols,col = "black", cex = 2.3, ylim = c(0,21.5),xlim = c(-0.02,0.45),xlab = "", ylab = "",xaxt ="n",cex.axis=1.5)
-dev.off()
+#dev.off()
 #plot(generalists_8$distance_branchlength, generalists_8$prop_DE)
-tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/de_8.tiff", width = 4.5, height = 5, units = 'in', res = 1000)
+#tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/de_8.tiff", width = 4.5, height = 5, units = 'in', res = 1000)
 plot(jitter(all_8$distance_branchlength), jitter((all_8$prop_DE)*100),pch = c(21,24)[as.factor(all_8$point_shape)],
      bg =sep_cols,col = "black", cex = 2.3, ylim = c(0,21.5),xlim = c(-0.02,0.45),xlab = "", ylab = "", yaxt = "n",xaxt ="n")
-dev.off()
+#dev.off()
 
 
 
@@ -462,7 +549,8 @@ row.names(all_48) <- all_48$tree_tip
 row.names(all_8) <- all_8$tree_tip
 row.names(generalists_48) <- test
 row.names(generalists_8) <- test
-
+all_48 <- all_48_me
+all_8 <- all_8_me
 
 pglsModel <- gls(prop_DE_vs_CRPA ~ distance_km, correlation = corBrownian(phy = generalist_tree),
                  data = generalists_48, method = "ML")
@@ -487,7 +575,8 @@ row.names(all_8) <- all_8$tree_tip
 test<-c("NAF1",	"CUNP",	"CAF1")
 row.names(generalists_48) <- test
 row.names(generalists_8) <- test
-
+all_48 <- all_48_me
+all_8 <- all_8_me
 
 pglsModel <- gls(prop_DE_vs_CRPA ~ distance_km, correlation = corBrownian(phy = generalist_tree),
                  data = generalists_48, method = "ML")
@@ -512,6 +601,10 @@ nodelabels()
 plotTree(map_tree,offset=1,direction = "leftwards")
 nodelabels(c("",100,100,100,100,100,100,100),frame="none",adj=c(1.2,0),cex = 0.4 )
 add.scale.bar(0.6,7)
+#dev.off()
+
+#png("D:/Martin Lab/rna_2018/raxml/map_tree_cp_and_op.png", width = 6, height = 10, units = 'in', res = 1000,bg = "transparent")
+plotTree(tree,offset=1)
 #dev.off()
 
 

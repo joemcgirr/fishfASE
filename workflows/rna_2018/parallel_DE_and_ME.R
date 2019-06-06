@@ -375,12 +375,12 @@ for (i in c(1:4))
   nrow(opp_dir_m_dn)
   intersect(am_dn$related_accession, ap_dn$related_accession)
   
-  tiff(paste("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/parallel_",comp_names[i],".tiff", sep = ""), width = 4, height = 4, units = 'in', res = 1000)
+  #tiff(paste("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/parallel_",comp_names[i],".tiff", sep = ""), width = 4, height = 4, units = 'in', res = 1000)
   VennDiag <- euler(c("A" = ai, "B" = cans, "A&B" = bo), counts=TRUE)
   plt <- plot(VennDiag, alpha=1, lty = 1, col = "black",counts = TRUE, quantities = list(fontsize = 20, col = "white"),
               fill=c(gre,blu), labels = c("",""))#, main = comp_names[i])
   print(plt)
-  dev.off()
+  #dev.off()
   bars <- c(nrow(same_dir_up)+nrow(same_dir_dn),nrow(opp_dir_m_up)+nrow(opp_dir_m_dn))
   #png(paste("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/parallel_bars_",comp_names[i],".png", sep = ""), width = 4, height = 4, units = 'in', res = 1000)
   
@@ -405,7 +405,7 @@ pie(c(0.9655725,0.0344275), labels = c("",""), col = c("#B2C4D2",lir))
 
 
 # generic read counts for parallel expression
-tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/parallel_bars.tiff", width = 2.8, height = 2.8, units = 'in', res = 1000)
+#tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/parallel_bars.tiff", width = 2.8, height = 2.8, units = 'in', res = 1000)
 x <- c(10,30,30)
 par(mfrow=c(2,2))
 par(mai=c(0.2,0.4,0.2,0))
@@ -428,7 +428,7 @@ x <- c(20,30,10)
 par(mai=c(0.2,0.4,0.2,0))
 barplot(x, ylab = "", col = c(red,gre,blu), yaxt = "n")
 abline(v=0.06, lwd = 1.5)
-dev.off()
+#dev.off()
 
 
 

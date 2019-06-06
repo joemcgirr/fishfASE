@@ -465,13 +465,13 @@ library(ape)
 #write.table(b,"C:/Users/jmcgirr/Documents/all_2018_samples/48hpf_outlier_rm.txt", quote = FALSE, row.names = FALSE)
 
 setwd("C:/Users/jmcgirr/Documents/all_2018_samples/")
-comp <- "8dpf_outlier_rm"
-comp <- "48hpf_outlier_rm"
-comp <- "all_outlier_rm"
+comp <- "8dpf_outlier_rm_lake_rm"
+comp <- "48hpf_outlier_rm_lake_rm"
+comp <- "all_outlier_rm_lake_cross_rm"
 comp_file <- paste(comp , ".txt", sep = "")
 #comp_file <- "table_maker_master_outlier_rm.txt"
 all_cts <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/ase_data/all_samples_2018_counts_mrna_saf.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
-sample_list <- read.table(comp_file, header = TRUE, stringsAsFactors = FALSE)
+sample_list <- read.table(comp_file, header = TRUE, stringsAsFactors = FALSE, sep = "\t")
 keeps <- c("Geneid", sample_list$sample)
 keeper <- sample_list$sample
 cts <- all_cts[keeps]
@@ -482,7 +482,7 @@ head(cts)
 nrow(cts)
 
 
-colData <- as.matrix(read.table(comp_file ,header = TRUE,row.names=1))
+colData <- as.matrix(read.table(comp_file ,header = TRUE,row.names=1, sep = "\t"))
 head(colData)
 ncol(cts)
 nrow(colData)
@@ -491,7 +491,7 @@ nrow(colData)
 #{
 dds <- DESeqDataSetFromMatrix(countData = cts,
                               colData = colData,
-                              design= ~sequencing_round+f1+stage)
+                              design= ~sequencing_round+f1)
 #}else 
 #{
 dds <- DESeqDataSetFromMatrix(countData = cts,
@@ -514,7 +514,7 @@ norm_cts$Geneid <- rownames(norm_cts)
 #norm_cts_48 <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/norm_cts_48hpf_no_seq_round.txt", header=TRUE, stringsAsFactors = FALSE)
 #norm_cts_8 <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/norm_cts_8dpf.txt", header=TRUE, stringsAsFactors = FALSE)
 
-head(norm_cts_48)
+head(norm_cts)
 
 
 # PCA
@@ -526,27 +526,40 @@ dists <- dist(t(assay(rld)))
 plot(hclust(dists))
 
 # contrast groups
-results(dds, contrast=c("f1","CRPA","NCA"))
+#results(dds, contrast=c("f1","CRPA","NCA"))
 
+library(RColorBrewer)
+n <- 20
+qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
 
 #plotPCA(rld, intgroup=c("stage"))
 
-rld.sub <- rld[ , rld$stage %in% c("8dpf") ]
-plotPCA(rld.sub, intgroup=c("f1"))+theme_bw()
+#rld.sub <- rld[ , rld$stage %in% c("8dpf") ]
+plotPCA(rld, intgroup=c("f1"))+theme_bw()
 #+geom_point(aes(shape='cross_type'))+scale_shape_manual(values=c(25))
 
-pcaData <- plotPCA(rld.sub, intgroup=c("f1",'cross_type'), returnData=TRUE)
+pcaData <- plotPCA(rld, intgroup=c("f1",'parents_label', 'cross_type_label'), returnData=TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
-p1 <- ggplot(pcaData, aes(PC1, PC2, color=f1, shape=cross_type)) +
+p1 <- ggplot(pcaData, aes(PC1, PC2, color=parents_label, shape=cross_type_label)) +
   geom_point(size=3) +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
-  coord_fixed()+theme_bw()+scale_shape_manual(values=c(17, 16))
-#tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/supp/pca_8dpf.tiff", width = 6, height = 6, units = 'in', res = 1000)
+  coord_fixed()+theme_bw()+scale_shape_manual(values=c(17,4,15,16,8,18))+
+  scale_color_manual(values=col_vector)
+#tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/supp/pca_8dpf_labels.tiff", width = 6, height = 9, units = 'in', res = 1000)
 p1 
 #dev.off()
-#+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-#panel.background = element_blank(), axis.line = element_line(colour = "black"))
+tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/supp/pca_48hpf.tiff", width = 6, height = 9, units = 'in', res = 1000)
+ggplot(pcaData, aes(PC1, PC2, color=parents_label, shape=cross_type_label)) +
+  geom_point(size=4) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  coord_fixed()+theme_bw()+scale_shape_manual(values=c(17,4,15,16,8,18))+
+  scale_color_manual(values=col_vector)+
+  theme(legend.position = "none")+
+  coord_fixed(1.5)
+dev.off()
 
 # hierarchical clustering of samples and heatmap of sample similarities
 
@@ -1593,15 +1606,27 @@ st_mis_trans_genes<- c()
 mis_trans_genes<- c()
 sl_mis_trans_genes<- c()
 
-#subset_comps <- c(1,19)
+mis_comp_ups <- c()
+mis_comp_dns <- c()
+total_ase_amenable <- c()
+total_cis_s <- c()
+total_trans_s <- c()
+total_comp_s <- c()
+total_con_s <- c()
+total_mis_over_s <- c()
+total_mis_under_s <- c()
 
-#for (i in subset_comps)
-for (i in (1:nrow(inheritance_comps)))
+subset_comps <- c(5:15,20:31)
+#row_comp <- 23
+for (row_comp in subset_comps)
+#for (i in (1:nrow(inheritance_comps)))
 {
-  parent_pops1_name <- inheritance_comps$parent_pops1[i]
-  parent_pops2_name <- inheritance_comps$parent_pops2[i]
-  hy_name <- inheritance_comps$hybrids[i]
-  stage <- inheritance_comps$stage[i]
+  # collapse here for plots #
+  {
+  parent_pops1_name <- inheritance_comps$parent_pops1[row_comp]
+  parent_pops2_name <- inheritance_comps$parent_pops2[row_comp]
+  hy_name <- inheritance_comps$hybrids[row_comp]
+  stage <- inheritance_comps$stage[row_comp]
   parent_pops_v_hy  <- paste(DE_genes_dir, "DE_", parent_pops1_name,"_and_",parent_pops2_name, "_vs_",hy_name, "_",stage,"_genes",".csv",sep = "")
   parent_pops1_v_hy <- paste(DE_genes_dir, "DE_", parent_pops1_name, "_vs_",hy_name, "_",stage,"_genes",".csv",sep = "")
   parent_pops2_v_hy <- paste(DE_genes_dir, "DE_", parent_pops2_name, "_vs_",hy_name, "_",stage,"_genes",".csv",sep = "")
@@ -2311,6 +2336,8 @@ for (i in (1:nrow(inheritance_comps)))
   st_mis_trans_genes<- c(st_mis_trans_genes,paste(unique(intersect(mis$related_accession,trans$related_accession)), sep = ";",collapse=";"))
   
   
+  
+  
   # lenient (all heterozygous sites in hybrids)
   
   cis <- inheritance_and_ase[which(inheritance_and_ase$padj_p1p2 <= 0.05 & 
@@ -2403,7 +2430,117 @@ for (i in (1:nrow(inheritance_comps)))
   print(hy_name)
   print(stage)
   
-} 
+  }
+  # plot regulatory mechanisms
+  # cis/trans defined strictly
+  # comp defined super-lenient (no trans test)
+  
+  cis <- inheritance_and_ase[which(inheritance_and_ase$padj_p1p2 <= 0.05 & 
+                                     inheritance_and_ase$hyAse_all_h_no_p_alt_hom_in_p == "yes" &
+                                     inheritance_and_ase$sig_fisher == "no"),]
+
+  trans <- inheritance_and_ase[which(inheritance_and_ase$padj_p1p2 <= 0.05 & 
+                                       inheritance_and_ase$hyAse_all_h_no_p_alt_hom_in_p != "yes" &
+                                       inheritance_and_ase$sig_fisher == "yes"),]
+  
+  comp <-  inheritance_and_ase[which(inheritance_and_ase$padj_p1p2 > 0.05 & 
+                                       inheritance_and_ase$hyAse_all_h_no_p == "yes"),]
+  
+  mis_over  <- inheritance_and_ase[which(inheritance_and_ase$padj_ph <= 0.05 & inheritance_and_ase$lfc_ph > 0),]
+  mis_under <- inheritance_and_ase[which(inheritance_and_ase$padj_ph <= 0.05 & inheritance_and_ase$lfc_ph < 0),]
+  mis_over_comp  <- mis_over[mis_over$related_accession %in% comp$related_accession, ]
+  mis_under_comp <- mis_under[mis_under$related_accession %in% comp$related_accession, ]
+  mis_over  <- mis_over[! mis_over$related_accession %in% comp$related_accession, ]
+  mis_under <- mis_under[! mis_under$related_accession %in% comp$related_accession, ]
+  comp <-  comp[ ! comp$related_accession %in% mis_under_comp$related_accession, ]
+  comp <-  comp[ ! comp$related_accession %in% mis_over_comp$related_accession, ]
+  cat_genes <- c(cis$related_accession,trans$related_accession,comp$related_accession,mis_over_comp$related_accession, mis_under_comp$related_accession, mis_under$related_accession,mis_over$related_accession)
+  con <- inheritance_and_ase[which(inheritance_and_ase$padj_ph > 0.05),]
+  con <- con[ ! con$related_accession %in% cat_genes, ]
+  
+  cis[(nrow(cis)+1),]  <- c(rep("NA",length(cis)))
+  trans[(nrow(trans)+1),]  <- c(rep("NA",length(cis)))
+  comp[(nrow(comp)+1),]  <- c(rep("NA",length(cis)))
+  mis_over[(nrow(mis_over)+1),] <- c(rep("NA",length(cis)))
+  mis_over_comp[(nrow(mis_over_comp)+1),] <- c(rep("NA",length(cis)))
+  mis_under[(nrow(mis_under)+1),] <- c(rep("NA",length(cis)))
+  mis_under_comp[(nrow(mis_under_comp)+1),] <- c(rep("NA",length(cis)))
+  cis$ase_type             <- 1
+  trans$ase_type           <- 2
+  comp$ase_type            <- 3 
+  mis_over$ase_type        <- 4
+  mis_under$ase_type       <- 5
+  mis_over_comp$ase_type   <- 6  
+  mis_under_comp$ase_type  <- 7
+  con$ase_type             <- 8
+  cis$mis_comp             <-"n"
+  trans$mis_comp           <-"n"
+  comp$mis_comp            <-"n"
+  mis_over$mis_comp        <-"n"
+  mis_under$mis_comp       <-"n"
+  mis_over_comp$mis_comp   <-"y"
+  mis_under_comp$mis_comp  <-"y"
+  con$mis_comp             <-"n"
+  
+  ase_type <- rbind(con, mis_over, mis_under, cis, trans, comp,mis_over_comp,mis_under_comp)
+  head(ase_type)
+  nrow(ase_type)
+  cols_ase <- c(red,gre,"black",blu,blu,blu,blu,yel)
+  cols_ase <- cols_ase[ase_type$ase_type]
+  cool_genes_out_dir <- "C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/supp/reg_mechs/"
+  #cool_genes_out_dir <- "C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/"
+  
+  #tiff(paste(cool_genes_out_dir,hy_name,"_",stage,"_reg_mechs.tiff", sep = ""), width = 7, height = 7, units = 'in', res = 1000)
+  #tiff(paste(cool_genes_out_dir,hy_name,"_",stage,"_reg_mechs.tiff", sep = ""), width = 6, height = 4, units = 'in', res = 1000)
+  
+  plot(ase_type$lfc_p1p2, ase_type$lfc_ph, col = cols_ase, 
+  pch = c(16,24)[as.factor(ase_type$mis_comp)],bg = "black",
+  cex.axis=1.1, ylab = "", xlab = "", cex = 1.2, ylim = c(-2,2.5),xlim = c(-2.1,1.5))
+  abline(v=0, col = "black", lty = 3, lwd = 1.8)
+  abline(h=0, col = "black", lty = 3, lwd = 1.8)
+  total_genes <- nrow(ase_type)
+  cols_l <- c(yel,red,gre,"black",blu,blu)
+  #legend("topleft", inset=0,
+  #       c(paste("conserved ", round(((nrow(con)/total_genes)*100),2),"%",sep = ""),
+  #         paste("cis ", round(((nrow(cis)/total_genes)*100),2),"%",sep = ""),
+  #         paste("trans ", round(((nrow(trans)/total_genes)*100),2),"%",sep = ""),
+  #         paste("compensatory ", round(((nrow(comp)/total_genes)*100),2),"%",sep = ""),
+  #         paste("misregulated up ", round((((nrow(mis_over)+nrow(mis_over_comp))/total_genes)*100),2),"%",sep = ""),
+  #         paste("misregulated down ", round((((nrow(mis_under)+nrow(mis_under_comp))/total_genes)*100),2),"%",sep = "")),
+  #         cex = 0.9, fill=cols_l, horiz=FALSE, bty="n")
+  #dev.off()
+  
+  print(row_comp)
+  print(hy_name)
+  print(nrow(mis_under_comp)+nrow(mis_over_comp))
+  
+  
+  mis_comp_ups       <- c(mis_comp_ups       ,nrow(mis_over_comp))
+  mis_comp_dns       <- c(mis_comp_dns       ,nrow(mis_under_comp))
+  total_ase_amenable <- c(total_ase_amenable ,total_genes)
+  total_cis_s        <- c(total_cis_s        ,nrow(cis))
+  total_trans_s      <- c(total_trans_s      ,nrow(trans))
+  total_comp_s       <- c(total_comp_s       ,nrow(comp))
+  total_con_s        <- c(total_con_s        ,nrow(con))
+  total_mis_over_s   <- c(total_mis_over_s   ,nrow(mis_over)+nrow(mis_over_comp)  )
+  total_mis_under_s  <- c(total_mis_under_s  ,nrow(mis_under)+nrow(mis_under_comp))
+}
+
+summary_table <- data.frame(parent_pops1_name_s = parent_pops1_name_s ,
+                            parent_pops2_name_s = parent_pops2_name_s ,
+                            hy_name_s           = hy_name_s           ,
+                            stage_s             = stage_s             ,
+                            mis_comp_ups       = mis_comp_ups,            
+                            mis_comp_dns       = mis_comp_dns ,      
+                            total_ase_amenable = total_ase_amenable, 
+                            total_cis_s        = total_cis_s ,       
+                            total_trans_s      = total_trans_s ,     
+                            total_comp_s       = total_comp_s,       
+                            total_con_s        = total_con_s ,       
+                            total_mis_over_s   = total_mis_over_s ,  
+                            total_mis_under_s  = total_mis_under_s,  
+                            stringsAsFactors = FALSE)
+#write.table(summary_table,        "C:/Users/jmcgirr/Documents/all_2018_samples/ase_data/ase_and_mse/supplement_summary_regulatory_mechanisms.txt", row.names = FALSE, quote = FALSE, sep ="\t")
 
 strict_table <- data.frame(parent_pops1_name_s = parent_pops1_name_s ,
                            parent_pops2_name_s = parent_pops2_name_s ,
@@ -2481,70 +2618,21 @@ super_lenient_table <- data.frame(parent_pops1_name_s = parent_pops1_name_s ,
 
 
   
-  #con = yellow ="#f6c700"
-  #cis = orange = "#E77200"
-  #comp = pink = "#FF00CC"
-  #trans = black = "#000000"
-  #over_dom = red = #bd1e24
-  #under_dom = blue = #0067a7
-  #
-  
-  cols <- 	c("#f6c700", "#bd1e24", "#0067a7","#000000","#E77200","#FF00CC")
-  cols_ase <- cols[ase_type$ase_type]
-  
-  total_genes <- nrow(ase_type)
-  nrow(ase_type[which(ase_type$padj_p1p2 > 0.05),])
-  nrow(ase_type[which(ase_type$padj_p1p2 <= 0.05),])
-  con <- paste(round(((nrow(ase_type[which(ase_type$ase_type == 1),]) / total_genes) *100), digits = 2), "%", sep = "")
-  mis_over <-  paste(round(((nrow(ase_type[which(ase_type$ase_type == 2),]) / total_genes) *100), digits = 2), "%", sep = "")
-  mis_under <- paste(round(((nrow(ase_type[which(ase_type$ase_type == 3),]) / total_genes) *100), digits = 2), "%", sep = "")
-  cis <-   paste(round(((nrow(ase_type[which(ase_type$ase_type == 4),]) / total_genes) *100), digits = 2), "%", sep = "")
-  trans <-     paste(round(((nrow(ase_type[which(ase_type$ase_type == 5),]) / total_genes) *100), digits = 2), "%", sep = "")
-  comp <-   paste(round(((nrow(ase_type[which(ase_type$ase_type == 6),]) / total_genes) *100), digits = 2), "%", sep = "")
-  cols_l <-	c("#000000","#E77200","#f6c700","#FF00CC","#bd1e24","#0067a7")
-  
-  
-  #tiff(paste("D:/Martin Lab/rna_2018/ASE/plots/",hy_name, "_",stage,"ase.tiff", sep = ""), width = 6, height = 6, units = 'in', res = 300)
-  #par(mfrow=c(1,1))
-  plot(ase_type$lfc_p1p2, ase_type$lfc_ph, col = cols_ase, 
-       pch = c(16,17)[as.factor(ase_type$ase)],
-       cex = c(1, 1, 1, 1,1,1)[ase_type$ase_type],cex.axis=1.5, ylab = "", xlab = "", ylim = c(-2,1.6),xlim = c(-2,1.6))
-  #ylab = "log2 fold change parental species vs. hybrids",
-  #xlab = "log2 fold change generalists vs. molluscivores")
-  #legend("bottomleft", inset=0,
-  #       c(paste("cis", cis),
-  #         paste("trans", trans),
-  #         paste("conserved", con),
-  #         paste("compensatory", comp),
-  #         paste("overdominant", mis_over),
-  #         paste("underdominant", mis_under)),
-  #         cex = 1.4, fill=cols_l, horiz=FALSE, bty="n")
-  abline(v=0, col = "black", lty = 3, lwd = 1.8)
-  abline(h=0, col = "black", lty = 3, lwd = 1.8)
-  #dev.off()
-  
-  cols_b <- c("#f6c700", "#FF00CC","#0067a7", "#bd1e24","#E77200","#000000")
-  labs <- c("additive",paste(parent_pops1_name,"dominant", sep = " "),paste(parent_pops1_name,"dominant", sep = " "),"overdominant","underdominant", "conserved")
-  bars <- c(((nrow(ase_type[which(ase_type$ase_type == 1),]) / total_genes) *100), ((nrow(ase_type[which(ase_type$ase_type == 6),]) / total_genes) *100), ((nrow(ase_type[which(ase_type$ase_type == 3),]) / total_genes) *100),((nrow(ase_type[which(ase_type$ase_type == 2),]) / total_genes) *100),((nrow(ase_type[which(ase_type$ase_type == 5),]) / total_genes) *100),((nrow(ase_type[which(ase_type$ase_type == 4),]) / total_genes) *100))
-  
-  #tiff("D:/Martin Lab/RNA-seq/axm/post_reviews/ASE/plots/17dpf_bar.tiff", width = 6, height = 4, units = 'in', res = 1000)
-  b1 <- barplot(bars, las =1, horiz = TRUE, font.axis = 2, cex.axis=1.5, col = cols_b, xlim = c(0,b1$))
-  #barplot(bars, las =1, horiz = TRUE, font.axis = 2, cex.axis=1.5, col = cols_b)
-  
-  offset <- 10
-  text(y=b1[1,], x=((nrow(ase_type[which(ase_type$ase_type == 1),]) / total_genes) *100)+offset,con, font = 2, cex = 1)
-  text(y=b1[2,], x=((nrow(ase_type[which(ase_type$ase_type == 6),]) / total_genes) *100)+offset,comp, font = 2, cex = 1)
-  text(y=b1[3,], x=((nrow(ase_type[which(ase_type$ase_type == 3),]) / total_genes) *100)+offset,mis_under, font = 2, cex = 1)
-  text(y=b1[4,], x=((nrow(ase_type[which(ase_type$ase_type == 2),]) / total_genes) *100)+offset,mis_over, font = 2, cex = 1)
-  text(y=b1[5,], x=((nrow(ase_type[which(ase_type$ase_type == 5),]) / total_genes) *100)+offset,trans, font = 2, cex = 1)
-  text(y=b1[6,], x=((nrow(ase_type[which(ase_type$ase_type == 4),]) / total_genes) *100)+offset,cis, font = 2, cex = 1)
-  
-  
   
   
   
  
 #####
+######################################################
+######################################################
+##### plot reg mechanisms ############################
+######################################################
+
+  
+  
+  
+  
+##### 
 ###############################################
 ###############################################
 ############ visualize ase at cool genes ######
@@ -2890,7 +2978,7 @@ library(RColorBrewer)
 library(plotfunctions)
 library(circlize)
 
-high_go <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/high_level_GO_ai_all.csv", stringsAsFactors = FALSE, header = TRUE, sep = ",")
+high_go <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/high_level_GO_eil_human.csv", stringsAsFactors = FALSE, header = TRUE, sep = ",")
 head(high_go$High.level.GO.category)
 total_genes <- sum(high_go$N)
 slices <- c(high_go[which(high_go$High.level.GO.category == "Anatomical structure development "),][1,1],
@@ -2970,21 +3058,40 @@ dev.off()
 
 
 
-go <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/GO_enriched_ai_fst_dxy.csv", stringsAsFactors = FALSE, header = TRUE, sep = ",")
+go <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/GO_enriched_eil_human_subset.csv", stringsAsFactors = FALSE, header = TRUE, sep = ",")
 head(go)
-go <- go[order(go$Genes.in.list, decreasing = TRUE),]
+#go <- go[order(go$Genes.in.list, decreasing = TRUE),]
 
 
 pal = colorRampPalette(c(red, blu))
 go$order = findInterval(go$Enrichment.FDR, sort(go$Enrichment.FDR))
 
-tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/enriched_ai.tiff", width = 5, height = 5, units = 'in', res = 1000)
+#tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/enriched_eil.tiff", width = 5, height = 5, units = 'in', res = 1000)
 par(las=2) # make label text perpendicular to axis
 par(mar=c(5,15,4,2)) # increase y-axis margin.
-barplot(go$Genes.in.list, col=pal(nrow(go))[go$order],horiz=TRUE, names.arg=c(tolower(go$Functional.Category)), xaxt = 'n',cex.names=0.6)
-axis(1,c(0,2,4,6,8,10,12), las=1,cex.axis=0.7)
-gradientLegend(valRange=range(go$Enrichment.FDR), color = pal(nrow(go)),pos = c(9,15,10,20), n.seg=2,dec = 3, coords = TRUE)
-dev.off()
+barplot(go$Genes.in.list, col=pal(nrow(go))[go$order],horiz=TRUE, names.arg=c(tolower(go$Functional.Category)), 
+        xaxt = 'n',cex.names=0.9)
+axis(1,c(0,10,20,30,40), las=1,cex.axis=0.9)
+gradientLegend(valRange=range(0,0.05), color = pal(nrow(go)),side = 4, n.seg=2,dec = 2, coords = TRUE)
+#dev.off()
+
+
+go <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/GO_enriched_eil_human.csv", stringsAsFactors = FALSE, header = TRUE, sep = ",")
+head(go)
+#go <- go[order(go$Genes.in.list, decreasing = TRUE),]
+
+
+pal = colorRampPalette(c(red, blu))
+go$order = findInterval(go$Enrichment.FDR, sort(go$Enrichment.FDR))
+
+#tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/supp/enriched_eil_all.tiff", width = 10, height = 20, units = 'in', res = 1000)
+par(las=2) # make label text perpendicular to axis
+par(mar=c(5,15,4,2)) # increase y-axis margin.
+barplot(go$Genes.in.list, col=pal(nrow(go))[go$order],horiz=TRUE, names.arg=c(tolower(go$Functional.Category)), 
+        cex.names=0.3)
+#axis(1,c(0,10,20,30,40), las=1,cex.axis=0.9)
+#gradientLegend(valRange=range(0,0.05), color = pal(nrow(go)),side = 4, n.seg=2,dec = 2, coords = TRUE)
+#dev.off()
 
 go <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/GO_enriched_pmp_fst_dxy.csv", stringsAsFactors = FALSE, header = TRUE, sep = ",")
 head(go)
@@ -3033,6 +3140,7 @@ kelly()
 ###############################################
 crosses <- c("caxcm","caxcp","oaxom", "oaxop", "cmxcp", "opxom","axm","axp","mxp")
 crosses <- c("axm","axp","mxp")
+crosses <- c("caxoa","cmxom","opxcp")
 i <- 1
 for (i in c(1:length(crosses)))
 {
@@ -3075,7 +3183,7 @@ pops <- c("ca","cm","cp","oa","om","op")
 for(pop in pops)
 {
  
-sweed <- read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/",pop,"_pop_bottle_58_sweeps_99_percentile.txt",sep = ""), header = F, stringsAsFactors = FALSE)
+sweed <- read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/SweeD_Report.",pop,"_pop_bottle_58_grid_500_sweeps.txt",sep = ""), header = F, stringsAsFactors = FALSE)
 colnames(sweed) <- c("CHROM","START","CLR","alpha")
 sweed$END <- sweed$START +1
 setDT(sweed)
@@ -3083,7 +3191,7 @@ c <- foverlaps(sweed, mrna_table,by.x = c("CHROM", "START", "END"),by.y = c("CHR
 c <- as.data.frame(c)
 rownames(c) <- NULL
 head(c)
-write.table(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/",pop,"_pop_bottle_58_sweeps_99_genes.txt",sep = ""), row.names = FALSE, quote = FALSE, sep = "\t")
+write.table(c,paste("C:/Users/jmcgirr/Documents/all_2018_samples/sweed/correct_seq/SweeD_Report.",pop,"_pop_bottle_58_grid_500_sweeps_genes.txt",sep = ""), row.names = FALSE, quote = FALSE, sep = "\t")
 
 }
 
@@ -3141,3 +3249,165 @@ intersect(gem_cans,intersect(intersect(omxop_8_ai ,omxop_sweed),intersect(omxop_
 
 
 
+
+#####
+###############################################
+###############################################
+############ phenotypes #######################
+###############################################
+
+library(ggplot2)
+library(ggpubr)
+require(gridExtra)
+add <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/GO/phenotype_data/adductors.csv", header = TRUE, stringsAsFactors = FALSE)
+iso <- read.csv("C:/Users/jmcgirr/Documents/all_2018_samples/GO/phenotype_data/isotopes.csv", header = TRUE, stringsAsFactors = FALSE)
+head(add)
+cols <- c(red,gre,blu)
+
+add$log_SL<- log(add$SL)
+add$log_a1 <- log(add$cuberoot_A1)
+a1_lm <- lm(add$log_a1~add$log_SL)
+add$resid_a1 <- data.frame(a1_lm$residuals)[,1]
+
+
+p1 <- ggboxplot(add, "species", "resid_a1",color = cols, ylab = "size corrected adductor muscle mass\n", xlab="species")+
+  #stat_compare_means(method = "anova", label.y = max(add$cuberoot_A1)+(max(add$cuberoot_A1)*.05),label.x = 2.25)+      # Add global p-value
+  stat_compare_means(label = "p.signif", hide.ns = TRUE,method = "t.test",ref.group = ".all.", label.y = (max(add$resid_a1)+(max(add$resid_a1)*.01)))+
+  scale_x_discrete(labels= c("generalist","molluscivore","scale-eater"))#+
+  #scale_y_continuous(limits=c(-0.2, 0.3))
+an <- aov(add$cuberoot_A1~add$species)
+an <- aov(add$resid_a1~add$species)
+
+summary(an)
+TukeyHSD(an)
+tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/fig_5_can_genes/adductor_size_corr.tiff", width = 8.5, height = 3, units = 'in', res = 1000)
+p1
+dev.off()
+p1 <- ggboxplot(iso, "species", "d15N",color = cols, ylab = "delta-N-15\n", xlab="")+
+  #stat_compare_means(method = "anova", label.y = max(add$cuberoot_A1)+(max(add$cuberoot_A1)*.05),label.x = 2.25)+      # Add global p-value
+  stat_compare_means(label = "p.signif", hide.ns = TRUE,method = "t.test",ref.group = ".all.", label.y = (max(iso$d15N)+(max(iso$d15N)*.01)))+
+  scale_x_discrete(labels= c("generalist","molluscivore","scale-eater"))
+an <- aov(iso$d15N~iso$species)
+summary(an)
+TukeyHSD(an)
+#tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/fig_5_can_genes/dn15.tiff", width = 8.5, height = 3, units = 'in', res = 1000)
+p1
+#dev.off()
+
+
+# introgression cans
+feats <- read.delim("D:/Cyprinodon/GCF_000732505.1_C_variegatus-1.0_feature_table.txt",header = TRUE,stringsAsFactors = FALSE)
+feats <- feats[which(feats$feature == "gene" | feats$feature == "mRNA"),]
+feats <- feats[c("genomic_accession", "start", "end","symbol")]
+adapt_intro <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/MvP_adaptive_introgession_regions.txt", header = TRUE, stringsAsFactors = FALSE)
+setDT(adapt_intro)
+setDT(feats)
+setkey(feats)
+c <- foverlaps(adapt_intro, feats,by.x = c("genomic_accession", "start", "end"),by.y = c("genomic_accession", "start", "end"),type="any", nomatch=0L)
+c <- as.data.frame(c)
+head(c)
+unique(c$symbol)
+#####
+###############################################
+###############################################
+## avgerage fst/dxy/pi, 90th dxy 10th taj ########
+###############################################
+
+comp_files <- c("am","ap","mp","caxcm","caxcp","cmxcp","oaxom","oaxop","omxop",
+                "caxoa","cmxom","cpxop")
+ind_files  <- c("a","m","p","ca","cm","cp","oa","om","op")
+comp_file <- "cpxop"
+ind_file <- "a"
+
+dxy_mean   <- c()
+dxy_90     <- c()
+pi_simon_a <- c()
+pi_simon_b <- c()
+fst_mean   <- c()
+fixed      <- c()
+for (comp_file in comp_files)
+{
+  
+  dxy <- read.csv(paste("D:/Martin Lab/rna_2018/fst/dna/",comp_file,"_popgen_dna_stats_corr_dxy.csv", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  fst <- read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",comp_file,"_fst", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  fst <- fst[which(fst$WEIR_AND_COCKERHAM_FST >= 0 & fst$WEIR_AND_COCKERHAM_FST <=1),]
+  dxy_mean <- c(dxy_mean,mean(dxy$corr_dxy))
+  dxy_90 <- c(dxy_90, quantile(dxy$corr_dxy,.9)[[1]]) 
+  pi_simon_a <- c(pi_simon_a,mean(dxy$corr_pi_a))
+  pi_simon_b <- c(pi_simon_b,mean(dxy$corr_pi_b))
+  fst_mean <- c(fst_mean, mean(fst$WEIR_AND_COCKERHAM_FST))
+  fixed <- c(fixed,nrow(fst[which(fst$WEIR_AND_COCKERHAM_FST == 1),]))
+  
+} 
+comp_table <- data.frame(comps = comp_files,
+                         dxy_mean  = dxy_mean  ,  
+                         dxy_90    = dxy_90    ,
+                         pi_simon_a= pi_simon_a,
+                         pi_simon_b= pi_simon_b,
+                         fst_mean  = fst_mean  ,
+                         fixed = fixed,
+                         stringsAsFactors = FALSE)
+#write.table(comp_table,"C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/pop_gen_summary_comps.txt", row.names = FALSE, quote = FALSE, sep = "\t")
+
+taj_mean <- c()
+taj_10   <- c()
+pi_mean  <- c()
+for (ind_file in ind_files)
+{  
+  taj <- read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",ind_file,"_taj_d_20kb.txt.Tajima.D", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  pi  <- read.table(paste("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/",ind_file,"_pi_20kb.txt.windowed.pi", sep = ""), header = TRUE, stringsAsFactors = FALSE)
+  taj <- na.omit(taj)
+  pi  <- na.omit(pi)
+  taj_mean <- c(taj_mean,mean(taj$TajimaD))
+  taj_10   <- c(taj_10,quantile(taj$TajimaD,.1)[[1]])
+  pi_mean  <- c(pi_mean,mean(pi$PI))
+  
+  
+}
+ind_table <- data.frame(ind_files = ind_files,
+                        taj_mean =taj_mean ,
+                        taj_10   =taj_10   ,
+                        pi_mean  =pi_mean  ,
+                        stringsAsFactors = FALSE)
+#write.table(ind_table,"C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/pop_gen_summary_inds.txt", row.names = FALSE, quote = FALSE, sep = "\t")
+
+comp_table <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/pop_gen_summary_comps.txt", stringsAsFactors = FALSE, header = TRUE)
+ind_table <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/pop_gen_summary_inds.txt", stringsAsFactors = FALSE, header = TRUE)
+
+barplot(comp_table$fst_mean, names.arg = comp_table$comps,ylab = "genome-wide mean Fst", cex.names = .9)
+barplot(comp_table$dxy_mean, names.arg = comp_table$comps,ylab = "genome-wide mean Dxy", cex.names = .9)
+
+barplot(ind_table$pi_mean, names.arg = ind_table$ind_files, col = c(red,gre,blu,red,gre,blu,red,gre,blu),
+        ylab = "genome-wide mean pi")
+barplot(ind_table$taj_mean, names.arg = ind_table$ind_files, col = c(red,gre,blu,red,gre,blu,red,gre,blu),
+        ylab = "genome-wide mean Tajima's D")
+
+
+
+library(ggplot2)
+library(vioplot)
+dxy <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/dxy_master.txt", header = TRUE, stringsAsFactors = FALSE)
+dxy <- dxy[, -c(1:4)] 
+pi <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/fst_dna/pi_master.txt", header = TRUE, stringsAsFactors = FALSE)
+pi <- pi[, -c(1:4)] 
+
+vioplot(dxy, names = c("am","ap","mp","caxcm","caxcp","cmxcp","oaxom","oaxop","omxop","caxoa","cmxom","cpxop"), 
+        cex.names = 0.8, ylab = "genome-wide mean Dxy", h=0.0001)
+vioplot(pi, names = c("a","m","p","ca","cm","cp","oa","om","op"), 
+        cex.names = 0.8, ylab = "genome-wide mean pi", h=0.0003,
+        col = c(red,gre,blu,red,gre,blu,red,gre,blu))
+
+
+
+ggplot(dxy, aes()) +
+  geom_violin()
+
+p <- ggplot(dxy, aes(x=type, y=lfc_ph)) + 
+  geom_violin(trim = TRUE)
+p+ scale_fill_manual(values=c("#bd1e24", "#0067a7")) + theme(axis.text.y = element_text(size=18, color = '#000000'),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                                                             panel.background = element_blank(),axis.line = element_line(colour = "black"),
+                                                             axis.text.x = element_text(size=18, color = '#000000'), legend.position="none",
+                                                             axis.title.y=element_blank(),axis.title.x=element_blank()) + stat_summary(fun.data=data_summary, col = "black")
+
+
+#####
