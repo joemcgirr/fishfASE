@@ -8,6 +8,7 @@
 wk_dir <- "C:/Users/jmcgirr/Documents/remote_pups/GEMMA/"
 traits <- c("jaw","pigment", "nose_height", "nose_length")
 sizes <- read.table("D:/Martin Lab/lots_of_pups_project/GEMMA/asm.racon.scaffsizes.txt", header=FALSE, stringsAsFactors = F)
+genes <- read.table("D:/Martin Lab/lots_of_pups_project/c_brontotheroides.all.renamed.putative_function.genes_only.reformated.known.gff", stringsAsFactors = FALSE)
 
 
 #if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -23,10 +24,10 @@ bins <- sizes %>% as_granges() %>% tile_ranges(width = 20000L)
 #trait <- "jaw"
 for (trait in traits)
 {
-  snp_params <- read.table(paste(wk_dir,"mean_params_",trait,"_.bed", sep = ""), header = FALSE, row.names = NULL, stringsAsFactors = FALSE)
+  snp_params <- read.table(paste(wk_dir,"mean_params_",trait,".bed", sep = ""), header = FALSE, row.names = NULL, stringsAsFactors = FALSE)
   colnames(snp_params) <- c("seqnames", "start","end","id","alpha","beta","gamma")
   snp_params$id <- NULL
-  #write.table(snp_params, paste(wk_dir,trait,"_mean_10_runs.txt", sep = ""), quote = FALSE, row.names = FALSE, sep = '\t')
+  write.table(snp_params, paste(wk_dir,trait,"_mean_10_runs.txt", sep = ""), quote = FALSE, row.names = FALSE, sep = '\t')
   print(trait)
   print('top hits snps')
   print(head(snp_params[order(snp_params$gamma,decreasing = TRUE),]))
@@ -34,12 +35,12 @@ for (trait in traits)
   snps <- snp_params %>% as_granges()  %>% filter_by_overlaps(bins)
   sums <- bins %>%
     join_overlap_inner(snps) %>%
-    disjoin_ranges(n = n(), sum_alpha_20kb = sum(alpha), 
+    disjoin_ranges(sum_alpha_20kb = sum(alpha), 
                    sum_beta_20kb = sum(beta), 
                    sum_gamma_20kb = sum(gamma))
   
   sums <-  as(sums, "data.frame")
-  #write.table(sums, paste(wk_dir,trait,"_mean_10_runs_sum_20kb_windows.txt", sep = ""), quote = FALSE, row.names = FALSE, sep = '\t')
+  write.table(sums, paste(wk_dir,trait,"_mean_10_runs_sum_20kb_windows.txt", sep = ""), quote = FALSE, row.names = FALSE, sep = '\t')
   print('top hits windows')
   print(head(sums[order(sums$sum_gamma_20kb,decreasing = TRUE),]))
 }
@@ -65,11 +66,11 @@ for (trait in traits)
   sums <- sums[order(sums$sum_gamma_20kb, decreasing = TRUE),]
   #write.table(sums, paste(wk_dir,trait,"_mean_10_runs_sum_20kb_windows_genes.txt", sep = ""), quote = FALSE, row.names = FALSE, sep = '\t')
   
-  snp_thresh <- quantile(snps$gamma,.999)[[1]]
+  snp_thresh <- quantile(snps$gamma,.99)[[1]]
   snps <- snps[which(snps$gamma >= snp_thresh),]
   #write.table(snps, paste(wk_dir,trait,"_mean_10_runs_genes_99th_sig.txt", sep = ""), quote = FALSE, row.names = FALSE, sep = '\t')
-  sum_thresh <- quantile(sums$sum_gamma_20kb,.999)[[1]]
+  sum_thresh <- quantile(sums$sum_gamma_20kb,.99)[[1]]
   sums <- sums[which(sums$sum_gamma_20kb >= sum_thresh),]
-  #write.table(sums, paste(wk_dir,trait,"_mean_10_runs_sum_20kb_windows_genes_99.9th_sig.txt", sep = ""), quote = FALSE, row.names = FALSE, sep = '\t')
+  write.table(sums, paste(wk_dir,trait,"_mean_10_runs_sum_20kb_windows_genes_99th_sig.txt", sep = ""), quote = FALSE, row.names = FALSE, sep = '\t')
   
 }
