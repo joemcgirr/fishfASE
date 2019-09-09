@@ -3098,13 +3098,13 @@ head(go)
 go <- go[order(go$Genes.in.list, decreasing = TRUE),]
 go$order = findInterval(go$Enrichment.FDR, sort(go$Enrichment.FDR))
 
-tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/enriched_pmp.tiff", width = 5, height = 5, units = 'in', res = 1000)
+#tiff("C:/Users/jmcgirr/Documents/all_2018_samples/manuscript_figs/enriched_pmp.tiff", width = 5, height = 5, units = 'in', res = 1000)
 par(las=2) # make label text perpendicular to axis
 par(mar=c(5,15,4,2)) # increase y-axis margin.
 barplot(go$Genes.in.list, col=pal(nrow(go))[go$order],horiz=TRUE, names.arg=c(tolower(go$Functional.Category)), xaxt = 'n',cex.names=0.58)
 axis(1,c(0,2,4,6,8,10,12,14), las=1,cex.axis=0.7)
 gradientLegend(valRange=range(go$Enrichment.FDR), color = pal(nrow(go)),pos = c(9,15,10,20), n.seg=2,dec = 3, coords = TRUE)
-dev.off()
+#dev.off()
 
 
 
