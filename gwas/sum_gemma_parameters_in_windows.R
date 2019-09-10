@@ -5,7 +5,7 @@
 # set working directory / trait names / .gff file directory / scaffold sizes file directory
 #------------------------------------------------------------------------------------------
 
-wk_dir <- "C:/Users/jmcgirr/Documents/remote_pups/GEMMA/"
+wk_dir <- "C:/Users/jmcgirr/Documents/remote_pups/GEMMA/osprey/"
 traits <- c("jaw","pigment", "nose_height", "nose_length")
 sizes <- read.table("D:/Martin Lab/lots_of_pups_project/GEMMA/asm.racon.scaffsizes.txt", header=FALSE, stringsAsFactors = F)
 genes <- read.table("D:/Martin Lab/lots_of_pups_project/c_brontotheroides.all.renamed.putative_function.genes_only.reformated.known.gff", stringsAsFactors = FALSE)
