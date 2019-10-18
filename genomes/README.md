@@ -9,7 +9,9 @@
 ## 1. unzip, trim, and align reads
 
 > gzip -d sample.fq.gz
+>
 > trim_galore -q 20 --paired --illumina sample_R1.fq sample_R2.fq
+>
 > bwa mem -aM -t 4 -R "@RG\\tID:group1\\tSM:'+infile+'\\tPL:illumina\\tLB:lib1" reference.fasta sample_trim_R1.fq sample_trim_R2.fq > sample.sam
 > samtools view -Shu sample.sam > sample.bam
 > samtools index sample.bam
