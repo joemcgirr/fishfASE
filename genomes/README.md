@@ -1,6 +1,7 @@
-# genomic analyses
-## jupyter notebook generates scripts to:
+# Genomic Analyses
+## genomes.ipynb jupyter notebook generates scripts to:
 1. trim and align reads
+2. deduplicate .bam files
 2. call snps with gatk 3.8
 3. calculate fst with vcftools
 4. 
@@ -13,18 +14,28 @@
 > trim_galore -q 20 --paired --illumina sample_R1.fq sample_R2.fq
 >
 > bwa mem -aM -t 4 -R "@RG\\tID:group1\\tSM:'+infile+'\\tPL:illumina\\tLB:lib1" reference.fasta sample_trim_R1.fq sample_trim_R2.fq > sample.sam
+>
 > samtools view -Shu sample.sam > sample.bam
+>
 > samtools index sample.bam
+>
 > samtools sort sample.bam -o sample.sort.bam
+>
 > samtools index sample.sort.bam
+>
 > rm sample.sam
+>
 > rm sample.bam
 
-###  deduplicate and call snps
-#### java -Xmx10g -jar picard.jar MarkDuplicates INPUT=sample.sort.bam OUTPUT=sample.sort.dedup.bam METRICS_FILE=sample.metrics.txt MAX_FILE_HANDLES=1000
-#### samtools index sample.sort.dedup.bam
-#### gatk -T HaplotypeCaller -ERC GVCF -drf DuplicateRead -R reference.fasta -I sample.sort.dedup.bam -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 4 -o sample_raw_variants.g.vcf
-#### gatk -T GenotypeGVCFs -R reference.fasta --variant sample1_raw_variants.g.vcf --variant sample2_raw_variants.g.vcf -o merged_raw_variants.vcf
+## 2. deduplicate .bam files with picard.jar
+> java -Xmx10g -jar picard.jar MarkDuplicates INPUT=sample.sort.bam OUTPUT=sample.sort.dedup.bam METRICS_FILE=sample.metrics.txt MAX_FILE_HANDLES=1000
+>
+> samtools index sample.sort.dedup.bam
+
+## 3. call snps with gatk 3.8
+> gatk -T HaplotypeCaller -ERC GVCF -drf DuplicateRead -R reference.fasta -I sample.sort.dedup.bam -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 4 -o sample_raw_variants.g.vcf
+>
+> gatk -T GenotypeGVCFs -R reference.fasta --variant sample1_raw_variants.g.vcf --variant sample2_raw_variants.g.vcf -o merged_raw_variants.vcf
 
 
 ## Species matched to sample name
