@@ -45,6 +45,8 @@ gene$geneIndex <- gene$GeneID
 gene$alleleOneCount <- gene$refCount
 gene$alleleTwoCount <- gene$altCount
 gene$aseIndex <- paste(gene$geneIndex, gene$snpIndex, sep = ":")
+gene$zero_counts <- paste(gene$refCount, gene$altCount, sep= ":")
+gene <- gene %>% filter(zero_counts != "0:0")
 cts <- gene[c("geneIndex", "snpIndex","alleleOneCount","alleleTwoCount","refAllele","altAllele", "chrom","position","aseIndex")]
 
 # change aseID=cts$aseIndex to aseID=cts$geneIndex for gene/exon level ase rather than snp level
