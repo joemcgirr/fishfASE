@@ -4,9 +4,10 @@
 2. call snps with gatk 3.8
 3. remove biased reads with WASP
 4. phase reads
-5. output allele counts
+5. calculate quality metrics with RseQC
 6. create gene feature file with stringtie
-7. run mbased for allele specific expression
+7. count reads with featureCounts
+8. run mbased for allele specific expression
 
 
 # Commands
