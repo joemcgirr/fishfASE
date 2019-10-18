@@ -2,9 +2,9 @@
 ## genomes.ipynb jupyter notebook generates scripts to:
 1. trim and align reads
 2. deduplicate .bam files
-2. call snps with gatk 3.8
-3. calculate fst with vcftools
-4. 
+3. call snps with gatk 3.8
+4. calculate fst with vcftools
+
 
 # Commands
 ## 1. unzip, trim, and align reads
