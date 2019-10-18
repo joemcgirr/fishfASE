@@ -3,8 +3,11 @@
 1. trim and align reads
 2. deduplicate .bam files
 3. call snps with gatk 3.8
-4. calculate fst with vcftools
-
+4. calculate Fst, Tajima's D, and pi with vcftools
+5. calculate Dxy with simon martin scripts
+6. find hard sweeps with SweeD
+7. create RaxML plylogeny
+8. GWAS with GEMMA
 
 # Commands
 ## 1. unzip, trim, and align reads
@@ -36,6 +39,13 @@
 > gatk -T HaplotypeCaller -ERC GVCF -drf DuplicateRead -R reference.fasta -I sample.sort.dedup.bam -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 4 -o sample_raw_variants.g.vcf
 >
 > gatk -T GenotypeGVCFs -R reference.fasta --variant sample1_raw_variants.g.vcf --variant sample2_raw_variants.g.vcf -o merged_raw_variants.vcf
+
+## 4. calculate Fst, Tajima's D, and pi with vcftools
+## 5. calculate Dxy with simon martin scripts
+## 6. find hard sweeps with SweeD
+## 7. create RaxML plylogeny
+## 8. GWAS with GEMMA
+
 
 
 ## Species matched to sample name
