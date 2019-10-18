@@ -1,10 +1,31 @@
 # genomic analyses
-## generate scripts to:
+## jupyter notebook generates scripts to:
 1. trim and align reads
 2. call snps with gatk 3.8
 3. calculate fst with vcftools
 4. 
 
+# Commands
+## 1. unzip, trim, and align reads
+
+> gzip -d sample.fq.gz
+> trim_galore -q 20 --paired --illumina sample_R1.fq sample_R2.fq
+> bwa mem -aM -t 4 -R "@RG\\tID:group1\\tSM:'+infile+'\\tPL:illumina\\tLB:lib1" reference.fasta sample_trim_R1.fq sample_trim_R2.fq > sample.sam
+> samtools view -Shu sample.sam > sample.bam
+> samtools index sample.bam
+> samtools sort sample.bam -o sample.sort.bam
+> samtools index sample.sort.bam
+> rm sample.sam
+> rm sample.bam
+
+###  deduplicate and call snps
+#### java -Xmx10g -jar picard.jar MarkDuplicates INPUT=sample.sort.bam OUTPUT=sample.sort.dedup.bam METRICS_FILE=sample.metrics.txt MAX_FILE_HANDLES=1000
+#### samtools index sample.sort.dedup.bam
+#### gatk -T HaplotypeCaller -ERC GVCF -drf DuplicateRead -R reference.fasta -I sample.sort.dedup.bam -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 4 -o sample_raw_variants.g.vcf
+#### gatk -T GenotypeGVCFs -R reference.fasta --variant sample1_raw_variants.g.vcf --variant sample2_raw_variants.g.vcf -o merged_raw_variants.vcf
+
+
+## Species matched to sample name
 San Salvador Island Generalists
 ["RHPA1","SPPA1","CRPA3","MRKA1","PIGA3","WDPA1","OSPA4","ME2A2","OSPA7","OYSA1","PIGA1","OSPA6","OSPA5","CRPA1","MERA2","GNYA1","LILA1","ME2A1","GREA1","OSPA1","OSPA9","OYSA2","CLRA1","OSPA11","NLLA1","OSPA13","GREA2","OSPA12","OSPA8","PAIA1","MERA3","OSPA10"]
 ### San Salvador Island Molluscivores
@@ -20,21 +41,3 @@ San Salvador Island Generalists
 fdir = "/pine/scr/j/m/jmcgirr/pupfish_genomes/Caribbean_pups/"
 ### San Salvador Island Breeders Used to Generate F1s for RNAseq
 ["CRPM1001","CRPP1000","CRPM1000","NCCA1000","CRPP1001","CRPA1000","OSPM1001","CRPA1001","CUNP10.2","OSPA1001","OSPP1000","OSPA1000","CRPA1003","OSPM1000","OSPP1001"]
-
-> This is a blockquote.
-### unzip, trim, align
-#### gzip -d sample.fq.gz
-#### trim_galore -q 20 --paired --illumina sample_R1.fq sample_R2.fq
-#### bwa mem -aM -t 4 -R "@RG\\tID:group1\\tSM:'+infile+'\\tPL:illumina\\tLB:lib1" reference.fasta sample_trim_R1.fq sample_trim_R2.fq > sample.sam
-#### samtools view -Shu sample.sam > sample.bam
-#### samtools index sample.bam
-#### samtools sort sample.bam -o sample.sort.bam
-#### samtools index sample.sort.bam
-#### rm sample.sam
-#### rm sample.bam
-
-###  deduplicate and call snps
-#### java -Xmx10g -jar picard.jar MarkDuplicates INPUT=sample.sort.bam OUTPUT=sample.sort.dedup.bam METRICS_FILE=sample.metrics.txt MAX_FILE_HANDLES=1000
-#### samtools index sample.sort.dedup.bam
-#### gatk -T HaplotypeCaller -ERC GVCF -drf DuplicateRead -R reference.fasta -I sample.sort.dedup.bam -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 4 -o sample_raw_variants.g.vcf
-#### gatk -T GenotypeGVCFs -R reference.fasta --variant sample1_raw_variants.g.vcf --variant sample2_raw_variants.g.vcf -o merged_raw_variants.vcf
