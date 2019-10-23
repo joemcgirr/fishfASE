@@ -5,9 +5,8 @@
 3. remove biased reads with WASP
 4. phase reads and output snp table
 5. calculate quality metrics with RseQC
-6. create gene feature file with stringtie
-7. count reads with featureCounts
-8. run mbased for allele specific expression
+6. count reads with featureCounts
+7. run mbased for allele specific expression
 
 
 # Commands
@@ -85,3 +84,10 @@ read_duplication.py -i sample.bam -o sample_dups
 read_GC.py -i sample.bam -o sample_gc
 ```
 
+## 6. count reads with featureCounts
+> see [subread documentation](http://subread.sourceforge.net/) for details
+```
+featureCounts -p -a gene_features.saf -F SAF -B -C -G reference.fasta -s 2 -T 8 -o feature_counts.txt sample_1.bam sample_2.bam
+```
+
+## 7. run mbased for allele specific expression
