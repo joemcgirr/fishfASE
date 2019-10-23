@@ -26,6 +26,7 @@ rm sample.bam
 ## 2. deduplicate .bam files with picard.jar
 ```
 java -Xmx10g -jar picard.jar MarkDuplicates INPUT=sample.sort.bam OUTPUT=sample.sort.dedup.bam METRICS_FILE=sample.metrics.txt MAX_FILE_HANDLES=1000
+
 samtools index sample.sort.dedup.bam
 ```
 ## 3. call snps with gatk 3.8
@@ -39,13 +40,24 @@ vcftools --vcf merged_raw_variants.vcf --maf 0.05 --max-missing 0.9 --recode --o
 ## 4. calculate Fst, Tajima's D, and pi with vcftools
 ```
 vcftools --vcf filtered_snps.vcf --keep populations_1_and_2.txt --out population_1_vs_2.weir.fst --weir-fst-pop population_1.txt --weir-fst-pop population_2.txt
+
+vcftools --vcf filtered_snps.vcf --TajimaD 20000 --out taj_d_20kb_windows.txt 
+
+vcftools --vcf filtered_snps.vcf --window-pi 20000 --out pi_20kb_windows.txt
+
+```
+> bash commands to remove negative values from Fst output and calculate genome-wide mean Fst
+```
 sed \'s/-[0-9].*/0/g\' population_1_vs_2.weir.fst | sed \'s/-nan/0/g\' > population_1_vs_2.weir.fst
 awk -F\'\\t\' \'{ sum += $3 } END { print sum / NR }\' population_1_vs_2.weir.fst > genome_wide_avg.txt
 
 ```
-
-
 ## 5. calculate Dxy with simon martin scripts
+> see [simonhmartin/genomics_general](https://github.com/simonhmartin/genomics_general/tree/master/VCF_processing) for `parseVCF.py` and `popgenWindows.py`
+```
+python parseVCF.py -i input.vcf.gz --skipIndels --minQual 30 --gtf flag=DP min=5 | bgzip > output.geno.gz
+python popgenWindows.py -w 10000 -m 10 -g output.geno.gz -o popgen_stats.csv -f phased -T 4 -p population_1 sample_1 sample_2 -p population_2.txt sample_3 sample_4
+```
 ## 6. find hard sweeps with SweeD
 ## 7. create RaxML plylogeny
 ## 8. GWAS with GEMMA
