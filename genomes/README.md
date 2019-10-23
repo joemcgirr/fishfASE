@@ -39,8 +39,16 @@
 > gatk -T HaplotypeCaller -ERC GVCF -drf DuplicateRead -R reference.fasta -I sample.sort.dedup.bam -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 4 -o sample_raw_variants.g.vcf
 >
 > gatk -T GenotypeGVCFs -R reference.fasta --variant sample1_raw_variants.g.vcf --variant sample2_raw_variants.g.vcf -o merged_raw_variants.vcf
+>
+>vcftools --vcf merged_raw_variants.vcf --maf 0.05 --max-missing 0.9 --recode --out filtered_snps.vcf
 
 ## 4. calculate Fst, Tajima's D, and pi with vcftools
+`code`
+vcftools --vcf filtered_snps.vcf --keep populations_1_and_2.txt --out population_1_vs_2.weir.fst --weir-fst-pop population_1.txt --weir-fst-pop population_2.txt
+sed \'s/-[0-9].*/0/g\' population_1_vs_2.weir.fst | sed \'s/-nan/0/g\' > population_1_vs_2.weir.fst
+awk -F\'\\t\' \'{ sum += $3 } END { print sum / NR }\' population_1_vs_2.weir.fst > genome_wide_avg.txt
+
+
 ## 5. calculate Dxy with simon martin scripts
 ## 6. find hard sweeps with SweeD
 ## 7. create RaxML plylogeny
