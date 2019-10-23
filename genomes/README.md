@@ -1,6 +1,6 @@
 # Genomic Analyses
 ## genomes.ipynb jupyter notebook generates scripts to:
-1. trim and align reads
+1. trim and align reads [create an anchor](#anchors-in-markdown)
 2. deduplicate .bam files
 3. call snps with gatk 3.8
 4. calculate Fst, Tajima's D, and pi with vcftools
