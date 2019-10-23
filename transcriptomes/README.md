@@ -12,8 +12,23 @@
 
 # Commands
 ## 1. unzip, trim, and align reads
-
-> gzip -d sample.fq.gz
->
-> trim_galore -q 20 --paired --illumina sample_R1.fq sample_R2.fq
->
+```
+gzip -d sample.fq.gz
+trim_galore -q 20 --paired --illumina sample_R1.fq sample_R2.fq
+```
+> create genome directory with STAR
+```
+STAR --runThreadN 4 \
+--runMode genomeGenerate 
+--genomeDir /path/to/genome_dir \
+--genomeFastaFiles /path/to/reference.fasta \
+--sjdbOverhang 149 \
+```
+> align with STAR
+```
+STAR --runThreadN 4 \
+--genomeDir /path/to/genome_dir \
+--readFilesIn sample_trimmed_R1.fq sample_trimmed_R2.fq \
+--outFileNamePrefix sample_name \
+--outSAMtype BAM SortedByCoordinate
+```
