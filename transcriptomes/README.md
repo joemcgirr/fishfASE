@@ -3,7 +3,7 @@
 1. trim and align reads with STAR
 2. call snps with gatk 3.8
 3. remove biased reads with WASP
-4. phase reads
+4. phase reads and output snp table
 5. calculate quality metrics with RseQC
 6. create gene feature file with stringtie
 7. count reads with featureCounts
@@ -70,12 +70,18 @@ samtools index sample.filtered.merged.sort.bam
 ```
 > repeat step 2 with unbiased `.bam` files (call snps again) 
 
-## 4. phase reads
+## 4. phase reads and output snp table
 ```
-gatk -T ReadBackedPhasing -R reference.fasta -I sample.filtered.merged.sort.bam --variant wasp_unbiased_filtered_snps.vcf -o /pine/scr/j/m/jmcgirr/pupfish_transcriptomes/wasp/vcf/'+infile+'_wasp_unbiased_phased.vcf --phaseQualityThresh 20.0 \n')
-    outfile.write('gatk -T ASEReadCounter -R /proj/cmarlab/users/joe/Cyprinodon/bronto/asm.racon.fasta -U ALLOW_SEQ_DICT_INCOMPATIBILITY -o '+counts_dir+infile+'_counts.csv -I '+rg_bams_dir+infile+'_filtered.merged.sort.RG.split.bam -sites /pine/scr/j/m/jmcgirr/pupfish_transcriptomes/wasp/vcf/'+infile+'_wasp_unbiased_phased.vcf \n')           
-    outfile.write('#gatk -T VariantsToTable -R /proj/cmarlab/users/joe/Cyprinodon/bronto/asm.racon.fasta -V /pine/scr/j/m/jmcgirr/pupfish_transcriptomes/wasp/vcf/'+infile+'_wasp_unbiased_phased.vcf -F CHROM -F POS -GF GT -GF HP -o '+counts_dir+infile+'_snp_table.txt')
-
+gatk -T ReadBackedPhasing -R reference.fasta -I sample.filtered.merged.sort.bam --variant wasp_unbiased_filtered_snps.vcf -o wasp_unbiased_phased.vcf --phaseQualityThresh 20.0
+gatk -T ASEReadCounter -R reference.fasta -U ALLOW_SEQ_DICT_INCOMPATIBILITY -o sample_counts.csv -I sample.filtered.merged.sort.bam -sites wasp_unbiased_phased.vcf           
+gatk -T VariantsToTable -R reference.fasta -V wasp_unbiased_phased.vcf -F CHROM -F POS -GF GT -GF HP -o snp_table.txt
 ```
 
+## 5. calculate quality metrics with RseQC
+> see [RSeQC documentation](http://rseqc.sourceforge.net/) for details
+```
+tin.py -i sample.bam -r feature_table.bed 
+read_duplication.py -i sample.bam -o sample_dups
+read_GC.py -i sample.bam -o sample_gc
+```
 
