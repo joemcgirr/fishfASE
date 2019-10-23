@@ -1,6 +1,6 @@
 # Genomic Analyses
 ## genomes.ipynb jupyter notebook generates scripts to:
-1. trim and align reads [trim and align reads](#calculate-Dxy-with-simon-martin-scripts)
+1. trim and align reads [link to header](#3)
 2. deduplicate .bam files
 3. call snps with gatk 3.8
 4. calculate Fst, Tajima's D, and pi with vcftools
