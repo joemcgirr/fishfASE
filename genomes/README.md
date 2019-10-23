@@ -1,6 +1,6 @@
 # Genomic Analyses
 ## genomes.ipynb jupyter notebook generates scripts to:
-1. trim and align reads [link to header](#3)
+1. trim and align reads
 2. deduplicate .bam files
 3. call snps with gatk 3.8
 4. calculate Fst, Tajima's D, and pi with vcftools
@@ -74,9 +74,13 @@ standard-RAxML-master/raxmlHPC -x 76345 -f a -m GTRGAMMA -o outgroup_sample_name
 >
 > first convert biallelic `.vcf` to [plink](http://zzz.bwh.harvard.edu/plink/) format
 ```
-gwas/gemma-0.98.1-linux-static -bfile '+gemma_dir+'all_pupfish_filtered_snps_passed.Q20.MAF0.05.MAXMISS0.5.plink -w 50000000 -s 100000000 -n 5 -rpace 10000 -wpace 100000 -bslmm 1 -o all_pupfish_filtered_snps_passed.Q20.MAF0.05.MAXMISS0.5.plink_sansal_run_'+j+' \n')
-
+vcftools --vcf biallelic_snps.vcf --plink --out biallelic_snps.plink
+plink.exe --file biallelic_snps.plink --make-bed --out biallelic_snps.plink
+gwas/gemma-0.98.1-linux-static -bfile biallelic_snps.plink -w 50000000 -s 100000000 -n 5 -rpace 10000 -wpace 100000 -bslmm 1 -o run_1.output
 ```
+
+
+
 
 ## Species matched to sample name
 San Salvador Island Generalists
