@@ -11,37 +11,32 @@
 
 # Commands
 ## 1. unzip, trim, and align reads
-
-> gzip -d sample.fq.gz
->
-> trim_galore -q 20 --paired --illumina sample_R1.fq sample_R2.fq
->
-> bwa mem -aM -t 4 -R "@RG\\tID:group1\\tSM:'+infile+'\\tPL:illumina\\tLB:lib1" reference.fasta sample_trim_R1.fq sample_trim_R2.fq > sample.sam
->
-> samtools view -Shu sample.sam > sample.bam
->
-> samtools index sample.bam
->
-> samtools sort sample.bam -o sample.sort.bam
->
-> samtools index sample.sort.bam
->
-> rm sample.sam
->
-> rm sample.bam
+```
+gzip -d sample.fq.gz
+trim_galore -q 20 --paired --illumina sample_R1.fq sample_R2.fq
+bwa mem -aM -t 4 -R "@RG\\tID:group1\\tSM:'+infile+'\\tPL:illumina\\tLB:lib1" reference.fasta sample_trim_R1.fq sample_trim_R2.fq > sample.sam
+samtools view -Shu sample.sam > sample.bam
+samtools index sample.bam
+samtools sort sample.bam -o sample.sort.bam
+samtools index sample.sort.bam
+rm sample.sam
+rm sample.bam
+```
 
 ## 2. deduplicate .bam files with picard.jar
-> java -Xmx10g -jar picard.jar MarkDuplicates INPUT=sample.sort.bam OUTPUT=sample.sort.dedup.bam METRICS_FILE=sample.metrics.txt MAX_FILE_HANDLES=1000
->
-> samtools index sample.sort.dedup.bam
+```
+java -Xmx10g -jar picard.jar MarkDuplicates INPUT=sample.sort.bam OUTPUT=sample.sort.dedup.bam METRICS_FILE=sample.metrics.txt MAX_FILE_HANDLES=1000
+samtools index sample.sort.dedup.bam
 
+```
 ## 3. call snps with gatk 3.8
-> gatk -T HaplotypeCaller -ERC GVCF -drf DuplicateRead -R reference.fasta -I sample.sort.dedup.bam -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 4 -o sample_raw_variants.g.vcf
->
-> gatk -T GenotypeGVCFs -R reference.fasta --variant sample1_raw_variants.g.vcf --variant sample2_raw_variants.g.vcf -o merged_raw_variants.vcf
->
->vcftools --vcf merged_raw_variants.vcf --maf 0.05 --max-missing 0.9 --recode --out filtered_snps.vcf
+```
+gatk -T HaplotypeCaller -ERC GVCF -drf DuplicateRead -R reference.fasta -I sample.sort.dedup.bam -dontUseSoftClippedBases -stand_call_conf 20.0 -nct 4 -o sample_raw_variants.g.vcf
 
+gatk -T GenotypeGVCFs -R reference.fasta --variant sample1_raw_variants.g.vcf --variant sample2_raw_variants.g.vcf -o merged_raw_variants.vcf
+
+vcftools --vcf merged_raw_variants.vcf --maf 0.05 --max-missing 0.9 --recode --out filtered_snps.vcf
+```
 ## 4. calculate Fst, Tajima's D, and pi with vcftools
 ```
 vcftools --vcf filtered_snps.vcf --keep populations_1_and_2.txt --out population_1_vs_2.weir.fst --weir-fst-pop population_1.txt --weir-fst-pop population_2.txt
