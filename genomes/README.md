@@ -27,7 +27,6 @@ rm sample.bam
 ```
 java -Xmx10g -jar picard.jar MarkDuplicates INPUT=sample.sort.bam OUTPUT=sample.sort.dedup.bam METRICS_FILE=sample.metrics.txt MAX_FILE_HANDLES=1000
 samtools index sample.sort.dedup.bam
-
 ```
 ## 3. call snps with gatk 3.8
 ```
