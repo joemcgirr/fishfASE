@@ -52,7 +52,7 @@ python parseVCF.py -i input.vcf.gz --skipIndels --minQual 30 --gtf flag=DP min=5
 python popgenWindows.py -w 10000 -m 10 -g output.geno.gz -o popgen_stats.csv -f phased -T 4 -p population_1 sample_1 sample_2 -p population_2.txt sample_3 sample_4
 ```
 ## 6. find hard sweeps with SweeD
-> see [SweeD documentation](https://cme.h-its.org/exelixis/resource/download/software/sweed3.0_manual.pdf) for details
+> see [SweeD documentation](https://cme.h-its.org/exelixis/resource/download/software/sweed3.0_manual.pdf) and [Pavlidis et al 2013](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3748355/) for details
 >
 > -eN flag used to specify demography specific to San Salvador pupfish system (population decrease 10kya)
 ```
