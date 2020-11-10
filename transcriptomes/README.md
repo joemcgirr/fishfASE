@@ -91,3 +91,4 @@ featureCounts -p -a gene_features.saf -F SAF -B -C -G reference.fasta -s 2 -T 8 
 ```
 
 ## 7. run mbased for allele specific expression
+See mbased.R in /ase
