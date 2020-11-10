@@ -14,7 +14,5 @@ Jupyter notebooks in `/genomes` and `/transcriptomes` generate SLURM scripts to 
 
 I hope that this repo can be useful to others studying genotype-phenotype relationships in non-model organisms! 
 
-![Image of Pipeline](https://github.com/joemcgirr/fishfASE/blob/master/Figure_1.pdf)
-
 ![Image of Pipeline](https://github.com/joemcgirr/fishfASE/blob/master/pipeline.png)
 
