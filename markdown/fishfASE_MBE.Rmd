@@ -4,7 +4,6 @@ author: "Joe McGirr"
 date: '`r Sys.Date()`'
 output:
   html_document:
-    code_folding: hide
     collapsed: no
     df_print: paged
     number_sections: yes
@@ -19,7 +18,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r setup, include=TRUE}
+```{r setup, include=TRUE, echo = TRUE, message=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(tidyverse)
@@ -42,7 +41,7 @@ org <- "#e69f00"
 yel <- "#f0e442"
 gry<-  '#BBBBBB'
 
-setwd("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files")
+#setwd("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files")
 
 ```
 ##
@@ -142,18 +141,19 @@ prop_de <- de_total/total_genes
 Genomic vcf for Fst and Dxy: all_pupfish_filtered_snps_passed.Q20.MAF0.05.MAXMISS0.5.recode.vcf  
 9312108 SNPs
  
-```{r, eval = TRUE, warning=FALSE}
+```{r, eval = TRUE, message=FALSE, warning=FALSE, error=TRUE ,fig.width= 10, fig.height= 7}
+#setwd("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files")
 
-genes <- read.table("c_brontotheroides.all.renamed.putative_function.genes_only.reformated.known.final.saf", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+genes <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/c_brontotheroides.all.renamed.putative_function.genes_only.reformated.known.final.saf", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
 names(genes) <- c("GeneID","seqnames", "start",  "end", "strand")
 genes$start <- genes$start -10000
 genes$end <- genes$end +10000
 
 genes <- genes %>% as_granges()
 
-de <- read.table("de_genes_8dpf_design_crp_and_osp_mvp.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
-de_48 <- read.table("de_genes_48hpf_design_crp_and_osp_mvp_jeremy_genes.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
-de_17 <- read.table("de_genes_17_20pf_design_crp_and_lil_mvp_jeremy_genes.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+de <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/de_genes_8dpf_design_crp_and_osp_mvp.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+de_48 <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/de_genes_48hpf_design_crp_and_osp_mvp_jeremy_genes.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+de_17 <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/de_genes_17_20pf_design_crp_and_lil_mvp_jeremy_genes.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
 
 de <-  de[which(de$padj <= 0.01),]
 de <- de$Geneid
@@ -162,17 +162,17 @@ de_48 <- de_48$Geneid
 de_17 <-  de_17[which(de_17$padj <= 0.01),]
 de_17 <- de_17$Geneid
 
-fst <- read.table("merged_fst_all_pupfish_filtered_snps_passed.Q20.MAF0.05.MAXMISS0.5.recode.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
-quantile(fst$WEIR_AND_COCKERHAM_FST.2, 0.99)
-high_fst <- fst[which(fst$WEIR_AND_COCKERHAM_FST.2 > 0.72 & fst$WEIR_AND_COCKERHAM_FST.2 < 1),]
-high_fst$end <- high_fst$POS +1
-names(high_fst) <- c("seqnames", "start", "all_v_m",  "all_v_p", "m_v_p","end")
-high_fst <- high_fst %>% as_granges()
-high_fst <- join_overlap_intersect(high_fst, genes) %>% as.data.frame()
-num_snps <- high_fst[high_fst$GeneID %in% c(de,de_48,de_17), ]
-high_fst <- unique(high_fst$GeneID)
+# fst <- read.table("merged_fst_all_pupfish_filtered_snps_passed.Q20.MAF0.05.MAXMISS0.5.recode.txt", header = TRUE, stringsAsFactors = FALSE, # sep = "\t")
+# quantile(fst$WEIR_AND_COCKERHAM_FST.2, 0.99)
+# high_fst <- fst[which(fst$WEIR_AND_COCKERHAM_FST.2 > 0.72 & fst$WEIR_AND_COCKERHAM_FST.2 < 1),]
+# high_fst$end <- high_fst$POS +1
+# names(high_fst) <- c("seqnames", "start", "all_v_m",  "all_v_p", "m_v_p","end")
+# high_fst <- high_fst %>% as_granges()
+# high_fst <- join_overlap_intersect(high_fst, genes) %>% as.data.frame()
+# num_snps <- high_fst[high_fst$GeneID %in% c(de,de_48,de_17), ]
+# high_fst <- unique(high_fst$GeneID)
 
-fixed <- read.table("fixed_snps_mvp.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+fixed <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/fixed_snps_mvp.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
 fixed$end <- fixed$POS +1
 names(fixed) <- c("seqnames", "start", "all_v_m",  "all_v_p", "m_v_p","end")
 fixed <- fixed %>% as_granges()
@@ -180,7 +180,7 @@ fixed <- join_overlap_intersect(fixed, genes) %>% as.data.frame()
 num_snps <- fixed[fixed$GeneID %in% c(de,de_48,de_17), ]
 fixed <- unique(fixed$GeneID)
 
-dxy <- read.csv("mxp_popgen_stats_corrected.csv", header = TRUE, stringsAsFactors = FALSE)
+dxy <- read.csv("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/mxp_popgen_stats_corrected.csv", header = TRUE, stringsAsFactors = FALSE)
 dxy <-  dxy[which(dxy$corr_dxy >= quantile(dxy$corr_dxy,0.90)[[1]]),]
 names(dxy)[names(dxy)== "scaffold"] <- "seqnames"
 dxy <- dxy %>% as_granges()
@@ -188,7 +188,7 @@ dxy <- join_overlap_intersect(dxy, genes) %>% as.data.frame()
 dxy <- unique(dxy$GeneID)
 popgen <- unique(intersect(high_fst,dxy))
 
-sv <- read.table("shared_pvm_Svs.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+sv <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/shared_pvm_Svs.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
 sv <- sv %>% as_granges() 
 sv <- join_overlap_intersect(sv, genes) %>% as.data.frame()
 sv <- unique(sv$GeneID)
@@ -202,7 +202,7 @@ outlier_filter_de <- intersect(popgen,c(de,de_48,de_17))
 
 
 ## upsetr plots
-```{r, eval = TRUE, message=FALSE, warning=FALSE, fig.width= 10, fig.height= 7}
+```{r, eval = TRUE, message=FALSE, warning=FALSE, error=TRUE ,fig.width= 10, fig.height= 7}
 #### fixed SNPs and deletions 1,10,20 kb ####
 listInput <- list(de_48 = de_48 ,de = de,de_17 = de_17,fixed_snps = fixed, fixed_SVs = sv)
 names(listInput) <- c("differentially expressed 2 dpf","differentially expressed 8 dpf","differentially expressed 20 dpf","near fixed SNP", "near fixed deletion")
@@ -218,16 +218,16 @@ upset(fromList(listInput), sets = rev(names(listInput)),order.by = "freq", point
 
 
 #### high Fst and dxy 1,10,20 kb ####
-listInput <- list(de_48 = de_48 ,de = de,de_17 = de_17, high_fst = high_fst,dxy = dxy)
-names(listInput) <- c("differentially expressed 2 dpf","differentially expressed 8 dpf","differentially expressed 20 dpf","Fst > 0.72","Dxy > 0.0083")
+# listInput <- list(de_48 = de_48 ,de = de,de_17 = de_17, high_fst = high_fst,dxy = dxy)
+# names(listInput) <- c("differentially expressed 2 dpf","differentially expressed 8 dpf","differentially expressed 20 dpf","Fst > 0.72","Dxy > 0.0083")
 
 #png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/upsetr_high_fst_dxy_1kb.png" , width = 12, height = 7, units = 'in', res = 600)
 #png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/upsetr_high_fst_dxy_10kb.png", width = 12, height = 7, units = 'in', res = 600)
 #png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/upsetr_high_fst_dxy_20kb.png", width = 12, height = 7, units = 'in', res = 600)
 
-upset(fromList(listInput), sets = rev(names(listInput)),order.by = "freq", point.size = 3.4, line.size = 1.2, 
-      mainbar.y.label = "genes intersecting", sets.x.label = "genes", nsets = 6,
-      text.scale = c(2, 1.6, 1.5, 1.4, 2,1.6),keep.order = TRUE)
+#upset(fromList(listInput), sets = rev(names(listInput)),order.by = "freq", point.size = 3.4, line.size = 1.2, 
+#      mainbar.y.label = "genes intersecting", sets.x.label = "genes", nsets = 6,
+#      text.scale = c(2, 1.6, 1.5, 1.4, 2,1.6),keep.order = TRUE)
 #dev.off()
 
 ```
@@ -261,9 +261,9 @@ go <- tolower(go$V1)
 
 ## Identify overlap between cis/trans genes between crosses
 
-```{r, eval = TRUE, message=FALSE, warning=FALSE, fig.width= 10, fig.height= 7}
+```{r, eval = TRUE, message=FALSE, warning=FALSE, error=TRUE ,fig.width= 10, fig.height= 7}
 
-inheritance_and_ase <- read.table("inheritance_and_ase_crp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
+inheritance_and_ase <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/inheritance_and_ase_crp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
 
 cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
                                    inheritance_and_ase$ase_in_crp_hyb == "yes" &
@@ -290,7 +290,7 @@ c8_cis_by_trans <- unique(cis_by_trans$Geneid)
 c8_cis_by_trans <- setdiff(c8_cis_by_trans,c(c8_cis,c8_trans))
 
 ###
-inheritance_and_ase <- read.table("inheritance_and_ase_osp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
+inheritance_and_ase <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/inheritance_and_ase_osp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
 
 cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
                                    inheritance_and_ase$ase_in_osp_hyb == "yes" &
@@ -317,7 +317,7 @@ o8_cis_by_trans <- unique(cis_by_trans$Geneid)
 o8_cis_by_trans <- setdiff(o8_cis_by_trans,c(o8_cis,o8_trans))
 
 ###
-inheritance_and_ase <- read.table("inheritance_and_ase_crp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
+inheritance_and_ase <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/inheritance_and_ase_crp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
 
 cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
                                    inheritance_and_ase$ase_in_crp_hyb == "yes" &
@@ -344,7 +344,7 @@ c2_cis_by_trans <- unique(cis_by_trans$Geneid)
 c2_cis_by_trans <- setdiff(c2_cis_by_trans,c(c2_cis,c2_trans))
 
 ###
-inheritance_and_ase <- read.table("inheritance_and_ase_osp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
+inheritance_and_ase <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/inheritance_and_ase_osp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
 
 cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
                                    inheritance_and_ase$ase_in_osp_hyb == "yes" &
@@ -404,10 +404,10 @@ intersect(o2_cis, popgen)
 
 # Plot Regulatory mechanisms
 
-```{r, eval = TRUE, message=FALSE, warning=FALSE, fig.width= 10, fig.height= 7}
+```{r, eval = TRUE, message=FALSE, warning=FALSE, error=TRUE ,fig.width= 10, fig.height= 7}
 
 
-inheritance_and_ase <- read.table("inheritance_and_ase_crp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
+inheritance_and_ase <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/inheritance_and_ase_crp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
 head(inheritance_and_ase)
 
 cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
@@ -469,16 +469,16 @@ legend("topleft", inset=0,
          paste("conserved ", round(((nrow(inheritance_and_ase)-(nrow(cis_plus_trans)+nrow(cis_by_trans)+nrow(trans)+nrow(cis))))/(nrow(inheritance_and_ase))*100,2),"%", sep = "")),
        pt.cex = 1.3, col=my_cols, horiz=FALSE, bty="n",pch =c(16,16,16,16,1))
 
-intersect(cis$Geneid,trans$Geneid)
-intersect(cis$Geneid,cis_by_trans$Geneid)
-intersect(cis$Geneid,cis_plus_trans$Geneid)
-intersect(trans$Geneid,cis_plus_trans$Geneid)
-intersect(trans$Geneid,cis_by_trans$Geneid)
-intersect(cis_plus_trans$Geneid,cis_by_trans$Geneid)
+# intersect(cis$Geneid,trans$Geneid)
+# intersect(cis$Geneid,cis_by_trans$Geneid)
+# intersect(cis$Geneid,cis_plus_trans$Geneid)
+# intersect(trans$Geneid,cis_plus_trans$Geneid)
+# intersect(trans$Geneid,cis_by_trans$Geneid)
+# intersect(cis_plus_trans$Geneid,cis_by_trans$Geneid)
 
 ##################
 
-inheritance_and_ase <- read.table("inheritance_and_ase_crp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
+inheritance_and_ase <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/inheritance_and_ase_crp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
 head(inheritance_and_ase)
 
 cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
@@ -542,7 +542,7 @@ legend("topleft", inset=0,
 #############
 
 
-inheritance_and_ase <- read.table("inheritance_and_ase_osp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
+inheritance_and_ase <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/inheritance_and_ase_osp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
 head(inheritance_and_ase)
 
 cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
@@ -605,7 +605,7 @@ legend("topleft", inset=0,
 ##########
 
 
-inheritance_and_ase <- read.table("inheritance_and_ase_osp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
+inheritance_and_ase <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/inheritance_and_ase_osp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
 head(inheritance_and_ase)
 
 cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
@@ -672,7 +672,7 @@ legend("topleft", inset=0,
 
 #### make plot like McManus 2010 4B
 
-inheritance_and_ase <- read.table("inheritance_all_genes_crp_and_osp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
+inheritance_and_ase <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/inheritance_all_genes_crp_and_osp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
   
   #Hybrid inheritance was considered additive if gene expression was intermediate between
   #molluscivores and scale-eaters with significant differential expression between molluscivores and
@@ -741,7 +741,7 @@ legend("topleft", inset=0,
   
   
   
-inheritance_and_ase <- read.table("inheritance_all_genes_crp_and_osp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
+inheritance_and_ase <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files/inheritance_all_genes_crp_and_osp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
   
   total_genes <- nrow(inheritance_and_ase)
   con <- inheritance_and_ase[which(inheritance_and_ase$padj_mph > 0.01 & inheritance_and_ase$padj_mh > 0.01 & inheritance_and_ase$padj_ph > 0.01 & inheritance_and_ase$padj_mp > 0.01),]
@@ -801,7 +801,7 @@ legend("topleft", inset=0,
 
 ```
 
-## Craniofacial genes underrepresented in genes with alternate homozygous sites? NO!
+# Craniofacial genes underrepresented in genes with alternate homozygous sites? NO!
 
 ```{r, eval = FALSE}
 
@@ -842,7 +842,7 @@ length(inheritance_and_ase$Geneid)
 
 ```
 
-## Generate inheritance and ASE tables
+# Generate inheritance and ASE tables
  
 ```{r, eval = FALSE}
 #inheritance for all genes expressed
