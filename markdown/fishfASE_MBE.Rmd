@@ -1,0 +1,1832 @@
+---
+title: "fishfASE MBE"
+author: "Joe McGirr"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    code_folding: hide
+    collapsed: no
+    df_print: paged
+    number_sections: yes
+    theme: cerulean
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+  html_notebook:
+    toc: yes
+    toc_depth: 5
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidyverse)
+library(reticulate)
+library(UpSetR)
+library(plyranges)
+library(venn)
+library(DESeq2)
+library(apeglm)
+
+# color-blind friendly 
+# Wong, B. Points of view: Color blindness. Nat Methods (2011).
+bla <- "#000000"
+blu <- "#0072b2"
+grb <- "#56b4e9"
+lir <- "#cc79a7"
+gre <- "#009e73"
+red <- "#d55e00"
+org <- "#e69f00"
+yel <- "#f0e442"
+gry<-  '#BBBBBB'
+
+setwd("C:/Users/jmcgirr/Documents/GitHub/fishfASE/markdown/data_files")
+
+```
+##
+
+# Differentially Expressed Genes
+creates de_genes_*.txt files 
+```{r, eval = FALSE}
+# DE
+
+samples <- read.table("table_maker_master_lakes.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+samples <- filter(samples, species != "h") %>% filter(stage == "8dpf")
+#samples <- filter(samples, species != "h") %>% filter(stage == "48hpf")
+#samples <- filter(samples, species != "h") %>% filter(stage == "17_20dpf")
+#samples <- filter(samples, species != "a")
+samples <- filter(samples, lake == "Crescent Pond"| lake == "Osprey Lake")
+#samples <- filter(samples, lake == "Crescent Pond"| lake == "Osprey Lake"| lake == "Little Lake")
+#samples <- filter(samples, f1 == "OPxOM"| f1 == "OSPP"| f1 == "OSPM"| f1 == "CMxCP"| f1 == "CRPP"| f1 == "CRPM") %>% filter(stage == "8dpf")
+#samples <- filter(samples, f1 == "OPxOM"| f1 == "OSPM") %>% filter(stage == "8dpf")
+
+cts <- read.table("counts_all_feature_types_jeremy_gff.txt",row.names=1, header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+cts <- cts[samples$sample]
+row.names(samples) <- samples$sample
+samples$sample <- NULL
+
+cts <- as.matrix(cts) 
+colData <- as.matrix(samples)
+head(colData)
+ncol(cts)
+nrow(colData)
+
+dds <- DESeqDataSetFromMatrix(countData = cts,
+                              colData = colData,
+                              design= ~p_unique)
+dds <- estimateSizeFactors(dds)
+idx <- rowSums(counts(dds, normalized=TRUE) >= 1 ) >= 1
+length(rowSums(counts(dds, normalized=TRUE) >= 1 ) >= 1)
+length(idx)
+dds <- dds[idx,]
+dds <- DESeq(dds)
+
+# for normalized counts
+#res <- results(dds, contrast=c("species","m","p"))
+#res <- results(dds, contrast=c("species","a","p"))
+norm_cts <- data.frame(counts(dds, normalized=TRUE))
+head(norm_cts)
+norm_cts$GeneID <- row.names(norm_cts)
+#write.table(norm_cts, "C:/Users/jmcgirr/Documents/remote_pups/hybrid_inheritance_and_misregulation/normalized_counts_8dpf_design_f1_om_v_opxom_jeremy_gff.txt", row.names = FALSE, quote= FALSE,sep="\t")
+#write.table(norm_cts, "C:/Users/jmcgirr/Documents/remote_pups/de/split_populations/normalized_counts_17_20dpf_design_crp_and_lil_mvp_stringtie_danio.txt", row.names = FALSE, quote= FALSE,sep="\t")
+
+# for DE
+res <- results(dds, alpha=0.01)
+resOrdered <- res[order(res$padj),]
+summary(res)
+resLFC <- lfcShrink(dds, coef=2, res=res)
+
+res_ordered <- as.data.frame(resOrdered)
+res_ordered$Geneid <- rownames(res_ordered)
+nrow(res_ordered)
+head(res_ordered)
+length(unique(res_ordered$Geneid))
+options(scipen=999)
+#plotCounts(dds,gene="gene678", intgroup='species')
+
+total_genes <- nrow(res_ordered)
+de_total <- nrow(res_ordered[which(res_ordered$padj < 0.01),])
+de_up <- (nrow(res_ordered[which(res_ordered$log2FoldChange > 0 & res_ordered$padj < 0.01),]))/total_genes
+de_dn <- (nrow(res_ordered[which(res_ordered$log2FoldChange < 0 & res_ordered$padj < 0.01),]))/total_genes
+prop_de <- de_total/total_genes
+#sample_sizes_plot <- paste(sample_size_a, " vs ", sample_size_b, sep = "")
+
+#png("C:/Users/jmcgirr/Documents/remote_pups/de/split_populations/de_genes_20dpf_design_crp_and_osp_mvp.png", width = 4, height = 4, units = 'in', res = 500)
+#plotMA(resLFC, ylim=c(-2.5,3))
+#axis(1,at = c(0.1,10,1000,100000), labels = c("0.1","10","1000","100000"))
+#dev.off()
+#prop_de
+
+# match zebrafish orthologs
+
+#genes <- read.table("C:/Users/jmcgirr/Documents/remote_pups/de/blastp_zebrafish.outfmt6", header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+#prots<-gsub("\\..*","",genes$V2)
+#genes$refseq_peptide <- prots
+#dat1 <- read.table("C:/Users/jmcgirr/Documents/remote_pups/de/zeb_refseq_symbols.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+#dat1$X <- NULL
+#names(dat1)[names(dat1)=="GenBank.Protein.Accession"] <- "refseq_peptide"
+#genes1 <- left_join(genes, dat1, by = c("refseq_peptide"))
+#genes1$Geneid<-gsub("\\.1\\.p.*","",genes1$V1)
+#genes1 <- genes1[c("Gene.Symbol","Geneid")]
+#res_ordered1 <- left_join(res_ordered, genes1, by = c("Geneid"))
+#write.table(res_ordered, "C:/Users/jmcgirr/Documents/remote_pups/de/split_populations/de_genes_17_20pf_design_crp_and_lil_mvp_stringtie_danio.txt", row.names = FALSE, quote= FALSE,sep="\t")
+#write.table(res_ordered, "C:/Users/jmcgirr/Documents/remote_pups/hybrid_inheritance_and_misregulation/de_genes_8dpf_design_om_v_opxom_jeremy_gff.txt", row.names = FALSE, quote= FALSE,sep="\t")
+
+```
+
+
+# Overlap Differentiated SNPs with Differentially Expressed Genes
+
+Genomic vcf for Fst and Dxy: all_pupfish_filtered_snps_passed.Q20.MAF0.05.MAXMISS0.5.recode.vcf  
+9312108 SNPs
+ 
+```{r, eval = TRUE, warning=FALSE}
+
+genes <- read.table("c_brontotheroides.all.renamed.putative_function.genes_only.reformated.known.final.saf", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+names(genes) <- c("GeneID","seqnames", "start",  "end", "strand")
+genes$start <- genes$start -10000
+genes$end <- genes$end +10000
+
+genes <- genes %>% as_granges()
+
+de <- read.table("de_genes_8dpf_design_crp_and_osp_mvp.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+de_48 <- read.table("de_genes_48hpf_design_crp_and_osp_mvp_jeremy_genes.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+de_17 <- read.table("de_genes_17_20pf_design_crp_and_lil_mvp_jeremy_genes.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+
+de <-  de[which(de$padj <= 0.01),]
+de <- de$Geneid
+de_48 <-  de_48[which(de_48$padj <= 0.01),]
+de_48 <- de_48$Geneid
+de_17 <-  de_17[which(de_17$padj <= 0.01),]
+de_17 <- de_17$Geneid
+
+fst <- read.table("merged_fst_all_pupfish_filtered_snps_passed.Q20.MAF0.05.MAXMISS0.5.recode.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+quantile(fst$WEIR_AND_COCKERHAM_FST.2, 0.99)
+high_fst <- fst[which(fst$WEIR_AND_COCKERHAM_FST.2 > 0.72 & fst$WEIR_AND_COCKERHAM_FST.2 < 1),]
+high_fst$end <- high_fst$POS +1
+names(high_fst) <- c("seqnames", "start", "all_v_m",  "all_v_p", "m_v_p","end")
+high_fst <- high_fst %>% as_granges()
+high_fst <- join_overlap_intersect(high_fst, genes) %>% as.data.frame()
+num_snps <- high_fst[high_fst$GeneID %in% c(de,de_48,de_17), ]
+high_fst <- unique(high_fst$GeneID)
+
+fixed <- read.table("fixed_snps_mvp.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+fixed$end <- fixed$POS +1
+names(fixed) <- c("seqnames", "start", "all_v_m",  "all_v_p", "m_v_p","end")
+fixed <- fixed %>% as_granges()
+fixed <- join_overlap_intersect(fixed, genes) %>% as.data.frame()
+num_snps <- fixed[fixed$GeneID %in% c(de,de_48,de_17), ]
+fixed <- unique(fixed$GeneID)
+
+dxy <- read.csv("mxp_popgen_stats_corrected.csv", header = TRUE, stringsAsFactors = FALSE)
+dxy <-  dxy[which(dxy$corr_dxy >= quantile(dxy$corr_dxy,0.90)[[1]]),]
+names(dxy)[names(dxy)== "scaffold"] <- "seqnames"
+dxy <- dxy %>% as_granges()
+dxy <- join_overlap_intersect(dxy, genes) %>% as.data.frame()
+dxy <- unique(dxy$GeneID)
+popgen <- unique(intersect(high_fst,dxy))
+
+sv <- read.table("shared_pvm_Svs.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+sv <- sv %>% as_granges() 
+sv <- join_overlap_intersect(sv, genes) %>% as.data.frame()
+sv <- unique(sv$GeneID)
+
+fixed_filter_de <- intersect(c(fixed,sv),c(de,de_48,de_17))
+outlier_filter_de <- intersect(popgen,c(de,de_48,de_17))
+#write.table(as.data.frame(fixed_filter_de),"C:/Users/jmcgirr/Documents/remote_pups/second_submission/candidates/de_fixed_20kb.txt", quote = FALSE, row.names = FALSE)
+#write.table(as.data.frame(outlier_filter_de),"C:/Users/jmcgirr/Documents/remote_pups/second_submission/candidates/de_high_fst_dxy_20kb.txt", quote = FALSE, row.names = FALSE)
+#write.table(as.data.frame(popgen),"C:/Users/jmcgirr/Documents/remote_pups/second_submission/candidates/high_fst_dxy_20kb.txt", quote = FALSE, row.names = FALSE)
+```
+
+
+## upsetr plots
+```{r, eval = TRUE, message=FALSE, warning=FALSE, fig.width= 10, fig.height= 7}
+#### fixed SNPs and deletions 1,10,20 kb ####
+listInput <- list(de_48 = de_48 ,de = de,de_17 = de_17,fixed_snps = fixed, fixed_SVs = sv)
+names(listInput) <- c("differentially expressed 2 dpf","differentially expressed 8 dpf","differentially expressed 20 dpf","near fixed SNP", "near fixed deletion")
+
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/upsetr_fixed_1kb.png" , width = 12, height = 7, units = 'in', res = 600)
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/upsetr_fixed_10kb.png", width = 12, height = 7, units = 'in', res = 600)
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/upsetr_fixed_20kb.png", width = 12, height = 7, units = 'in', res = 600)
+
+upset(fromList(listInput), sets = rev(names(listInput)),order.by = "freq", point.size = 3.4, line.size = 1.2, 
+      mainbar.y.label = "genes intersecting", sets.x.label = "genes", nsets = 6,
+      text.scale = c(2, 1.6, 1.5, 1.4, 2,1.6),keep.order = TRUE)
+#dev.off()
+
+
+#### high Fst and dxy 1,10,20 kb ####
+listInput <- list(de_48 = de_48 ,de = de,de_17 = de_17, high_fst = high_fst,dxy = dxy)
+names(listInput) <- c("differentially expressed 2 dpf","differentially expressed 8 dpf","differentially expressed 20 dpf","Fst > 0.72","Dxy > 0.0083")
+
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/upsetr_high_fst_dxy_1kb.png" , width = 12, height = 7, units = 'in', res = 600)
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/upsetr_high_fst_dxy_10kb.png", width = 12, height = 7, units = 'in', res = 600)
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/upsetr_high_fst_dxy_20kb.png", width = 12, height = 7, units = 'in', res = 600)
+
+upset(fromList(listInput), sets = rev(names(listInput)),order.by = "freq", point.size = 3.4, line.size = 1.2, 
+      mainbar.y.label = "genes intersecting", sets.x.label = "genes", nsets = 6,
+      text.scale = c(2, 1.6, 1.5, 1.4, 2,1.6),keep.order = TRUE)
+#dev.off()
+
+```
+
+# Overlap DE and high differentiation with cis-regulation
+
+```{r, eval = FALSE}
+
+diff_de <- unique(intersect(popgen, c(de_48 ,de)))
+diff_de_cis <-  unique(intersect(diff_de, c(c8_cis, c2_cis, o8_cis, o2_cis)))
+length(diff_de_cis)
+cis_all <- unique(c(c8_cis, c2_cis, o8_cis, o2_cis))
+fixed_de_cis <- intersect(c(sv,fixed),intersect(cis_all,c(de_48 ,de)))
+
+#write.table(as.data.frame(diff_de_cis),"C:/Users/jmcgirr/Documents/remote_pups/second_submission/candidates/high_fst_dxy_20kb_de_cis.txt", quote = FALSE, row.names = FALSE)
+#write.table(as.data.frame(cis_all),"C:/Users/jmcgirr/Documents/remote_pups/second_submission/candidates/cis_all_stages_and_lake_crosses.txt", quote = FALSE, row.names = FALSE)
+
+### overlap with GO
+cis <- read.table("C:/Users/jmcgirr/Documents/remote_pups/second_submission/candidates/high_fst_dxy_20kb_de_cis.txt", header = TRUE, stringsAsFactors = FALSE, sep = '\t')
+cis <- tolower(cis$diff_de_cis)
+
+go <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/cranial_skeletal_system_development_GO_1904888.txt", header = FALSE, stringsAsFactors = FALSE, sep = '\t')
+go <- tolower(go$V1)
+
+intersect(cis,go)
+
+go <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/skeletal_system_morphogenesis_GO_0048705.txt", header = FALSE, stringsAsFactors = FALSE, sep = '\t')
+go <- tolower(go$V1)
+
+```
+
+## Identify overlap between cis/trans genes between crosses
+
+```{r, eval = TRUE, message=FALSE, warning=FALSE, fig.width= 10, fig.height= 7}
+
+inheritance_and_ase <- read.table("inheritance_and_ase_crp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
+
+cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                   inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                   inheritance_and_ase$sig_trans == "no"),]
+c8_cis <- unique(cis$Geneid)
+
+trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                     inheritance_and_ase$ase_in_crp_hyb == "no" &
+                                     inheritance_and_ase$sig_trans == "yes"),]
+c8_trans <- unique(trans$Geneid)
+
+cis_plus_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                              inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                              inheritance_and_ase$sig_trans == "yes" &
+                                              inheritance_and_ase$H_sign == inheritance_and_ase$P_sign),]
+c8_cis_plus_trans <- unique(cis_plus_trans$Geneid)
+c8_cis_plus_trans <- setdiff(c8_cis_plus_trans,c(c8_cis,c8_trans))
+
+cis_by_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                            inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                            inheritance_and_ase$sig_trans == "yes" &
+                                            inheritance_and_ase$H_sign != inheritance_and_ase$P_sign),]
+c8_cis_by_trans <- unique(cis_by_trans$Geneid)
+c8_cis_by_trans <- setdiff(c8_cis_by_trans,c(c8_cis,c8_trans))
+
+###
+inheritance_and_ase <- read.table("inheritance_and_ase_osp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
+
+cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                   inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                   inheritance_and_ase$sig_trans == "no"),]
+o8_cis <- unique(cis$Geneid)
+
+trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                     inheritance_and_ase$ase_in_osp_hyb == "no" &
+                                     inheritance_and_ase$sig_trans == "yes"),]
+o8_trans <- unique(trans$Geneid)
+
+cis_plus_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                              inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                              inheritance_and_ase$sig_trans == "yes" &
+                                              inheritance_and_ase$H_sign == inheritance_and_ase$P_sign),]
+o8_cis_plus_trans <- unique(cis_plus_trans$Geneid)
+o8_cis_plus_trans <- setdiff(o8_cis_plus_trans,c(o8_cis,o8_trans))
+
+cis_by_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                            inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                            inheritance_and_ase$sig_trans == "yes" &
+                                            inheritance_and_ase$H_sign != inheritance_and_ase$P_sign),]
+o8_cis_by_trans <- unique(cis_by_trans$Geneid)
+o8_cis_by_trans <- setdiff(o8_cis_by_trans,c(o8_cis,o8_trans))
+
+###
+inheritance_and_ase <- read.table("inheritance_and_ase_crp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
+
+cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                   inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                   inheritance_and_ase$sig_trans == "no"),]
+c2_cis <- unique(cis$Geneid)
+
+trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                     inheritance_and_ase$ase_in_crp_hyb == "no" &
+                                     inheritance_and_ase$sig_trans == "yes"),]
+c2_trans <- unique(trans$Geneid)
+
+cis_plus_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                              inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                              inheritance_and_ase$sig_trans == "yes" &
+                                              inheritance_and_ase$H_sign == inheritance_and_ase$P_sign),]
+c2_cis_plus_trans <- unique(cis_plus_trans$Geneid)
+c2_cis_plus_trans <- setdiff(c2_cis_plus_trans,c(c2_cis,c2_trans))
+
+cis_by_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                            inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                            inheritance_and_ase$sig_trans == "yes" &
+                                            inheritance_and_ase$H_sign != inheritance_and_ase$P_sign),]
+c2_cis_by_trans <- unique(cis_by_trans$Geneid)
+c2_cis_by_trans <- setdiff(c2_cis_by_trans,c(c2_cis,c2_trans))
+
+###
+inheritance_and_ase <- read.table("inheritance_and_ase_osp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
+
+cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                   inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                   inheritance_and_ase$sig_trans == "no"),]
+o2_cis <- unique(cis$Geneid)
+
+trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                     inheritance_and_ase$ase_in_osp_hyb == "no" &
+                                     inheritance_and_ase$sig_trans == "yes"),]
+o2_trans <- unique(trans$Geneid)
+
+cis_plus_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                              inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                              inheritance_and_ase$sig_trans == "yes" &
+                                              inheritance_and_ase$H_sign == inheritance_and_ase$P_sign),]
+o2_cis_plus_trans <- unique(cis_plus_trans$Geneid)
+o2_cis_plus_trans <- setdiff(o2_cis_plus_trans,c(o2_cis,o2_trans))
+
+cis_by_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                            inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                            inheritance_and_ase$sig_trans == "yes" &
+                                            inheritance_and_ase$H_sign != inheritance_and_ase$P_sign),]
+o2_cis_by_trans <- unique(cis_by_trans$Geneid)
+o2_cis_by_trans <- setdiff(o2_cis_by_trans,c(o2_cis,o2_trans))
+
+
+
+my_cols <- c(red,blu,yel,gry)
+
+
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/cis_cross_overlap.png" , width = 3, height = 3, units = 'in', res = 600)
+venn(list(c2_cis=c2_cis,o2_cis=o2_cis,c8_cis=c8_cis,o8_cis=o8_cis), 
+     ilabels = TRUE, cexsn = 0.70, cexil = 0.85, zcolor = my_cols,box = FALSE, opacity = 0.6,ilcs = 0.9,sncs = 1)
+#dev.off()
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/trans_cross_overlap.png" , width = 3, height = 3, units = 'in', res = 600)
+venn(list(c2_trans=c2_trans,o2_trans=o2_trans,c8_trans=c8_trans,o8_trans=o8_trans), 
+     ilabels = TRUE, cexsn = 0.70, cexil = 0.85, zcolor = my_cols,box = FALSE, opacity = 0.6,ilcs = 0.9,sncs = 1)
+#dev.off()
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/c_and_t_cross_overlap.png" , width = 3, height = 3, units = 'in', res = 600)
+venn(list(c2_cis_plus_trans=c2_cis_plus_trans,o2_cis_plus_trans=o2_cis_plus_trans,c8_cis_plus_trans=c8_cis_plus_trans,o8_cis_plus_trans=o8_cis_plus_trans), 
+     ilabels = TRUE, cexsn = 0.70, cexil = 0.85, zcolor = my_cols,box = FALSE, opacity = 0.6,ilcs = 0.9,sncs = 1)
+#dev.off()
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/c_by_t_cross_overlap.png" , width = 3, height = 3, units = 'in', res = 600)
+venn(list(c2_cis_by_trans=c2_cis_by_trans,o2_cis_by_trans=o2_cis_by_trans,c8_cis_by_trans=c8_cis_by_trans,o8_cis_by_trans=o8_cis_by_trans), 
+     ilabels = TRUE, cexsn = 0.70, cexil = 0.85, zcolor = my_cols,box = FALSE, opacity = 0.6,ilcs = 0.9,sncs = 1)
+#dev.off()
+
+high_fst_dxy_cis_cans <- c(
+intersect(c8_cis, popgen),
+intersect(c2_cis, popgen),
+intersect(o8_cis, popgen),
+intersect(o2_cis, popgen)
+)
+#write.table(as.data.frame(high_fst_dxy_cis_cans),"C:/Users/jmcgirr/Documents/remote_pups/second_submission/candidates/high_fst_dxy_cis_cans.txt", quote = FALSE, row.names = FALSE)
+
+```
+
+# Plot Regulatory mechanisms
+
+```{r, eval = TRUE, message=FALSE, warning=FALSE, fig.width= 10, fig.height= 7}
+
+
+inheritance_and_ase <- read.table("inheritance_and_ase_crp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
+head(inheritance_and_ase)
+
+cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                   inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                   inheritance_and_ase$sig_trans == "no"),]
+trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                     inheritance_and_ase$ase_in_crp_hyb == "no" &
+                                     inheritance_and_ase$sig_trans == "yes"),]
+cis_plus_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                              inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                              inheritance_and_ase$sig_trans == "yes" &
+                                              inheritance_and_ase$H_sign == inheritance_and_ase$P_sign),]
+cis_by_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                            inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                            inheritance_and_ase$sig_trans == "yes" &
+                                            inheritance_and_ase$H_sign != inheritance_and_ase$P_sign),]
+con <- inheritance_and_ase[! inheritance_and_ase$Geneid %in% c(cis$Geneid,trans$Geneid,cis_plus_trans$Geneid,cis_by_trans$Geneid),]
+
+my_cols <- c(red,bla,blu,yel,gry)
+
+
+
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/reg_mechs_crp_8dpf.png", width = 7.25, height = 7.25, units = 'in', res = 400)
+plot(inheritance_and_ase$LFC_mp, inheritance_and_ase$LFC_mph, pch =16, col = "white", cex.axis=1.3,
+    xlim = c(-3.5,3.5),ylim = c(-2,2), xlab = "", ylab = "")
+points(con$LFC_mp,con$LFC_mph, col = my_cols[5])
+points(trans$LFC_mp,trans$LFC_mph, col = my_cols[2],pch = 16, cex = 1.2)
+points(cis_plus_trans$LFC_mp,cis_plus_trans$LFC_mph, col = my_cols[4],pch = 16, cex = 1.2)
+points(cis_by_trans$LFC_mp,cis_by_trans$LFC_mph, col = my_cols[3],pch = 16, cex = 1.2)
+points(cis$LFC_mp,cis$LFC_mph, col = my_cols[1],pch = 16, cex = 1.2)
+
+abline(v=0, col = "black", lty = 3, lwd = 1.8)
+abline(h=0, col = "black", lty = 3, lwd = 1.8)
+legend("topleft", inset=0,
+       c(paste("cis ", round((nrow(cis))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("trans ", round((nrow(trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis x trans ", round((nrow(cis_by_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis + trans ", round((nrow(cis_plus_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("conserved ", round(((nrow(inheritance_and_ase)-(nrow(cis_plus_trans)+nrow(cis_by_trans)+nrow(trans)+nrow(cis))))/(nrow(inheritance_and_ase))*100,2),"%", sep = "")),
+         pt.cex = 1.3, col=my_cols, horiz=FALSE, bty="n",pch =c(16,16,16,16,1))
+#dev.off()
+
+# H and P on axes
+plot(log2(inheritance_and_ase$P),log2(inheritance_and_ase$H), pch =16, col = "white", cex.axis=1.3,
+     xlim = c(-3.5,3.5), xlab = "", ylab = "")
+points(log2(con$P),log2(con$H), col = my_cols[5])
+points(log2(trans$P),log2(trans$H), col = my_cols[2],pch = 16, cex = 1.2)
+points(log2(cis_plus_trans$P),log2(cis_plus_trans$H), col = my_cols[4],pch = 16, cex = 1.2)
+points(log2(cis_by_trans$P),log2(cis_by_trans$H), col = my_cols[3],pch = 16, cex = 1.2)
+points(log2(cis$P),log2(cis$H), col = my_cols[1],pch = 16, cex = 1.2)
+
+abline(v=0, col = "black", lty = 3, lwd = 1.8)
+abline(h=0, col = "black", lty = 3, lwd = 1.8)
+legend("topleft", inset=0,
+       c(paste("cis ", round((nrow(cis))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("trans ", round((nrow(trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis x trans ", round((nrow(cis_by_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis + trans ", round((nrow(cis_plus_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("conserved ", round(((nrow(inheritance_and_ase)-(nrow(cis_plus_trans)+nrow(cis_by_trans)+nrow(trans)+nrow(cis))))/(nrow(inheritance_and_ase))*100,2),"%", sep = "")),
+       pt.cex = 1.3, col=my_cols, horiz=FALSE, bty="n",pch =c(16,16,16,16,1))
+
+intersect(cis$Geneid,trans$Geneid)
+intersect(cis$Geneid,cis_by_trans$Geneid)
+intersect(cis$Geneid,cis_plus_trans$Geneid)
+intersect(trans$Geneid,cis_plus_trans$Geneid)
+intersect(trans$Geneid,cis_by_trans$Geneid)
+intersect(cis_plus_trans$Geneid,cis_by_trans$Geneid)
+
+##################
+
+inheritance_and_ase <- read.table("inheritance_and_ase_crp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
+head(inheritance_and_ase)
+
+cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                   inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                   inheritance_and_ase$sig_trans == "no"),]
+trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                     inheritance_and_ase$ase_in_crp_hyb == "no" &
+                                     inheritance_and_ase$sig_trans == "yes"),]
+cis_plus_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                              inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                              inheritance_and_ase$sig_trans == "yes" &
+                                              inheritance_and_ase$H_sign == inheritance_and_ase$P_sign),]
+cis_by_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                            inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                            inheritance_and_ase$sig_trans == "yes" &
+                                            inheritance_and_ase$H_sign != inheritance_and_ase$P_sign),]
+con <- inheritance_and_ase[! inheritance_and_ase$Geneid %in% c(cis$Geneid,trans$Geneid,cis_plus_trans$Geneid,cis_by_trans$Geneid),]
+
+
+
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/reg_mechs_crp_48hpf.png", width = 7.25, height = 7.25, units = 'in', res = 400)
+plot(inheritance_and_ase$LFC_mp, inheritance_and_ase$LFC_mph, pch =16, col = "white", cex.axis=1.3,
+     xlim = c(-3.5,3.5),ylim = c(-2,2), xlab = "", ylab = "")
+points(con$LFC_mp,con$LFC_mph, col = my_cols[5])
+points(trans$LFC_mp,trans$LFC_mph, col = my_cols[2],pch = 16, cex = 1.2)
+points(cis_plus_trans$LFC_mp,cis_plus_trans$LFC_mph, col = my_cols[4],pch = 16, cex = 1.2)
+points(cis_by_trans$LFC_mp,cis_by_trans$LFC_mph, col = my_cols[3],pch = 16, cex = 1.2)
+points(cis$LFC_mp,cis$LFC_mph, col = my_cols[1],pch = 16, cex = 1.2)
+
+abline(v=0, col = "black", lty = 3, lwd = 1.8)
+abline(h=0, col = "black", lty = 3, lwd = 1.8)
+legend("topleft", inset=0,
+       c(paste("cis ", round((nrow(cis))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("trans ", round((nrow(trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis x trans ", round((nrow(cis_by_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis + trans ", round((nrow(cis_plus_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("conserved ", round(((nrow(inheritance_and_ase)-(nrow(cis_plus_trans)+nrow(cis_by_trans)+nrow(trans)+nrow(cis))))/(nrow(inheritance_and_ase))*100,2),"%", sep = "")),
+       pt.cex = 1.3, col=my_cols, horiz=FALSE, bty="n",pch =c(16,16,16,16,1))
+#dev.off()
+
+# H and P on axes
+plot(log2(inheritance_and_ase$P),log2(inheritance_and_ase$H), pch =16, col = "white", cex.axis=1.3,
+     xlim = c(-3.5,3.5), xlab = "", ylab = "")
+points(log2(con$P),log2(con$H), col = my_cols[5])
+points(log2(trans$P),log2(trans$H), col = my_cols[2],pch = 16, cex = 1.2)
+points(log2(cis_plus_trans$P),log2(cis_plus_trans$H), col = my_cols[4],pch = 16, cex = 1.2)
+points(log2(cis_by_trans$P),log2(cis_by_trans$H), col = my_cols[3],pch = 16, cex = 1.2)
+points(log2(cis$P),log2(cis$H), col = my_cols[1],pch = 16, cex = 1.2)
+
+abline(v=0, col = "black", lty = 3, lwd = 1.8)
+abline(h=0, col = "black", lty = 3, lwd = 1.8)
+legend("topleft", inset=0,
+       c(paste("cis ", round((nrow(cis))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("trans ", round((nrow(trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis x trans ", round((nrow(cis_by_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis + trans ", round((nrow(cis_plus_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("conserved ", round(((nrow(inheritance_and_ase)-(nrow(cis_plus_trans)+nrow(cis_by_trans)+nrow(trans)+nrow(cis))))/(nrow(inheritance_and_ase))*100,2),"%", sep = "")),
+       pt.cex = 1.3, col=my_cols, horiz=FALSE, bty="n",pch =c(16,16,16,16,1))
+
+#############
+#############
+
+
+inheritance_and_ase <- read.table("inheritance_and_ase_osp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
+head(inheritance_and_ase)
+
+cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                   inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                   inheritance_and_ase$sig_trans == "no"),]
+trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                     inheritance_and_ase$ase_in_osp_hyb == "no" &
+                                     inheritance_and_ase$sig_trans == "yes"),]
+cis_plus_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                              inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                              inheritance_and_ase$sig_trans == "yes" &
+                                              inheritance_and_ase$H_sign == inheritance_and_ase$P_sign),]
+cis_by_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                            inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                            inheritance_and_ase$sig_trans == "yes" &
+                                            inheritance_and_ase$H_sign != inheritance_and_ase$P_sign),]
+con <- inheritance_and_ase[! inheritance_and_ase$Geneid %in% c(cis$Geneid,trans$Geneid,cis_plus_trans$Geneid,cis_by_trans$Geneid),]
+
+
+
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/reg_mechs_osp_8dpf.png", width = 7.25, height = 7.25, units = 'in', res = 400)
+plot(inheritance_and_ase$LFC_mp, inheritance_and_ase$LFC_mph, pch =16, col = "white", cex.axis=1.3,
+     xlim = c(-3.5,3.5),ylim = c(-2,2), xlab = "", ylab = "")
+points(con$LFC_mp,con$LFC_mph, col = my_cols[5])
+points(trans$LFC_mp,trans$LFC_mph, col = my_cols[2],pch = 16, cex = 1.2)
+points(cis_plus_trans$LFC_mp,cis_plus_trans$LFC_mph, col = my_cols[4],pch = 16, cex = 1.2)
+points(cis_by_trans$LFC_mp,cis_by_trans$LFC_mph, col = my_cols[3],pch = 16, cex = 1.2)
+points(cis$LFC_mp,cis$LFC_mph, col = my_cols[1],pch = 16, cex = 1.2)
+
+abline(v=0, col = "black", lty = 3, lwd = 1.8)
+abline(h=0, col = "black", lty = 3, lwd = 1.8)
+legend("topleft", inset=0,
+       c(paste("cis ", round((nrow(cis))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("trans ", round((nrow(trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis x trans ", round((nrow(cis_by_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis + trans ", round((nrow(cis_plus_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("conserved ", round(((nrow(inheritance_and_ase)-(nrow(cis_plus_trans)+nrow(cis_by_trans)+nrow(trans)+nrow(cis))))/(nrow(inheritance_and_ase))*100,2),"%", sep = "")),
+       pt.cex = 1.3, col=my_cols, horiz=FALSE, bty="n",pch =c(16,16,16,16,1))
+#dev.off()
+
+# H and P on axes
+plot(log2(inheritance_and_ase$P),log2(inheritance_and_ase$H), pch =16, col = "white", cex.axis=1.3,
+     xlim = c(-3.5,3.5), xlab = "", ylab = "")
+points(log2(con$P),log2(con$H), col = my_cols[5])
+points(log2(trans$P),log2(trans$H), col = my_cols[2],pch = 16, cex = 1.2)
+points(log2(cis_plus_trans$P),log2(cis_plus_trans$H), col = my_cols[4],pch = 16, cex = 1.2)
+points(log2(cis_by_trans$P),log2(cis_by_trans$H), col = my_cols[3],pch = 16, cex = 1.2)
+points(log2(cis$P),log2(cis$H), col = my_cols[1],pch = 16, cex = 1.2)
+
+abline(v=0, col = "black", lty = 3, lwd = 1.8)
+abline(h=0, col = "black", lty = 3, lwd = 1.8)
+legend("topleft", inset=0,
+       c(paste("cis ", round((nrow(cis))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("trans ", round((nrow(trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis x trans ", round((nrow(cis_by_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis + trans ", round((nrow(cis_plus_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("conserved ", round(((nrow(inheritance_and_ase)-(nrow(cis_plus_trans)+nrow(cis_by_trans)+nrow(trans)+nrow(cis))))/(nrow(inheritance_and_ase))*100,2),"%", sep = "")),
+       pt.cex = 1.3, col=my_cols, horiz=FALSE, bty="n",pch =c(16,16,16,16,1))
+
+##########
+
+
+inheritance_and_ase <- read.table("inheritance_and_ase_osp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
+head(inheritance_and_ase)
+
+cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                   inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                   inheritance_and_ase$sig_trans == "no"),]
+trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                     inheritance_and_ase$ase_in_osp_hyb == "no" &
+                                     inheritance_and_ase$sig_trans == "yes"),]
+cis_plus_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                              inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                              inheritance_and_ase$sig_trans == "yes" &
+                                              inheritance_and_ase$H_sign == inheritance_and_ase$P_sign),]
+cis_by_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                            inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                            inheritance_and_ase$sig_trans == "yes" &
+                                            inheritance_and_ase$H_sign != inheritance_and_ase$P_sign),]
+con <- inheritance_and_ase[! inheritance_and_ase$Geneid %in% c(cis$Geneid,trans$Geneid,cis_plus_trans$Geneid,cis_by_trans$Geneid),]
+
+
+
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/reg_mechs_osp_48hpf.png", width = 7.25, height = 7.25, units = 'in', res = 400)
+plot(inheritance_and_ase$LFC_mp, inheritance_and_ase$LFC_mph, pch =16, col = "white", cex.axis=1.3,
+     xlim = c(-3.5,3.5),ylim = c(-2,2), xlab = "", ylab = "")
+points(con$LFC_mp,con$LFC_mph, col = my_cols[5])
+points(trans$LFC_mp,trans$LFC_mph, col = my_cols[2],pch = 16, cex = 1.2)
+points(cis_plus_trans$LFC_mp,cis_plus_trans$LFC_mph, col = my_cols[4],pch = 16, cex = 1.2)
+points(cis_by_trans$LFC_mp,cis_by_trans$LFC_mph, col = my_cols[3],pch = 16, cex = 1.2)
+points(cis$LFC_mp,cis$LFC_mph, col = my_cols[1],pch = 16, cex = 1.2)
+
+abline(v=0, col = "black", lty = 3, lwd = 1.8)
+abline(h=0, col = "black", lty = 3, lwd = 1.8)
+legend("topleft", inset=0,
+       c(paste("cis ", round((nrow(cis))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("trans ", round((nrow(trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis x trans ", round((nrow(cis_by_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis + trans ", round((nrow(cis_plus_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("conserved ", round(((nrow(inheritance_and_ase)-(nrow(cis_plus_trans)+nrow(cis_by_trans)+nrow(trans)+nrow(cis))))/(nrow(inheritance_and_ase))*100,2),"%", sep = "")),
+       pt.cex = 1.3, col=my_cols, horiz=FALSE, bty="n",pch =c(16,16,16,16,1))
+#dev.off()
+
+# H and P on axes
+plot(log2(inheritance_and_ase$P),log2(inheritance_and_ase$H), pch =16, col = "white", cex.axis=1.3,
+     xlim = c(-3.5,3.5), xlab = "", ylab = "")
+points(log2(con$P),log2(con$H), col = my_cols[5])
+points(log2(trans$P),log2(trans$H), col = my_cols[2],pch = 16, cex = 1.2)
+points(log2(cis_plus_trans$P),log2(cis_plus_trans$H), col = my_cols[4],pch = 16, cex = 1.2)
+points(log2(cis_by_trans$P),log2(cis_by_trans$H), col = my_cols[3],pch = 16, cex = 1.2)
+points(log2(cis$P),log2(cis$H), col = my_cols[1],pch = 16, cex = 1.2)
+
+abline(v=0, col = "black", lty = 3, lwd = 1.8)
+abline(h=0, col = "black", lty = 3, lwd = 1.8)
+legend("topleft", inset=0,
+       c(paste("cis ", round((nrow(cis))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("trans ", round((nrow(trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis x trans ", round((nrow(cis_by_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("cis + trans ", round((nrow(cis_plus_trans))/(nrow(inheritance_and_ase))*100,2),"%", sep = ""),
+         paste("conserved ", round(((nrow(inheritance_and_ase)-(nrow(cis_plus_trans)+nrow(cis_by_trans)+nrow(trans)+nrow(cis))))/(nrow(inheritance_and_ase))*100,2),"%", sep = "")),
+       pt.cex = 1.3, col=my_cols, horiz=FALSE, bty="n",pch =c(16,16,16,16,1))
+
+```
+
+# Plot inheritance
+```{r}
+
+#### make plot like McManus 2010 4B
+
+inheritance_and_ase <- read.table("inheritance_all_genes_crp_and_osp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
+  
+  #Hybrid inheritance was considered additive if gene expression was intermediate between
+  #molluscivores and scale-eaters with significant differential expression between molluscivores and
+  #scale-eaters. Inheritance was dominant if 
+  #hybrid expression was significantly different from one parent but not the other.
+  #Genes showing misexpression in hybrids showed transgressive inheritance, where hybrid gene
+  #expression was significantly higher (overdominant) or lower (underdominant) than parental
+  #populations.
+  
+  total_genes <- nrow(inheritance_and_ase)
+  con <- inheritance_and_ase[which(inheritance_and_ase$padj_mph > 0.01 & inheritance_and_ase$padj_mh > 0.01 & inheritance_and_ase$padj_ph > 0.01 & inheritance_and_ase$padj_mp > 0.01),]
+  add <- inheritance_and_ase[which(inheritance_and_ase$padj_mh > 0.01 & inheritance_and_ase$padj_mp < 0.01 & inheritance_and_ase$padj_ph > 0.01),]
+  add1 <- add[which(add$LFC_mh < 0 & add$LFC_ph > 0),]
+  add2 <- add[which(add$LFC_mh > 0 & add$LFC_ph < 0),]
+  add <- rbind(add1, add2)
+  p1_dom <- inheritance_and_ase[which(inheritance_and_ase$padj_mh > 0.01 & inheritance_and_ase$padj_ph < 0.01),]
+  #p1_dom1 <- p1_dom[which(p1_dom$LFC_mh < 0 & p1_dom$LFC_ph > 0),]
+  #p1_dom2 <- p1_dom[which(p1_dom$LFC_mh > 0 & p1_dom$LFC_ph < 0),]
+  #p1_dom <- rbind(p1_dom1, p1_dom2)
+  p2_dom <- inheritance_and_ase[which(inheritance_and_ase$padj_mh < 0.01 & inheritance_and_ase$padj_ph > 0.01),]
+  #p2_dom1 <- p2_dom[which(p2_dom$LFC_mh < 0 & p2_dom$LFC_ph > 0),]
+  #p2_dom2 <- p2_dom[which(p2_dom$LFC_mh > 0 & p2_dom$LFC_ph < 0),]
+  #p2_dom <- rbind(p2_dom1, p2_dom2)
+  over_dom <- inheritance_and_ase[which(inheritance_and_ase$padj_mph < 0.01 & inheritance_and_ase$LFC_mh > 0 & inheritance_and_ase$LFC_ph > 0),]
+  under_dom <- inheritance_and_ase[which(inheritance_and_ase$padj_mph < 0.01 & inheritance_and_ase$LFC_mh < 0 & inheritance_and_ase$LFC_ph < 0),]
+  transgressive <- rbind(over_dom, under_dom)
+  dom <- rbind(p1_dom, p2_dom)
+  
+  prop_con      <-paste(round((nrow(con)/total_genes * 100), digits = 2),"%", sep = "") 
+  prop_add      <-paste(round((nrow(add)/total_genes * 100), digits = 2),"%", sep = "")
+  prop_p1_dom   <-paste(round((nrow(p1_dom)/total_genes * 100), digits = 2),"%", sep = "")      
+  prop_p2_dom   <-paste(round((nrow(p2_dom)/total_genes * 100), digits = 2),"%", sep = "")      
+  prop_overdom  <-paste(round((nrow(over_dom)/total_genes * 100), digits = 2),"%", sep = "")         
+  prop_underdom <-paste(round((nrow(under_dom)/total_genes * 100), digits = 2),"%", sep = "")
+  prop_dom <- paste(round((nrow(dom)/total_genes * 100), digits = 2),"%", sep = "") 
+  prop_transgressive <- paste(round((nrow(transgressive)/total_genes * 100), digits = 2),"%", sep = "") 
+  
+  inheritance <- rbind(con, add, dom, transgressive)
+  head(inheritance)
+  nrow(inheritance)
+  my_cols <- c(red,bla,blu,yel,gry)
+  cols_in <- my_cols[inheritance$inheritance]
+
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/inheritance_all_genes_8dpf.png", width = 7.25, height = 7.25, units = 'in', res = 400)
+{plot(inheritance$LFC_mh, inheritance$LFC_ph, pch =16, col = "white", 
+     ylab = "log2 fold change mh",
+     xlab = "log2 fold change ph",cex.axis=1.3, ylim = c(-7,6.5), xlim = c(-4.5,3.5))
+
+points(con$LFC_mh,con$LFC_ph, col = my_cols[5])
+points(transgressive$LFC_mh,transgressive$LFC_ph, col = my_cols[3],pch = 16, cex = 1.2)
+points(add$LFC_mh,add$LFC_ph, col = my_cols[1],pch = 16, cex = 1.2)
+points(dom$LFC_mh,dom$LFC_ph, col = my_cols[2],pch = 16, cex = 1.2)
+
+abline(v=0, col = "black", lty = 3, lwd = 1.8)
+abline(h=0, col = "black", lty = 3, lwd = 1.8)
+legend("topleft", inset=0,
+       c(paste("additive ", prop_add, sep = ""),
+         paste("dominant ", prop_dom, sep = ""),
+         paste("transgressive ", prop_transgressive, sep = ""),
+         paste("conserved ", prop_con, sep = "")),
+       pt.cex = 1.3, col=c(red,bla,blu,gry), horiz=FALSE, bty="n",pch =c(16,16,16,1))}
+  #dev.off()
+  
+
+  
+  
+  
+  
+inheritance_and_ase <- read.table("inheritance_all_genes_crp_and_osp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
+  
+  total_genes <- nrow(inheritance_and_ase)
+  con <- inheritance_and_ase[which(inheritance_and_ase$padj_mph > 0.01 & inheritance_and_ase$padj_mh > 0.01 & inheritance_and_ase$padj_ph > 0.01 & inheritance_and_ase$padj_mp > 0.01),]
+  add <- inheritance_and_ase[which(inheritance_and_ase$padj_mh > 0.01 & inheritance_and_ase$padj_mp < 0.01 & inheritance_and_ase$padj_ph > 0.01),]
+  add1 <- add[which(add$LFC_mh < 0 & add$LFC_ph > 0),]
+  add2 <- add[which(add$LFC_mh > 0 & add$LFC_ph < 0),]
+  add <- rbind(add1, add2)
+  p1_dom <- inheritance_and_ase[which(inheritance_and_ase$padj_mh > 0.01 & inheritance_and_ase$padj_ph < 0.01),]
+  #p1_dom1 <- p1_dom[which(p1_dom$LFC_mh < 0 & p1_dom$LFC_ph > 0),]
+  #p1_dom2 <- p1_dom[which(p1_dom$LFC_mh > 0 & p1_dom$LFC_ph < 0),]
+  #p1_dom <- rbind(p1_dom1, p1_dom2)
+  p2_dom <- inheritance_and_ase[which(inheritance_and_ase$padj_mh < 0.01 & inheritance_and_ase$padj_ph > 0.01),]
+  #p2_dom1 <- p2_dom[which(p2_dom$LFC_mh < 0 & p2_dom$LFC_ph > 0),]
+  #p2_dom2 <- p2_dom[which(p2_dom$LFC_mh > 0 & p2_dom$LFC_ph < 0),]
+  #p2_dom <- rbind(p2_dom1, p2_dom2)
+  over_dom <- inheritance_and_ase[which(inheritance_and_ase$padj_mph < 0.01 & inheritance_and_ase$LFC_mh > 0 & inheritance_and_ase$LFC_ph > 0),]
+  under_dom <- inheritance_and_ase[which(inheritance_and_ase$padj_mph < 0.01 & inheritance_and_ase$LFC_mh < 0 & inheritance_and_ase$LFC_ph < 0),]
+  transgressive <- rbind(over_dom, under_dom)
+  dom <- rbind(p1_dom, p2_dom)
+  
+  prop_con      <-paste(round((nrow(con)/total_genes * 100), digits = 2),"%", sep = "") 
+  prop_add      <-paste(round((nrow(add)/total_genes * 100), digits = 2),"%", sep = "")
+  prop_p1_dom   <-paste(round((nrow(p1_dom)/total_genes * 100), digits = 2),"%", sep = "")      
+  prop_p2_dom   <-paste(round((nrow(p2_dom)/total_genes * 100), digits = 2),"%", sep = "")      
+  prop_overdom  <-paste(round((nrow(over_dom)/total_genes * 100), digits = 2),"%", sep = "")         
+  prop_underdom <-paste(round((nrow(under_dom)/total_genes * 100), digits = 2),"%", sep = "")
+  prop_dom <- paste(round((nrow(dom)/total_genes * 100), digits = 2),"%", sep = "") 
+  prop_transgressive <- paste(round((nrow(transgressive)/total_genes * 100), digits = 2),"%", sep = "") 
+  
+  inheritance <- rbind(con, add, dom, transgressive)
+  head(inheritance)
+  nrow(inheritance)
+  my_cols <- c(red,bla,blu,yel,gry)
+  cols_in <- my_cols[inheritance$inheritance]
+
+#png("C:/Users/jmcgirr/Documents/remote_pups/second_submission/figs/inheritance_all_genes_48hdpf.png", width = 7.25, height = 7.25, units = 'in', res = 400)
+{plot(inheritance$LFC_mh, inheritance$LFC_ph, pch =16, col = "white", 
+     ylab = "log2 fold change mh",
+     xlab = "log2 fold change ph",cex.axis=1.3, ylim = c(-7,6.5), xlim = c(-4.5,3.5))
+
+points(con$LFC_mh,con$LFC_ph, col = my_cols[5])
+points(transgressive$LFC_mh,transgressive$LFC_ph, col = my_cols[3],pch = 16, cex = 1.2)
+points(add$LFC_mh,add$LFC_ph, col = my_cols[1],pch = 16, cex = 1.2)
+points(dom$LFC_mh,dom$LFC_ph, col = my_cols[2],pch = 16, cex = 1.2)
+
+abline(v=0, col = "black", lty = 3, lwd = 1.8)
+abline(h=0, col = "black", lty = 3, lwd = 1.8)
+legend("topleft", inset=0,
+       c(paste("additive ", prop_add, sep = ""),
+         paste("dominant ", prop_dom, sep = ""),
+         paste("transgressive ", prop_transgressive, sep = ""),
+         paste("conserved ", prop_con, sep = "")),
+       pt.cex = 1.3, col=c(red,bla,blu,gry), horiz=FALSE, bty="n",pch =c(16,16,16,1))}
+  #dev.off()
+  
+
+
+```
+
+## Craniofacial genes underrepresented in genes with alternate homozygous sites? NO!
+
+```{r, eval = FALSE}
+
+go <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/cranial_skeletal_system_development_GO_1904888.txt", header = FALSE, stringsAsFactors = FALSE, sep = '\t')
+go <- tolower(go$V1)
+
+go <- read.table("C:/Users/jmcgirr/Documents/all_2018_samples/GO/skeletal_system_morphogenesis_GO_0048705.txt", header = FALSE, stringsAsFactors = FALSE, sep = '\t')
+go <- tolower(go$V1)
+
+genes <- read.table("D:/Cyprinodon/bronto/c_brontotheroides.all.renamed.putative_function.genes_only.reformated.known.final.saf", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+names(genes) <- c("GeneID","seqnames", "start",  "end", "strand")
+
+#length(intersect(go, genes$GeneID))
+#length(setdiff(genes$GeneID,go))
+#length(setdiff(inheritance_and_ase$Geneid,go))
+#length(intersect(setdiff(genes$GeneID,inheritance_and_ase$Geneid),go))
+#no_snps <- setdiff(genes$GeneID,inheritance_and_ase$Geneid)
+
+inheritance_and_ase <- read.table("C:/Users/jmcgirr/Documents/remote_pups/second_submission/ase/inheritance_and_ase_crp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
+inheritance_and_ase <- read.table("C:/Users/jmcgirr/Documents/remote_pups/second_submission/ase/inheritance_and_ase_crp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
+inheritance_and_ase <- read.table("C:/Users/jmcgirr/Documents/remote_pups/second_submission/ase/inheritance_and_ase_osp_8dpf.txt", header = TRUE, stringsAsFactors = FALSE)
+inheritance_and_ase <- read.table("C:/Users/jmcgirr/Documents/remote_pups/second_submission/ase/inheritance_and_ase_osp_48hpf.txt", header = TRUE, stringsAsFactors = FALSE)
+
+a <- length(intersect(go,inheritance_and_ase$Geneid))
+b <- length(intersect(go, genes$GeneID)) - a #length(intersect(setdiff(genes$GeneID,inheritance_and_ase$Geneid),go))
+c <- length(setdiff(inheritance_and_ase$Geneid,go))
+d <- length(setdiff(setdiff(genes$GeneID,go),inheritance_and_ase$Geneid))
+
+test <- matrix(c(a,b,
+                 c,d), ncol=2)
+fish <- fisher.test(test)
+fish$p.value
+a / (a+c)
+b / (b+d)
+
+length(inheritance_and_ase$Geneid)
+
+
+```
+
+## Generate inheritance and ASE tables
+ 
+```{r, eval = FALSE}
+#inheritance for all genes expressed
+mp <- read.table("C:/Users/jmcgirr/Documents/remote_pups/hybrid_inheritance_and_misregulation/de_genes_48hpf_design_cmom_v_cpop.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mp <- mp %>% select (-c(lfcSE, stat, pvalue))
+colnames(mp) <- c("baseMean_mp","LFC_mp","padj_mp","Geneid")
+mph <- read.table("C:/Users/jmcgirr/Documents/remote_pups/hybrid_inheritance_and_misregulation/de_genes_48hpf_design_cmomcpop_v_cmxcp_and_opxom_jeremy_gff.txt", header = TRUE, stringsAsFactors = FALSE ,sep="\t")
+mph <- mph %>% select (-c(lfcSE, stat, pvalue))
+colnames(mph) <- c("baseMean_mph","LFC_mph","padj_mph","Geneid")
+mh <- read.table("C:/Users/jmcgirr/Documents/remote_pups/hybrid_inheritance_and_misregulation/de_genes_48hpf_design_cm_and_om_v_cmxcp_and_opxom_jeremy_gff.txt", header = TRUE, stringsAsFactors = FALSE ,sep="\t")
+mh <- mh %>% select (-c(lfcSE, stat, pvalue))
+colnames(mh) <- c("baseMean_mh","LFC_mh","padj_mh","Geneid")
+ph <- read.table("C:/Users/jmcgirr/Documents/remote_pups/hybrid_inheritance_and_misregulation/de_genes_48hpf_design_cp_and_op_v_cmxcp_and_opxom_jeremy_gff.txt", header = TRUE, stringsAsFactors = FALSE ,sep="\t")
+ph <- ph %>% select (-c(lfcSE, stat, pvalue))
+colnames(ph) <- c("baseMean_ph","LFC_ph","padj_ph","Geneid")
+
+de_8 <- inner_join(mp,mph, by = "Geneid")
+de_8 <- inner_join(de_8,mh, by = "Geneid")
+de_8 <- inner_join(de_8,ph, by = "Geneid")
+nrow(de_8)
+
+#write.table(de_8,"C:/Users/jmcgirr/Documents/remote_pups/second_submission/ase/inheritance_all_genes_crp_and_osp_48hpf.txt", quote = FALSE, row.names = FALSE)
+
+
+#inheritance and ASE for genes with heterozygous sites
+#### 8dpf ####
+CMxCP_8 <- c("CWE2","CWE3","CWE4")
+CMxCP_48 <- c("CWT1","CWT2","CWT3")
+OPxOM_8 <- c("OZE2","OZE4","OZE5")
+OPxOM_48 <- c("OZT1","OZT2","OZT3")
+ase_run_type <- "gene_level"
+
+cts_8 <- read.table("C:/Users/jmcgirr/Documents/remote_pups/hybrid_inheritance_and_misregulation/normalized_counts_8dpf_design_f1_all_crescent_osprey_m_p_and_hybrids_jeremy_gff.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+names(cts_8)[names(cts_8) == 'GeneID'] <- 'Geneid'
+
+
+mp <- read.table("C:/Users/jmcgirr/Documents/remote_pups/de/split_populations/de_genes_8dpf_design_crp_and_osp_mvp.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mp <- mp %>% select (-c(lfcSE, stat, pvalue))
+colnames(mp) <- c("baseMean_mp","LFC_mp","padj_mp","Geneid")
+mph <- read.table("C:/Users/jmcgirr/Documents/remote_pups/hybrid_inheritance_and_misregulation/de_genes_8dpf_design_cmomcpop_v_cmxcp_and_opxom_jeremy_gff.txt", header = TRUE, stringsAsFactors = FALSE ,sep="\t")
+mph <- mph %>% select (-c(lfcSE, stat, pvalue))
+colnames(mph) <- c("baseMean_mph","LFC_mph","padj_mph","Geneid")
+mh <- read.table("C:/Users/jmcgirr/Documents/remote_pups/hybrid_inheritance_and_misregulation/de_genes_8dpf_design_cm_and_om_v_cmxcp_and_opxom_jeremy_gff.txt", header = TRUE, stringsAsFactors = FALSE ,sep="\t")
+mh <- mh %>% select (-c(lfcSE, stat, pvalue))
+colnames(mh) <- c("baseMean_mh","LFC_mh","padj_mh","Geneid")
+ph <- read.table("C:/Users/jmcgirr/Documents/remote_pups/hybrid_inheritance_and_misregulation/de_genes_8dpf_design_cp_and_op_v_cmxcp_and_opxom_jeremy_gff.txt", header = TRUE, stringsAsFactors = FALSE ,sep="\t")
+ph <- ph %>% select (-c(lfcSE, stat, pvalue))
+colnames(ph) <- c("baseMean_ph","LFC_ph","padj_ph","Geneid")
+
+de_8 <- inner_join(mp,mph, by = "Geneid")
+de_8 <- inner_join(de_8,mh, by = "Geneid")
+de_8 <- inner_join(de_8,ph, by = "Geneid")
+nrow(de_8)
+# + LFC mp = higher in p
+# + LFC mh = higher in m
+# + LFC ph = higher in p
+# + LFC mph = higher in mp
+
+
+mb1 <- read.table(paste("C:/Users/jmcgirr/Documents/remote_pups/ase/mbased_output/",CMxCP_8[1],"_mbased_ase_unphased_",ase_run_type,".txt",sep = ""), header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mb1 <- mb1[c("pValueASE","geneID")]
+colnames(mb1) <- c("pASE_CWE2", "Geneid")
+de_8 <- left_join(de_8,mb1, by = "Geneid")
+mb1 <- read.table(paste("C:/Users/jmcgirr/Documents/remote_pups/ase/mbased_output/",CMxCP_8[2],"_mbased_ase_unphased_",ase_run_type,".txt",sep = ""), header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mb1 <- mb1[c("pValueASE","geneID")]
+colnames(mb1) <- c("pASE_CWE3", "Geneid")
+de_8 <- left_join(de_8,mb1, by = "Geneid")
+mb1 <- read.table(paste("C:/Users/jmcgirr/Documents/remote_pups/ase/mbased_output/",CMxCP_8[3],"_mbased_ase_unphased_",ase_run_type,".txt",sep = ""), header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mb1 <- mb1[c("pValueASE","geneID")]
+colnames(mb1) <- c("pASE_CWE4", "Geneid")
+de_8 <- left_join(de_8,mb1, by = "Geneid")
+mb1 <- read.table(paste("C:/Users/jmcgirr/Documents/remote_pups/ase/mbased_output/",OPxOM_8[1],"_mbased_ase_unphased_",ase_run_type,".txt",sep = ""), header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mb1 <- mb1[c("pValueASE","geneID")]
+colnames(mb1) <- c("pASE_OZE2", "Geneid")
+de_8 <- left_join(de_8,mb1, by = "Geneid")
+mb1 <- read.table(paste("C:/Users/jmcgirr/Documents/remote_pups/ase/mbased_output/",OPxOM_8[2],"_mbased_ase_unphased_",ase_run_type,".txt",sep = ""), header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mb1 <- mb1[c("pValueASE","geneID")]
+colnames(mb1) <- c("pASE_OZE4", "Geneid")
+de_8 <- left_join(de_8,mb1, by = "Geneid")
+mb1 <- read.table(paste("C:/Users/jmcgirr/Documents/remote_pups/ase/mbased_output/",OPxOM_8[3],"_mbased_ase_unphased_",ase_run_type,".txt",sep = ""), header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mb1 <- mb1[c("pValueASE","geneID")]
+colnames(mb1) <- c("pASE_OZE5", "Geneid")
+
+de_ase_8 <- left_join(de_8,mb1, by = "Geneid")
+
+de_ase_8 <- de_ase_8 %>% mutate(ase_in_all_hyb = ifelse((pASE_CWE2 < 0.05 & pASE_CWE3 < 0.05 & pASE_CWE4 < 0.05 & pASE_OZE2 < 0.05 & pASE_OZE4 < 0.05 & pASE_OZE5 < 0.05), 'yes', 'no'))
+de_ase_8 <- de_ase_8 %>% mutate(ase_in_crp_hyb = ifelse((pASE_CWE2 < 0.05 & pASE_CWE3 < 0.05 & pASE_CWE4 < 0.05), 'yes', 'no'))
+de_ase_8 <- de_ase_8 %>% mutate(ase_in_osp_hyb = ifelse((pASE_OZE2 < 0.05 & pASE_OZE4 < 0.05 & pASE_OZE5 < 0.05), 'yes', 'no'))
+de_ase_8 <- de_ase_8 %>% mutate(ase_in_any_hyb = ifelse((pASE_CWE2 | 0.05 | pASE_CWE3 < 0.05 | pASE_CWE4 < 0.05 | pASE_OZE2 < 0.05 | pASE_OZE4 | 0.05 | pASE_OZE5 < 0.05), 'yes', 'no'))
+
+
+#
+#nrow(de_ase_8_t[which(de_ase_8$ase_in_all_hyb == 'yes'),])
+#nrow(de_ase_8_t[which(de_ase_8$ase_in_all_hyb == 'no'),])
+#table(is.na(de_ase_8$ase_in_all_hyb))
+#
+#nrow(de_ase_8_t[which(de_ase_8$ase_in_crp_hyb == 'yes'),])
+#nrow(de_ase_8_t[which(de_ase_8$ase_in_crp_hyb == 'no'),])
+#table(is.na(de_ase_8$ase_in_crp_hyb))
+#
+#
+#nrow(de_ase_8_t[which(de_ase_8$ase_in_osp_hyb == 'yes'),])
+#nrow(de_ase_8_t[which(de_ase_8$ase_in_osp_hyb == 'no'),])
+#table(is.na(de_ase_8$ase_in_osp_hyb))
+
+# mom/dad counts per gene
+
+cts_dir <- "C:/Users/jmcgirr/Documents/remote_pups/ase/parental_counts/dad_doublecheck/"
+gene <- read.table("C:/Users/jmcgirr/Documents/remote_pups/igv/c_brontotheroides.all.renamed.putative_function.genes_only_reformated_known_final.bed", header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+#exon <- read.table("C:/Users/jmcgirr/Documents/remote_pups/igv/c_brontotheroides.all.renamed.putative_function.exons_only_reformated_known_final.bed", header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+#zeb_exon <- read.table("C:/Users/jmcgirr/Documents/remote_pups/igv/stringtie_transcoder_exons_zebrafish.bed", header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+names(gene) <- c("seqnames", "start","end","GeneID", "strand")
+
+indiv <- "CWE2"
+parental_cts <- read.table(paste(cts_dir, indiv, "_parental_counts.txt",sep = ""),sep = "\t", stringsAsFactors = FALSE, header = TRUE)
+parental_cts_ranges <- parental_cts
+parental_cts_ranges$seqnames <- parental_cts_ranges$chrom
+parental_cts_ranges$start <- parental_cts_ranges$position
+parental_cts_ranges$end <- parental_cts_ranges$start +1
+head(parental_cts_ranges)
+parental_cts_ranges <- parental_cts_ranges %>% as_granges()
+
+hy_cts <- gene %>% as_granges()
+hy_cts <- join_overlap_intersect(hy_cts, parental_cts_ranges) %>% as.data.frame()
+hy_cts$geneIndex <- paste(hy_cts$GeneID, hy_cts$seqnames, sep = ";")
+hy_cts$aseIndex <- paste(hy_cts$GeneID, hy_cts$snpIndex, sep = ";")
+names(hy_cts)[names(hy_cts) == 'GeneID'] <- 'Geneid'
+
+hy_cts <- hy_cts %>% 
+  group_by(geneIndex) %>%
+  mutate(mom_count_gene = sum(momCount)) %>%
+  mutate(dad_count_gene = sum(dadCount)) %>%
+  mutate(total_count = mom_count_gene + dad_count_gene)%>%
+  filter(total_count > 10)%>%
+  filter(mom_count_gene>1)%>%
+  filter(dad_count_gene>1)
+hy_cts <- hy_cts[c("Geneid","geneIndex","mom_count_gene","dad_count_gene")]
+hy_cts <- hy_cts[!duplicated(hy_cts[c("geneIndex")]),]
+
+colnames(hy_cts)[colnames(hy_cts)=="mom_count_gene"] <- "mom_count_gene1"
+colnames(hy_cts)[colnames(hy_cts)=="dad_count_gene"] <- "dad_count_gene1"
+hy_cts1 <- hy_cts
+head(hy_cts1)
+
+indiv <- "CWE3"
+parental_cts <- read.table(paste(cts_dir, indiv, "_parental_counts.txt",sep = ""),sep = "\t", stringsAsFactors = FALSE, header = TRUE)
+parental_cts_ranges <- parental_cts
+parental_cts_ranges$seqnames <- parental_cts_ranges$chrom
+parental_cts_ranges$start <- parental_cts_ranges$position
+parental_cts_ranges$end <- parental_cts_ranges$start +1
+parental_cts_ranges <- parental_cts_ranges %>% as_granges()
+
+hy_cts <- gene %>% as_granges()
+hy_cts <- join_overlap_intersect(hy_cts, parental_cts_ranges) %>% as.data.frame()
+hy_cts$geneIndex <- paste(hy_cts$GeneID, hy_cts$seqnames, sep = ";")
+hy_cts$aseIndex <- paste(hy_cts$GeneID, hy_cts$snpIndex, sep = ";")
+names(hy_cts)[names(hy_cts) == 'GeneID'] <- 'Geneid'
+
+hy_cts <- hy_cts %>% 
+  group_by(geneIndex) %>%
+  mutate(mom_count_gene = sum(momCount)) %>%
+  mutate(dad_count_gene = sum(dadCount)) %>%
+  mutate(total_count = mom_count_gene + dad_count_gene)%>%
+  filter(total_count > 10)%>%
+  filter(mom_count_gene>1)%>%
+  filter(dad_count_gene>1)
+hy_cts <- hy_cts[c("geneIndex","mom_count_gene","dad_count_gene")]
+hy_cts <- hy_cts[!duplicated(hy_cts[c("geneIndex")]),]
+
+colnames(hy_cts)[colnames(hy_cts)=="mom_count_gene"] <- "mom_count_gene2"
+colnames(hy_cts)[colnames(hy_cts)=="dad_count_gene"] <- "dad_count_gene2"
+hy_cts2 <- hy_cts
+
+indiv <- "CWE4"
+parental_cts <- read.table(paste(cts_dir, indiv, "_parental_counts.txt",sep = ""),sep = "\t", stringsAsFactors = FALSE, header = TRUE)
+parental_cts_ranges <- parental_cts
+parental_cts_ranges$seqnames <- parental_cts_ranges$chrom
+parental_cts_ranges$start <- parental_cts_ranges$position
+parental_cts_ranges$end <- parental_cts_ranges$start +1
+parental_cts_ranges <- parental_cts_ranges %>% as_granges()
+
+hy_cts <- gene %>% as_granges()
+hy_cts <- join_overlap_intersect(hy_cts, parental_cts_ranges) %>% as.data.frame()
+hy_cts$geneIndex <- paste(hy_cts$GeneID, hy_cts$seqnames, sep = ";")
+hy_cts$aseIndex <- paste(hy_cts$GeneID, hy_cts$snpIndex, sep = ";")
+names(hy_cts)[names(hy_cts) == 'GeneID'] <- 'Geneid'
+
+hy_cts <- hy_cts %>% 
+  group_by(geneIndex) %>%
+  mutate(mom_count_gene = sum(momCount)) %>%
+  mutate(dad_count_gene = sum(dadCount)) %>%
+  mutate(total_count = mom_count_gene + dad_count_gene)%>%
+  filter(total_count > 10)%>%
+  filter(mom_count_gene>1)%>%
+  filter(dad_count_gene>1)
+hy_cts <- hy_cts[c("geneIndex","mom_count_gene","dad_count_gene")]
+hy_cts <- hy_cts[!duplicated(hy_cts[c("geneIndex")]),]
+
+colnames(hy_cts)[colnames(hy_cts)=="mom_count_gene"] <- "mom_count_gene3"
+colnames(hy_cts)[colnames(hy_cts)=="dad_count_gene"] <- "dad_count_gene3"
+hy_cts3 <- hy_cts
+
+hy_cts <- inner_join(hy_cts1,hy_cts2, by = 'geneIndex')
+hy_cts <- inner_join(hy_cts,hy_cts3, by = 'geneIndex')
+head(hy_cts)
+
+hy_cts <- hy_cts %>% rowwise() %>% 
+          mutate(mom_mean_allele_count = mean(c(mom_count_gene1,mom_count_gene2,mom_count_gene3), na.rm = TRUE)) %>% rowwise() %>% 
+          mutate(dad_mean_allele_count = mean(c(dad_count_gene1,dad_count_gene2,dad_count_gene3), na.rm = TRUE)) %>% as.data.frame()
+hy_cts <- hy_cts[c("Geneid","geneIndex","mom_mean_allele_count", "dad_mean_allele_count")]
+nrow(hy_cts)
+
+# trans test
+
+fish_table1 <- merge(hy_cts,cts_8, by = "Geneid")
+# for CMxCP
+fish_table <- fish_table1 %>% rowwise() %>% 
+              mutate(mom_mean_norm_count = mean(c(CME1,CME2,CME5), na.rm = TRUE)) %>% rowwise() %>% 
+              mutate(dad_mean_norm_count = mean(c(CPE1,CPE2,CPE3,CPE4,CPE5), na.rm = TRUE)) %>% as.data.frame()
+#for OPxOM
+#fish_table2 <- fish_table %>% rowwise() %>% mutate(mom_mean_norm_count = mean(c(OPE1,OPE2,OPE3,OPE4,OPE5), na.rm = TRUE))
+#fish_table3 <- fish_table2 %>% rowwise() %>% mutate(dad_mean_norm_count = mean(c(OME1,OME2,OME3,OME4,OME5), na.rm = TRUE))
+
+geneIndexs <- c()
+Hs <- c()
+Ps <- c()
+P_H_ratios <- c()
+fishers_exacts <- c()
+
+#defaultW <- getOption("warn") 
+#options(warn = -1) 
+
+for(row_num in c(1:nrow(fish_table)))
+  #row_num <- 1
+{
+  geneIndexs <- c(geneIndexs, fish_table$geneIndex[row_num])
+  Hs <- c(Hs,(fish_table$mom_mean_allele_count[row_num] /fish_table$dad_mean_allele_count[row_num]))
+  Ps <- c(Ps,(fish_table$mom_mean_norm_count[row_num] /fish_table$dad_mean_norm_count[row_num]))
+  P_H_ratios <- c(P_H_ratios, ((fish_table$mom_mean_norm_count[row_num] /fish_table$dad_mean_norm_count[row_num]))/((fish_table$mom_mean_allele_count[row_num] /fish_table$dad_mean_allele_count[row_num])))
+  test <- matrix(c(fish_table$mom_mean_allele_count[row_num],fish_table$mom_mean_norm_count[row_num],fish_table$dad_mean_allele_count[row_num],fish_table$dad_mean_norm_count[row_num]), ncol=2)
+  
+  #if(any(is.na(test)))
+  #{
+  #  fishers_exacts <- c(fishers_exacts,"NA")
+  #}else
+  #{
+  fish <- fisher.test(test)
+  fishers_exacts <- c(fishers_exacts,fish$p.value)
+  #}
+}
+#options(warn = defaultW)
+
+fisher  <- data.frame (geneIndex = geneIndexs,
+                       H = Hs,
+                       P = Ps,
+                       P_H_ratio     = P_H_ratios ,
+                       fishers_exact_p = fishers_exacts,
+                       stringsAsFactors=FALSE)
+
+fisher <- fisher %>% mutate(H_sign = ifelse((H > 1), 'positive', 'negative'))
+fisher <- fisher %>% mutate(P_sign = ifelse((P > 1), 'positive', 'negative'))
+fisher <- fisher %>% mutate(sig_trans = ifelse((fishers_exact_p <= 0.05), 'yes', 'no'))
+fisher <- fisher %>% separate(geneIndex, c("Geneid","seqnames"), sep = ";", remove = FALSE)
+head(fisher)
+head(de_ase_8) 
+
+#for CRP
+inheritance_and_ase <- inner_join(fisher, de_ase_8, by = "Geneid")
+head(inheritance_and_ase)
+nrow(inheritance_and_ase)
+
+#write.table(inheritance_and_ase,"C:/Users/jmcgirr/Documents/remote_pups/second_submission/ase/inheritance_and_ase_crp_8dpf.txt", quote = FALSE, row.names = FALSE, sep = "\t")
+
+cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                   inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                   inheritance_and_ase$sig_trans == "no"),]
+nrow(cis)
+cis$Geneid
+
+trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                   inheritance_and_ase$ase_in_crp_hyb == "no" &
+                                   inheritance_and_ase$sig_trans == "yes"),]
+nrow(trans)
+trans$Geneid
+
+cis_plus_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                     inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                     inheritance_and_ase$sig_trans == "yes" &
+                                     inheritance_and_ase$H_sign == inheritance_and_ase$P_sign),]
+nrow(cis_plus_trans)
+cis_plus_trans$Geneid
+
+cis_by_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                              inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                              inheritance_and_ase$sig_trans == "yes" &
+                                              inheritance_and_ase$H_sign != inheritance_and_ase$P_sign),]
+nrow(cis_by_trans)
+cis_by_trans$Geneid
+
+
+
+### OSP cis/trans
+
+cts_dir <- "C:/Users/jmcgirr/Documents/remote_pups/ase/parental_counts/dad_doublecheck/"
+gene <- read.table("C:/Users/jmcgirr/Documents/remote_pups/igv/c_brontotheroides.all.renamed.putative_function.genes_only_reformated_known_final.bed", header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+#exon <- read.table("C:/Users/jmcgirr/Documents/remote_pups/igv/c_brontotheroides.all.renamed.putative_function.exons_only_reformated_known_final.bed", header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+#zeb_exon <- read.table("C:/Users/jmcgirr/Documents/remote_pups/igv/stringtie_transcoder_exons_zebrafish.bed", header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+names(gene) <- c("seqnames", "start","end","GeneID", "strand")
+
+indiv <- "OZE2"
+parental_cts <- read.table(paste(cts_dir, indiv, "_parental_counts.txt",sep = ""),sep = "\t", stringsAsFactors = FALSE, header = TRUE)
+parental_cts_ranges <- parental_cts
+parental_cts_ranges$seqnames <- parental_cts_ranges$chrom
+parental_cts_ranges$start <- parental_cts_ranges$position
+parental_cts_ranges$end <- parental_cts_ranges$start +1
+head(parental_cts_ranges)
+parental_cts_ranges <- parental_cts_ranges %>% as_granges()
+
+hy_cts <- gene %>% as_granges()
+hy_cts <- join_overlap_intersect(hy_cts, parental_cts_ranges) %>% as.data.frame()
+hy_cts$geneIndex <- paste(hy_cts$GeneID, hy_cts$seqnames, sep = ";")
+hy_cts$aseIndex <- paste(hy_cts$GeneID, hy_cts$snpIndex, sep = ";")
+names(hy_cts)[names(hy_cts) == 'GeneID'] <- 'Geneid'
+
+hy_cts <- hy_cts %>% 
+  group_by(geneIndex) %>%
+  mutate(mom_count_gene = sum(momCount)) %>%
+  mutate(dad_count_gene = sum(dadCount)) %>%
+  mutate(total_count = mom_count_gene + dad_count_gene)%>%
+  filter(total_count > 10)%>%
+  filter(mom_count_gene>1)%>%
+  filter(dad_count_gene>1)
+hy_cts <- hy_cts[c("Geneid","geneIndex","mom_count_gene","dad_count_gene")]
+hy_cts <- hy_cts[!duplicated(hy_cts[c("geneIndex")]),]
+
+colnames(hy_cts)[colnames(hy_cts)=="mom_count_gene"] <- "mom_count_gene1"
+colnames(hy_cts)[colnames(hy_cts)=="dad_count_gene"] <- "dad_count_gene1"
+hy_cts1 <- hy_cts
+head(hy_cts1)
+
+indiv <- "OZE4"
+parental_cts <- read.table(paste(cts_dir, indiv, "_parental_counts.txt",sep = ""),sep = "\t", stringsAsFactors = FALSE, header = TRUE)
+parental_cts_ranges <- parental_cts
+parental_cts_ranges$seqnames <- parental_cts_ranges$chrom
+parental_cts_ranges$start <- parental_cts_ranges$position
+parental_cts_ranges$end <- parental_cts_ranges$start +1
+parental_cts_ranges <- parental_cts_ranges %>% as_granges()
+
+hy_cts <- gene %>% as_granges()
+hy_cts <- join_overlap_intersect(hy_cts, parental_cts_ranges) %>% as.data.frame()
+hy_cts$geneIndex <- paste(hy_cts$GeneID, hy_cts$seqnames, sep = ";")
+hy_cts$aseIndex <- paste(hy_cts$GeneID, hy_cts$snpIndex, sep = ";")
+names(hy_cts)[names(hy_cts) == 'GeneID'] <- 'Geneid'
+
+hy_cts <- hy_cts %>% 
+  group_by(geneIndex) %>%
+  mutate(mom_count_gene = sum(momCount)) %>%
+  mutate(dad_count_gene = sum(dadCount)) %>%
+  mutate(total_count = mom_count_gene + dad_count_gene)%>%
+  filter(total_count > 10)%>%
+  filter(mom_count_gene>1)%>%
+  filter(dad_count_gene>1)
+hy_cts <- hy_cts[c("geneIndex","mom_count_gene","dad_count_gene")]
+hy_cts <- hy_cts[!duplicated(hy_cts[c("geneIndex")]),]
+
+colnames(hy_cts)[colnames(hy_cts)=="mom_count_gene"] <- "mom_count_gene2"
+colnames(hy_cts)[colnames(hy_cts)=="dad_count_gene"] <- "dad_count_gene2"
+hy_cts2 <- hy_cts
+
+indiv <- "OZE5"
+parental_cts <- read.table(paste(cts_dir, indiv, "_parental_counts.txt",sep = ""),sep = "\t", stringsAsFactors = FALSE, header = TRUE)
+parental_cts_ranges <- parental_cts
+parental_cts_ranges$seqnames <- parental_cts_ranges$chrom
+parental_cts_ranges$start <- parental_cts_ranges$position
+parental_cts_ranges$end <- parental_cts_ranges$start +1
+parental_cts_ranges <- parental_cts_ranges %>% as_granges()
+
+hy_cts <- gene %>% as_granges()
+hy_cts <- join_overlap_intersect(hy_cts, parental_cts_ranges) %>% as.data.frame()
+hy_cts$geneIndex <- paste(hy_cts$GeneID, hy_cts$seqnames, sep = ";")
+hy_cts$aseIndex <- paste(hy_cts$GeneID, hy_cts$snpIndex, sep = ";")
+names(hy_cts)[names(hy_cts) == 'GeneID'] <- 'Geneid'
+
+hy_cts <- hy_cts %>% 
+  group_by(geneIndex) %>%
+  mutate(mom_count_gene = sum(momCount)) %>%
+  mutate(dad_count_gene = sum(dadCount)) %>%
+  mutate(total_count = mom_count_gene + dad_count_gene)%>%
+  filter(total_count > 10)%>%
+  filter(mom_count_gene>1)%>%
+  filter(dad_count_gene>1)
+hy_cts <- hy_cts[c("geneIndex","mom_count_gene","dad_count_gene")]
+hy_cts <- hy_cts[!duplicated(hy_cts[c("geneIndex")]),]
+
+colnames(hy_cts)[colnames(hy_cts)=="mom_count_gene"] <- "mom_count_gene3"
+colnames(hy_cts)[colnames(hy_cts)=="dad_count_gene"] <- "dad_count_gene3"
+hy_cts3 <- hy_cts
+
+hy_cts <- inner_join(hy_cts1,hy_cts2, by = 'geneIndex')
+hy_cts <- inner_join(hy_cts,hy_cts3, by = 'geneIndex')
+head(hy_cts)
+
+hy_cts <- hy_cts %>% rowwise() %>% 
+  mutate(mom_mean_allele_count = mean(c(mom_count_gene1,mom_count_gene2,mom_count_gene3), na.rm = TRUE)) %>% rowwise() %>% 
+  mutate(dad_mean_allele_count = mean(c(dad_count_gene1,dad_count_gene2,dad_count_gene3), na.rm = TRUE)) %>% as.data.frame()
+hy_cts <- hy_cts[c("Geneid","geneIndex","mom_mean_allele_count", "dad_mean_allele_count")]
+nrow(hy_cts)
+
+# trans test
+
+fish_table1 <- merge(hy_cts,cts_8, by = "Geneid")
+# for CMxCP
+#fish_table <- fish_table1 %>% rowwise() %>% 
+#              mutate(mom_mean_norm_count = mean(c(CME1,CME2,CME5), na.rm = TRUE)) %>% rowwise() %>% 
+#              mutate(dad_mean_norm_count = mean(c(CPE1,CPE2,CPE3,CPE4,CPE5), na.rm = TRUE)) %>% as.data.frame()
+#for OPxOM
+fish_table <- fish_table1 %>% rowwise() %>% 
+              mutate(mom_mean_norm_count = mean(c(OPE1,OPE2,OPE3,OPE4,OPE5), na.rm = TRUE)) %>% rowwise() %>% 
+              mutate(dad_mean_norm_count = mean(c(OME1,OME2,OME3,OME4,OME5), na.rm = TRUE)) %>% as.data.frame()
+
+geneIndexs <- c()
+Hs <- c()
+Ps <- c()
+P_H_ratios <- c()
+fishers_exacts <- c()
+
+#defaultW <- getOption("warn") 
+#options(warn = -1) 
+
+for(row_num in c(1:nrow(fish_table)))
+  #row_num <- 1
+{
+  geneIndexs <- c(geneIndexs, fish_table$geneIndex[row_num])
+  Hs <- c(Hs,(fish_table$mom_mean_allele_count[row_num] /fish_table$dad_mean_allele_count[row_num]))
+  Ps <- c(Ps,(fish_table$mom_mean_norm_count[row_num] /fish_table$dad_mean_norm_count[row_num]))
+  P_H_ratios <- c(P_H_ratios, ((fish_table$mom_mean_norm_count[row_num] /fish_table$dad_mean_norm_count[row_num]))/((fish_table$mom_mean_allele_count[row_num] /fish_table$dad_mean_allele_count[row_num])))
+  test <- matrix(c(fish_table$mom_mean_allele_count[row_num],fish_table$mom_mean_norm_count[row_num],fish_table$dad_mean_allele_count[row_num],fish_table$dad_mean_norm_count[row_num]), ncol=2)
+  
+  #if(any(is.na(test)))
+  #{
+  #  fishers_exacts <- c(fishers_exacts,"NA")
+  #}else
+  #{
+  fish <- fisher.test(test)
+  fishers_exacts <- c(fishers_exacts,fish$p.value)
+  #}
+}
+#options(warn = defaultW)
+
+fisher  <- data.frame (geneIndex = geneIndexs,
+                       H = Hs,
+                       P = Ps,
+                       P_H_ratio     = P_H_ratios ,
+                       fishers_exact_p = fishers_exacts,
+                       stringsAsFactors=FALSE)
+
+fisher <- fisher %>% mutate(H_sign = ifelse((H > 1), 'positive', 'negative'))
+fisher <- fisher %>% mutate(P_sign = ifelse((P > 1), 'positive', 'negative'))
+fisher <- fisher %>% mutate(sig_trans = ifelse((fishers_exact_p <= 0.05), 'yes', 'no'))
+fisher <- fisher %>% separate(geneIndex, c("Geneid","seqnames"), sep = ";", remove = FALSE)
+head(fisher)
+head(de_ase_8) 
+
+#for OSP
+inheritance_and_ase <- inner_join(fisher, de_ase_8, by = "Geneid")
+head(inheritance_and_ase)
+nrow(inheritance_and_ase)
+
+#write.table(inheritance_and_ase,"C:/Users/jmcgirr/Documents/remote_pups/second_submission/ase/inheritance_and_ase_osp_8dpf.txt", quote = FALSE, row.names = FALSE, sep = "\t")
+
+cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                   inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                   inheritance_and_ase$sig_trans == "no"),]
+nrow(cis)
+cis$Geneid
+
+trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                     inheritance_and_ase$ase_in_osp_hyb == "no" &
+                                     inheritance_and_ase$sig_trans == "yes"),]
+nrow(trans)
+trans$Geneid
+
+cis_plus_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                              inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                              inheritance_and_ase$sig_trans == "yes" &
+                                              inheritance_and_ase$H_sign == inheritance_and_ase$P_sign),]
+nrow(cis_plus_trans)
+cis_plus_trans$Geneid
+
+cis_by_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                            inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                            inheritance_and_ase$sig_trans == "yes" &
+                                            inheritance_and_ase$H_sign != inheritance_and_ase$P_sign),]
+nrow(cis_by_trans)
+cis_by_trans$Geneid
+
+
+
+
+
+
+
+#### 2dpf####
+
+CMxCP_8 <- c("CWE2","CWE3","CWE4")
+CMxCP_48 <- c("CWT1","CWT2","CWT3")
+OPxOM_8 <- c("OZE2","OZE4","OZE5")
+OPxOM_48 <- c("OZT1","OZT2","OZT3")
+ase_run_type <- "gene_level"
+
+cts_8 <- read.table("C:/Users/jmcgirr/Documents/remote_pups/hybrid_inheritance_and_misregulation/normalized_counts_48hpf_design_f1_all_crescent_osprey_m_p_and_hybrids_jeremy_gff.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+names(cts_8)[names(cts_8) == 'GeneID'] <- 'Geneid'
+
+
+mp <- read.table("C:/Users/jmcgirr/Documents/remote_pups/de/split_populations/de_genes_48hpf_design_crp_and_osp_mvp_jeremy_genes.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mp <- mp %>% select (-c(lfcSE, stat, pvalue))
+colnames(mp) <- c("baseMean_mp","LFC_mp","padj_mp","Geneid")
+mph <- read.table("C:/Users/jmcgirr/Documents/remote_pups/hybrid_inheritance_and_misregulation/de_genes_48hpf_design_cmomcpop_v_cmxcp_and_opxom_jeremy_gff.txt", header = TRUE, stringsAsFactors = FALSE ,sep="\t")
+mph <- mph %>% select (-c(lfcSE, stat, pvalue))
+colnames(mph) <- c("baseMean_mph","LFC_mph","padj_mph","Geneid")
+mh <- read.table("C:/Users/jmcgirr/Documents/remote_pups/hybrid_inheritance_and_misregulation/de_genes_48hpf_design_cm_and_om_v_cmxcp_and_opxom_jeremy_gff.txt", header = TRUE, stringsAsFactors = FALSE ,sep="\t")
+mh <- mh %>% select (-c(lfcSE, stat, pvalue))
+colnames(mh) <- c("baseMean_mh","LFC_mh","padj_mh","Geneid")
+ph <- read.table("C:/Users/jmcgirr/Documents/remote_pups/hybrid_inheritance_and_misregulation/de_genes_48hpf_design_cp_and_op_v_cmxcp_and_opxom_jeremy_gff.txt", header = TRUE, stringsAsFactors = FALSE ,sep="\t")
+ph <- ph %>% select (-c(lfcSE, stat, pvalue))
+colnames(ph) <- c("baseMean_ph","LFC_ph","padj_ph","Geneid")
+
+de_8 <- inner_join(mp,mph, by = "Geneid")
+de_8 <- inner_join(de_8,mh, by = "Geneid")
+de_8 <- inner_join(de_8,ph, by = "Geneid")
+nrow(de_8)
+# + LFC mp = higher in p
+# + LFC mh = higher in m
+# + LFC ph = higher in p
+# + LFC mph = higher in mp
+
+
+mb1 <- read.table(paste("C:/Users/jmcgirr/Documents/remote_pups/ase/mbased_output/",CMxCP_48[1],"_mbased_ase_unphased_",ase_run_type,".txt",sep = ""), header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mb1 <- mb1[c("pValueASE","geneID")]
+colnames(mb1) <- c("pASE_CWE2", "Geneid")
+de_8 <- left_join(de_8,mb1, by = "Geneid")
+mb1 <- read.table(paste("C:/Users/jmcgirr/Documents/remote_pups/ase/mbased_output/",CMxCP_48[2],"_mbased_ase_unphased_",ase_run_type,".txt",sep = ""), header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mb1 <- mb1[c("pValueASE","geneID")]
+colnames(mb1) <- c("pASE_CWE3", "Geneid")
+de_8 <- left_join(de_8,mb1, by = "Geneid")
+mb1 <- read.table(paste("C:/Users/jmcgirr/Documents/remote_pups/ase/mbased_output/",CMxCP_48[3],"_mbased_ase_unphased_",ase_run_type,".txt",sep = ""), header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mb1 <- mb1[c("pValueASE","geneID")]
+colnames(mb1) <- c("pASE_CWE4", "Geneid")
+de_8 <- left_join(de_8,mb1, by = "Geneid")
+mb1 <- read.table(paste("C:/Users/jmcgirr/Documents/remote_pups/ase/mbased_output/",OPxOM_48[1],"_mbased_ase_unphased_",ase_run_type,".txt",sep = ""), header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mb1 <- mb1[c("pValueASE","geneID")]
+colnames(mb1) <- c("pASE_OZE2", "Geneid")
+de_8 <- left_join(de_8,mb1, by = "Geneid")
+mb1 <- read.table(paste("C:/Users/jmcgirr/Documents/remote_pups/ase/mbased_output/",OPxOM_48[2],"_mbased_ase_unphased_",ase_run_type,".txt",sep = ""), header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mb1 <- mb1[c("pValueASE","geneID")]
+colnames(mb1) <- c("pASE_OZE4", "Geneid")
+de_8 <- left_join(de_8,mb1, by = "Geneid")
+mb1 <- read.table(paste("C:/Users/jmcgirr/Documents/remote_pups/ase/mbased_output/",OPxOM_48[3],"_mbased_ase_unphased_",ase_run_type,".txt",sep = ""), header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+mb1 <- mb1[c("pValueASE","geneID")]
+colnames(mb1) <- c("pASE_OZE5", "Geneid")
+
+de_ase_8 <- left_join(de_8,mb1, by = "Geneid")
+
+de_ase_8 <- de_ase_8 %>% mutate(ase_in_all_hyb = ifelse((pASE_CWE2 < 0.05 & pASE_CWE3 < 0.05 & pASE_CWE4 < 0.05 & pASE_OZE2 < 0.05 & pASE_OZE4 < 0.05 & pASE_OZE5 < 0.05), 'yes', 'no'))
+de_ase_8 <- de_ase_8 %>% mutate(ase_in_crp_hyb = ifelse((pASE_CWE2 < 0.05 & pASE_CWE3 < 0.05 & pASE_CWE4 < 0.05), 'yes', 'no'))
+de_ase_8 <- de_ase_8 %>% mutate(ase_in_osp_hyb = ifelse((pASE_OZE2 < 0.05 & pASE_OZE4 < 0.05 & pASE_OZE5 < 0.05), 'yes', 'no'))
+de_ase_8 <- de_ase_8 %>% mutate(ase_in_any_hyb = ifelse((pASE_CWE2 | 0.05 | pASE_CWE3 < 0.05 | pASE_CWE4 < 0.05 | pASE_OZE2 < 0.05 | pASE_OZE4 | 0.05 | pASE_OZE5 < 0.05), 'yes', 'no'))
+
+
+#
+#nrow(de_ase_8_t[which(de_ase_8$ase_in_all_hyb == 'yes'),])
+#nrow(de_ase_8_t[which(de_ase_8$ase_in_all_hyb == 'no'),])
+#table(is.na(de_ase_8$ase_in_all_hyb))
+#
+#nrow(de_ase_8_t[which(de_ase_8$ase_in_crp_hyb == 'yes'),])
+#nrow(de_ase_8_t[which(de_ase_8$ase_in_crp_hyb == 'no'),])
+#table(is.na(de_ase_8$ase_in_crp_hyb))
+#
+#
+#nrow(de_ase_8_t[which(de_ase_8$ase_in_osp_hyb == 'yes'),])
+#nrow(de_ase_8_t[which(de_ase_8$ase_in_osp_hyb == 'no'),])
+#table(is.na(de_ase_8$ase_in_osp_hyb))
+
+# mom/dad counts per gene
+
+cts_dir <- "C:/Users/jmcgirr/Documents/remote_pups/ase/parental_counts/dad_doublecheck/"
+gene <- read.table("C:/Users/jmcgirr/Documents/remote_pups/igv/c_brontotheroides.all.renamed.putative_function.genes_only_reformated_known_final.bed", header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+#exon <- read.table("C:/Users/jmcgirr/Documents/remote_pups/igv/c_brontotheroides.all.renamed.putative_function.exons_only_reformated_known_final.bed", header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+#zeb_exon <- read.table("C:/Users/jmcgirr/Documents/remote_pups/igv/stringtie_transcoder_exons_zebrafish.bed", header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+names(gene) <- c("seqnames", "start","end","GeneID", "strand")
+
+indiv <- "CWT1"
+parental_cts <- read.table(paste(cts_dir, indiv, "_parental_counts.txt",sep = ""),sep = "\t", stringsAsFactors = FALSE, header = TRUE)
+parental_cts_ranges <- parental_cts
+parental_cts_ranges$seqnames <- parental_cts_ranges$chrom
+parental_cts_ranges$start <- parental_cts_ranges$position
+parental_cts_ranges$end <- parental_cts_ranges$start +1
+head(parental_cts_ranges)
+parental_cts_ranges <- parental_cts_ranges %>% as_granges()
+
+hy_cts <- gene %>% as_granges()
+hy_cts <- join_overlap_intersect(hy_cts, parental_cts_ranges) %>% as.data.frame()
+hy_cts$geneIndex <- paste(hy_cts$GeneID, hy_cts$seqnames, sep = ";")
+hy_cts$aseIndex <- paste(hy_cts$GeneID, hy_cts$snpIndex, sep = ";")
+names(hy_cts)[names(hy_cts) == 'GeneID'] <- 'Geneid'
+
+hy_cts <- hy_cts %>% 
+  group_by(geneIndex) %>%
+  mutate(mom_count_gene = sum(momCount)) %>%
+  mutate(dad_count_gene = sum(dadCount)) %>%
+  mutate(total_count = mom_count_gene + dad_count_gene)%>%
+  filter(total_count > 10)%>%
+  filter(mom_count_gene>1)%>%
+  filter(dad_count_gene>1)
+hy_cts <- hy_cts[c("Geneid","geneIndex","mom_count_gene","dad_count_gene")]
+hy_cts <- hy_cts[!duplicated(hy_cts[c("geneIndex")]),]
+
+colnames(hy_cts)[colnames(hy_cts)=="mom_count_gene"] <- "mom_count_gene1"
+colnames(hy_cts)[colnames(hy_cts)=="dad_count_gene"] <- "dad_count_gene1"
+hy_cts1 <- hy_cts
+head(hy_cts1)
+
+indiv <- "CWT2"
+parental_cts <- read.table(paste(cts_dir, indiv, "_parental_counts.txt",sep = ""),sep = "\t", stringsAsFactors = FALSE, header = TRUE)
+parental_cts_ranges <- parental_cts
+parental_cts_ranges$seqnames <- parental_cts_ranges$chrom
+parental_cts_ranges$start <- parental_cts_ranges$position
+parental_cts_ranges$end <- parental_cts_ranges$start +1
+parental_cts_ranges <- parental_cts_ranges %>% as_granges()
+
+hy_cts <- gene %>% as_granges()
+hy_cts <- join_overlap_intersect(hy_cts, parental_cts_ranges) %>% as.data.frame()
+hy_cts$geneIndex <- paste(hy_cts$GeneID, hy_cts$seqnames, sep = ";")
+hy_cts$aseIndex <- paste(hy_cts$GeneID, hy_cts$snpIndex, sep = ";")
+names(hy_cts)[names(hy_cts) == 'GeneID'] <- 'Geneid'
+
+hy_cts <- hy_cts %>% 
+  group_by(geneIndex) %>%
+  mutate(mom_count_gene = sum(momCount)) %>%
+  mutate(dad_count_gene = sum(dadCount)) %>%
+  mutate(total_count = mom_count_gene + dad_count_gene)%>%
+  filter(total_count > 10)%>%
+  filter(mom_count_gene>1)%>%
+  filter(dad_count_gene>1)
+hy_cts <- hy_cts[c("geneIndex","mom_count_gene","dad_count_gene")]
+hy_cts <- hy_cts[!duplicated(hy_cts[c("geneIndex")]),]
+
+colnames(hy_cts)[colnames(hy_cts)=="mom_count_gene"] <- "mom_count_gene2"
+colnames(hy_cts)[colnames(hy_cts)=="dad_count_gene"] <- "dad_count_gene2"
+hy_cts2 <- hy_cts
+
+indiv <- "CWT3"
+parental_cts <- read.table(paste(cts_dir, indiv, "_parental_counts.txt",sep = ""),sep = "\t", stringsAsFactors = FALSE, header = TRUE)
+parental_cts_ranges <- parental_cts
+parental_cts_ranges$seqnames <- parental_cts_ranges$chrom
+parental_cts_ranges$start <- parental_cts_ranges$position
+parental_cts_ranges$end <- parental_cts_ranges$start +1
+parental_cts_ranges <- parental_cts_ranges %>% as_granges()
+
+hy_cts <- gene %>% as_granges()
+hy_cts <- join_overlap_intersect(hy_cts, parental_cts_ranges) %>% as.data.frame()
+hy_cts$geneIndex <- paste(hy_cts$GeneID, hy_cts$seqnames, sep = ";")
+hy_cts$aseIndex <- paste(hy_cts$GeneID, hy_cts$snpIndex, sep = ";")
+names(hy_cts)[names(hy_cts) == 'GeneID'] <- 'Geneid'
+
+hy_cts <- hy_cts %>% 
+  group_by(geneIndex) %>%
+  mutate(mom_count_gene = sum(momCount)) %>%
+  mutate(dad_count_gene = sum(dadCount)) %>%
+  mutate(total_count = mom_count_gene + dad_count_gene)%>%
+  filter(total_count > 10)%>%
+  filter(mom_count_gene>1)%>%
+  filter(dad_count_gene>1)
+hy_cts <- hy_cts[c("geneIndex","mom_count_gene","dad_count_gene")]
+hy_cts <- hy_cts[!duplicated(hy_cts[c("geneIndex")]),]
+
+colnames(hy_cts)[colnames(hy_cts)=="mom_count_gene"] <- "mom_count_gene3"
+colnames(hy_cts)[colnames(hy_cts)=="dad_count_gene"] <- "dad_count_gene3"
+hy_cts3 <- hy_cts
+
+hy_cts <- inner_join(hy_cts1,hy_cts2, by = 'geneIndex')
+hy_cts <- inner_join(hy_cts,hy_cts3, by = 'geneIndex')
+head(hy_cts)
+
+hy_cts <- hy_cts %>% rowwise() %>% 
+  mutate(mom_mean_allele_count = mean(c(mom_count_gene1,mom_count_gene2,mom_count_gene3), na.rm = TRUE)) %>% rowwise() %>% 
+  mutate(dad_mean_allele_count = mean(c(dad_count_gene1,dad_count_gene2,dad_count_gene3), na.rm = TRUE)) %>% as.data.frame()
+hy_cts <- hy_cts[c("Geneid","geneIndex","mom_mean_allele_count", "dad_mean_allele_count")]
+nrow(hy_cts)
+
+# trans test
+
+fish_table1 <- merge(hy_cts,cts_8, by = "Geneid")
+# for CMxCP
+fish_table <- fish_table1 %>% rowwise() %>% 
+  mutate(mom_mean_norm_count = mean(c(CMT1,CMT2,CMT3), na.rm = TRUE)) %>% rowwise() %>% 
+  mutate(dad_mean_norm_count = mean(c(CPT1,CPT2,CPT3), na.rm = TRUE)) %>% as.data.frame()
+#for OPxOM
+#fish_table <- fish_table1 %>% rowwise() %>% 
+#  mutate(mom_mean_norm_count = mean(c(OPT1,OPT2,OPT3), na.rm = TRUE)) %>% rowwise() %>% 
+#  mutate(dad_mean_norm_count = mean(c(OMT1,OMT2,OMT3), na.rm = TRUE)) %>% as.data.frame()
+
+geneIndexs <- c()
+Hs <- c()
+Ps <- c()
+P_H_ratios <- c()
+fishers_exacts <- c()
+
+#defaultW <- getOption("warn") 
+#options(warn = -1) 
+
+for(row_num in c(1:nrow(fish_table)))
+  #row_num <- 1
+{
+  geneIndexs <- c(geneIndexs, fish_table$geneIndex[row_num])
+  Hs <- c(Hs,(fish_table$mom_mean_allele_count[row_num] /fish_table$dad_mean_allele_count[row_num]))
+  Ps <- c(Ps,(fish_table$mom_mean_norm_count[row_num] /fish_table$dad_mean_norm_count[row_num]))
+  P_H_ratios <- c(P_H_ratios, ((fish_table$mom_mean_norm_count[row_num] /fish_table$dad_mean_norm_count[row_num]))/((fish_table$mom_mean_allele_count[row_num] /fish_table$dad_mean_allele_count[row_num])))
+  test <- matrix(c(fish_table$mom_mean_allele_count[row_num],fish_table$mom_mean_norm_count[row_num],fish_table$dad_mean_allele_count[row_num],fish_table$dad_mean_norm_count[row_num]), ncol=2)
+  
+  #if(any(is.na(test)))
+  #{
+  #  fishers_exacts <- c(fishers_exacts,"NA")
+  #}else
+  #{
+  fish <- fisher.test(test)
+  fishers_exacts <- c(fishers_exacts,fish$p.value)
+  #}
+}
+#options(warn = defaultW)
+
+fisher  <- data.frame (geneIndex = geneIndexs,
+                       H = Hs,
+                       P = Ps,
+                       P_H_ratio     = P_H_ratios ,
+                       fishers_exact_p = fishers_exacts,
+                       stringsAsFactors=FALSE)
+
+fisher <- fisher %>% mutate(H_sign = ifelse((H > 1), 'positive', 'negative'))
+fisher <- fisher %>% mutate(P_sign = ifelse((P > 1), 'positive', 'negative'))
+fisher <- fisher %>% mutate(sig_trans = ifelse((fishers_exact_p <= 0.05), 'yes', 'no'))
+fisher <- fisher %>% separate(geneIndex, c("Geneid","seqnames"), sep = ";", remove = FALSE)
+head(fisher)
+head(de_ase_8) 
+
+#for CRP
+inheritance_and_ase <- inner_join(fisher, de_ase_8, by = "Geneid")
+head(inheritance_and_ase)
+nrow(inheritance_and_ase)
+
+#write.table(inheritance_and_ase,"C:/Users/jmcgirr/Documents/remote_pups/second_submission/ase/inheritance_and_ase_crp_48hpf.txt", quote = FALSE, row.names = FALSE, sep = "\t")
+
+
+cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                   inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                   inheritance_and_ase$sig_trans == "no"),]
+nrow(cis)
+cis$Geneid
+
+trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                     inheritance_and_ase$ase_in_crp_hyb == "no" &
+                                     inheritance_and_ase$sig_trans == "yes"),]
+nrow(trans)
+trans$Geneid
+
+cis_plus_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                              inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                              inheritance_and_ase$sig_trans == "yes" &
+                                              inheritance_and_ase$H_sign == inheritance_and_ase$P_sign),]
+nrow(cis_plus_trans)
+cis_plus_trans$Geneid
+
+cis_by_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                            inheritance_and_ase$ase_in_crp_hyb == "yes" &
+                                            inheritance_and_ase$sig_trans == "yes" &
+                                            inheritance_and_ase$H_sign != inheritance_and_ase$P_sign),]
+nrow(cis_by_trans)
+cis_by_trans$Geneid
+
+
+
+### OSP cis/trans
+
+cts_dir <- "C:/Users/jmcgirr/Documents/remote_pups/ase/parental_counts/dad_doublecheck/"
+gene <- read.table("C:/Users/jmcgirr/Documents/remote_pups/igv/c_brontotheroides.all.renamed.putative_function.genes_only_reformated_known_final.bed", header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+#exon <- read.table("C:/Users/jmcgirr/Documents/remote_pups/igv/c_brontotheroides.all.renamed.putative_function.exons_only_reformated_known_final.bed", header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+#zeb_exon <- read.table("C:/Users/jmcgirr/Documents/remote_pups/igv/stringtie_transcoder_exons_zebrafish.bed", header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+names(gene) <- c("seqnames", "start","end","GeneID", "strand")
+
+indiv <- "OZT1"
+parental_cts <- read.table(paste(cts_dir, indiv, "_parental_counts.txt",sep = ""),sep = "\t", stringsAsFactors = FALSE, header = TRUE)
+parental_cts_ranges <- parental_cts
+parental_cts_ranges$seqnames <- parental_cts_ranges$chrom
+parental_cts_ranges$start <- parental_cts_ranges$position
+parental_cts_ranges$end <- parental_cts_ranges$start +1
+head(parental_cts_ranges)
+parental_cts_ranges <- parental_cts_ranges %>% as_granges()
+
+hy_cts <- gene %>% as_granges()
+hy_cts <- join_overlap_intersect(hy_cts, parental_cts_ranges) %>% as.data.frame()
+hy_cts$geneIndex <- paste(hy_cts$GeneID, hy_cts$seqnames, sep = ";")
+hy_cts$aseIndex <- paste(hy_cts$GeneID, hy_cts$snpIndex, sep = ";")
+names(hy_cts)[names(hy_cts) == 'GeneID'] <- 'Geneid'
+
+hy_cts <- hy_cts %>% 
+  group_by(geneIndex) %>%
+  mutate(mom_count_gene = sum(momCount)) %>%
+  mutate(dad_count_gene = sum(dadCount)) %>%
+  mutate(total_count = mom_count_gene + dad_count_gene)%>%
+  filter(total_count > 10)%>%
+  filter(mom_count_gene>1)%>%
+  filter(dad_count_gene>1)
+hy_cts <- hy_cts[c("Geneid","geneIndex","mom_count_gene","dad_count_gene")]
+hy_cts <- hy_cts[!duplicated(hy_cts[c("geneIndex")]),]
+
+colnames(hy_cts)[colnames(hy_cts)=="mom_count_gene"] <- "mom_count_gene1"
+colnames(hy_cts)[colnames(hy_cts)=="dad_count_gene"] <- "dad_count_gene1"
+hy_cts1 <- hy_cts
+head(hy_cts1)
+
+indiv <- "OZT2"
+parental_cts <- read.table(paste(cts_dir, indiv, "_parental_counts.txt",sep = ""),sep = "\t", stringsAsFactors = FALSE, header = TRUE)
+parental_cts_ranges <- parental_cts
+parental_cts_ranges$seqnames <- parental_cts_ranges$chrom
+parental_cts_ranges$start <- parental_cts_ranges$position
+parental_cts_ranges$end <- parental_cts_ranges$start +1
+parental_cts_ranges <- parental_cts_ranges %>% as_granges()
+
+hy_cts <- gene %>% as_granges()
+hy_cts <- join_overlap_intersect(hy_cts, parental_cts_ranges) %>% as.data.frame()
+hy_cts$geneIndex <- paste(hy_cts$GeneID, hy_cts$seqnames, sep = ";")
+hy_cts$aseIndex <- paste(hy_cts$GeneID, hy_cts$snpIndex, sep = ";")
+names(hy_cts)[names(hy_cts) == 'GeneID'] <- 'Geneid'
+
+hy_cts <- hy_cts %>% 
+  group_by(geneIndex) %>%
+  mutate(mom_count_gene = sum(momCount)) %>%
+  mutate(dad_count_gene = sum(dadCount)) %>%
+  mutate(total_count = mom_count_gene + dad_count_gene)%>%
+  filter(total_count > 10)%>%
+  filter(mom_count_gene>1)%>%
+  filter(dad_count_gene>1)
+hy_cts <- hy_cts[c("geneIndex","mom_count_gene","dad_count_gene")]
+hy_cts <- hy_cts[!duplicated(hy_cts[c("geneIndex")]),]
+
+colnames(hy_cts)[colnames(hy_cts)=="mom_count_gene"] <- "mom_count_gene2"
+colnames(hy_cts)[colnames(hy_cts)=="dad_count_gene"] <- "dad_count_gene2"
+hy_cts2 <- hy_cts
+
+indiv <- "OZT3"
+parental_cts <- read.table(paste(cts_dir, indiv, "_parental_counts.txt",sep = ""),sep = "\t", stringsAsFactors = FALSE, header = TRUE)
+parental_cts_ranges <- parental_cts
+parental_cts_ranges$seqnames <- parental_cts_ranges$chrom
+parental_cts_ranges$start <- parental_cts_ranges$position
+parental_cts_ranges$end <- parental_cts_ranges$start +1
+parental_cts_ranges <- parental_cts_ranges %>% as_granges()
+
+hy_cts <- gene %>% as_granges()
+hy_cts <- join_overlap_intersect(hy_cts, parental_cts_ranges) %>% as.data.frame()
+hy_cts$geneIndex <- paste(hy_cts$GeneID, hy_cts$seqnames, sep = ";")
+hy_cts$aseIndex <- paste(hy_cts$GeneID, hy_cts$snpIndex, sep = ";")
+names(hy_cts)[names(hy_cts) == 'GeneID'] <- 'Geneid'
+
+hy_cts <- hy_cts %>% 
+  group_by(geneIndex) %>%
+  mutate(mom_count_gene = sum(momCount)) %>%
+  mutate(dad_count_gene = sum(dadCount)) %>%
+  mutate(total_count = mom_count_gene + dad_count_gene)%>%
+  filter(total_count > 10)%>%
+  filter(mom_count_gene>1)%>%
+  filter(dad_count_gene>1)
+hy_cts <- hy_cts[c("geneIndex","mom_count_gene","dad_count_gene")]
+hy_cts <- hy_cts[!duplicated(hy_cts[c("geneIndex")]),]
+
+colnames(hy_cts)[colnames(hy_cts)=="mom_count_gene"] <- "mom_count_gene3"
+colnames(hy_cts)[colnames(hy_cts)=="dad_count_gene"] <- "dad_count_gene3"
+hy_cts3 <- hy_cts
+
+hy_cts <- inner_join(hy_cts1,hy_cts2, by = 'geneIndex')
+hy_cts <- inner_join(hy_cts,hy_cts3, by = 'geneIndex')
+head(hy_cts)
+
+hy_cts <- hy_cts %>% rowwise() %>% 
+  mutate(mom_mean_allele_count = mean(c(mom_count_gene1,mom_count_gene2,mom_count_gene3), na.rm = TRUE)) %>% rowwise() %>% 
+  mutate(dad_mean_allele_count = mean(c(dad_count_gene1,dad_count_gene2,dad_count_gene3), na.rm = TRUE)) %>% as.data.frame()
+hy_cts <- hy_cts[c("Geneid","geneIndex","mom_mean_allele_count", "dad_mean_allele_count")]
+nrow(hy_cts)
+
+# trans test
+
+fish_table1 <- merge(hy_cts,cts_8, by = "Geneid")
+# for CMxCP
+
+#for OPxOM
+fish_table <- fish_table1 %>% rowwise() %>% 
+  mutate(mom_mean_norm_count = mean(c(OPT1,OPT2,OPT3), na.rm = TRUE)) %>% rowwise() %>% 
+  mutate(dad_mean_norm_count = mean(c(OMT1,OMT2,OMT3), na.rm = TRUE)) %>% as.data.frame()
+
+geneIndexs <- c()
+Hs <- c()
+Ps <- c()
+P_H_ratios <- c()
+fishers_exacts <- c()
+
+#defaultW <- getOption("warn") 
+#options(warn = -1) 
+
+for(row_num in c(1:nrow(fish_table)))
+  #row_num <- 1
+{
+  geneIndexs <- c(geneIndexs, fish_table$geneIndex[row_num])
+  Hs <- c(Hs,(fish_table$mom_mean_allele_count[row_num] /fish_table$dad_mean_allele_count[row_num]))
+  Ps <- c(Ps,(fish_table$mom_mean_norm_count[row_num] /fish_table$dad_mean_norm_count[row_num]))
+  P_H_ratios <- c(P_H_ratios, ((fish_table$mom_mean_norm_count[row_num] /fish_table$dad_mean_norm_count[row_num]))/((fish_table$mom_mean_allele_count[row_num] /fish_table$dad_mean_allele_count[row_num])))
+  test <- matrix(c(fish_table$mom_mean_allele_count[row_num],fish_table$mom_mean_norm_count[row_num],fish_table$dad_mean_allele_count[row_num],fish_table$dad_mean_norm_count[row_num]), ncol=2)
+  
+  #if(any(is.na(test)))
+  #{
+  #  fishers_exacts <- c(fishers_exacts,"NA")
+  #}else
+  #{
+  fish <- fisher.test(test)
+  fishers_exacts <- c(fishers_exacts,fish$p.value)
+  #}
+}
+#options(warn = defaultW)
+
+fisher  <- data.frame (geneIndex = geneIndexs,
+                       H = Hs,
+                       P = Ps,
+                       P_H_ratio     = P_H_ratios ,
+                       fishers_exact_p = fishers_exacts,
+                       stringsAsFactors=FALSE)
+
+fisher <- fisher %>% mutate(H_sign = ifelse((H > 1), 'positive', 'negative'))
+fisher <- fisher %>% mutate(P_sign = ifelse((P > 1), 'positive', 'negative'))
+fisher <- fisher %>% mutate(sig_trans = ifelse((fishers_exact_p <= 0.05), 'yes', 'no'))
+fisher <- fisher %>% separate(geneIndex, c("Geneid","seqnames"), sep = ";", remove = FALSE)
+head(fisher)
+head(de_ase_8) 
+
+#for OSP
+inheritance_and_ase <- inner_join(fisher, de_ase_8, by = "Geneid")
+head(inheritance_and_ase)
+nrow(inheritance_and_ase)
+
+#write.table(inheritance_and_ase,"C:/Users/jmcgirr/Documents/remote_pups/second_submission/ase/inheritance_and_ase_osp_48hpf.txt", quote = FALSE, row.names = FALSE, sep = "\t")
+
+
+cis <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                   inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                   inheritance_and_ase$sig_trans == "no"),]
+nrow(cis)
+cis$Geneid
+
+trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                     inheritance_and_ase$ase_in_osp_hyb == "no" &
+                                     inheritance_and_ase$sig_trans == "yes"),]
+nrow(trans)
+trans$Geneid
+
+cis_plus_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                              inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                              inheritance_and_ase$sig_trans == "yes" &
+                                              inheritance_and_ase$H_sign == inheritance_and_ase$P_sign),]
+nrow(cis_plus_trans)
+cis_plus_trans$Geneid
+
+cis_by_trans <- inheritance_and_ase[which(inheritance_and_ase$padj_mp <= 0.05 & 
+                                            inheritance_and_ase$ase_in_osp_hyb == "yes" &
+                                            inheritance_and_ase$sig_trans == "yes" &
+                                            inheritance_and_ase$H_sign != inheritance_and_ase$P_sign),]
+nrow(cis_by_trans)
+cis_by_trans$Geneid
+
+
+      
+```
+
+
+
+
+
+
+
+
+
