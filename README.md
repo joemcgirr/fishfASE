@@ -10,8 +10,9 @@ Generic command line arguments are outlined in `/genomes/README.md` and `/transc
 
 Jupyter notebooks in `/genomes` and `/transcriptomes` generate SLURM scripts to run commands.
 
-`/markdown` contains scripts used to analyze output in `/markdown/data_files` 
-I hope that this repo can be useful to others studying genotype-phenotype relationships in non-model organisms 
+`/markdown` contains scripts used to analyze output in `/markdown/data_files`
+
+I hope that this repo can be useful to others studying genotype-phenotype relationships in non-model organisms! 
 
 ![Image of Pipeline](https://github.com/joemcgirr/fishfASE/blob/master/Figure_1-01.tif)
 
