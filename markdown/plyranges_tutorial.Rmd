@@ -31,10 +31,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 # A quick tutorial using my favorite R package called plyranges.
-This notebook is used to overlap genes interesting SNPs and get `.fasta` files for your favorite pupfish genes.
+This notebook is used to find SNPs within gene coding regions and get `.fasta` files for your favorite pupfish genes.
 
-Plyranges has lots of advanced options for overlapping genomic intervalsYou can find out more about plyranges here:  
-https://bioconductor.org/packages/devel/bioc/vignettes/plyranges/inst/doc/an-introduction.html  
+Plyranges has lots of advanced options for overlapping genomic intervalsYou can find out more about plyranges [here](https://bioconductor.org/packages/devel/bioc/vignettes/plyranges/inst/doc/an-introduction.html)  
+
+The R markdown file used to generate this can be found [here](https://github.com/joemcgirr/fishfASE/blob/master/markdown/plyranges_tutorial.Rmd)
 
 # Make sure you are running R v.3.6 or higher
 
@@ -72,7 +73,7 @@ Normally this information is combined in a `.gtf` or `.gff3` file
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
 
 genes <- read.table("D:/Cyprinodon/bronto/c_brontotheroides.all.renamed.putative_function.genes_only.reformated.known.final.saf", header = TRUE, stringsAsFactors = FALSE)
-exons <- read.table("D:/Cyprinodon/bronto/c_brontotheroides.all.renamed.putative_function.exons_only_reformated_known_final.saf", header = FALSE, stringsAsFactors = FALSE)
+exons <- read.table("https://github.com/joemcgirr/fishfASE/raw/master/markdown/data_files/c_brontotheroides.all.renamed.putative_function.exons_only_reformated_known_final.saf", header = FALSE, stringsAsFactors = FALSE)
 
 head(genes)
 head(exons)
@@ -145,7 +146,7 @@ gene_region <- features %>% filter(gene == gene_name)
 gene_region
 ```
 
-# Notice that there are two regions of the genome called gpa33.  
+# Notice that there are two regions of the genome with a gene called gpa33.  
 One version is on scaffold 5 and the other is on scaffold 1089.  
 This is one of the joys of working with non-model organisms! /s   
 Often times genome annotations are a little messy.  

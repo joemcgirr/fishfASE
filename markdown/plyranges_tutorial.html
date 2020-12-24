@@ -2936,9 +2936,9 @@ pre, code {white-space:pre !important; overflow-x:auto}
 </style>
 <div id="a-quick-tutorial-using-my-favorite-r-package-called-plyranges." class="section level1">
 <h1><span class="header-section-number">1</span> A quick tutorial using my favorite R package called plyranges.</h1>
-<p>This notebook is used to overlap genes interesting SNPs and get <code>.fasta</code> files for your favorite pupfish genes.</p>
-<p>Plyranges has lots of advanced options for overlapping genomic intervalsYou can find out more about plyranges here:<br />
-<a href="https://bioconductor.org/packages/devel/bioc/vignettes/plyranges/inst/doc/an-introduction.html" class="uri">https://bioconductor.org/packages/devel/bioc/vignettes/plyranges/inst/doc/an-introduction.html</a></p>
+<p>This notebook is used to find SNPs within gene coding regions and get <code>.fasta</code> files for your favorite pupfish genes.</p>
+<p>Plyranges has lots of advanced options for overlapping genomic intervalsYou can find out more about plyranges <a href="https://bioconductor.org/packages/devel/bioc/vignettes/plyranges/inst/doc/an-introduction.html">here</a></p>
+<p>The R markdown file used to generate this can be found <a href="https://github.com/joemcgirr/fishfASE/blob/master/markdown/plyranges_tutorial.Rmd">here</a></p>
 </div>
 <div id="make-sure-you-are-running-r-v.3.6-or-higher" class="section level1">
 <h1><span class="header-section-number">2</span> Make sure you are running R v.3.6 or higher</h1>
@@ -2965,7 +2965,7 @@ library(plyranges)</code></pre>
 exon coordinates - c_brontotheroides.all.renamed.putative_function.exons_only_reformated_known_final.saf</p>
 <p>Normally this information is combined in a <code>.gtf</code> or <code>.gff3</code> file</p>
 <pre class="r"><code>genes &lt;- read.table(&quot;D:/Cyprinodon/bronto/c_brontotheroides.all.renamed.putative_function.genes_only.reformated.known.final.saf&quot;, header = TRUE, stringsAsFactors = FALSE)
-exons &lt;- read.table(&quot;D:/Cyprinodon/bronto/c_brontotheroides.all.renamed.putative_function.exons_only_reformated_known_final.saf&quot;, header = FALSE, stringsAsFactors = FALSE)
+exons &lt;- read.table(&quot;https://github.com/joemcgirr/fishfASE/raw/master/markdown/data_files/c_brontotheroides.all.renamed.putative_function.exons_only_reformated_known_final.saf&quot;, header = FALSE, stringsAsFactors = FALSE)
 
 head(genes)</code></pre>
 <div data-pagedtable="false">
@@ -3054,8 +3054,8 @@ gene_region</code></pre>
   </script>
 </div>
 </div>
-<div id="notice-that-there-are-two-regions-of-the-genome-called-gpa33." class="section level1">
-<h1><span class="header-section-number">12</span> Notice that there are two regions of the genome called gpa33.</h1>
+<div id="notice-that-there-are-two-regions-of-the-genome-with-a-gene-called-gpa33." class="section level1">
+<h1><span class="header-section-number">12</span> Notice that there are two regions of the genome with a gene called gpa33.</h1>
 <p>One version is on scaffold 5 and the other is on scaffold 1089.<br />
 This is one of the joys of working with non-model organisms! /s<br />
 Often times genome annotations are a little messy.<br />
