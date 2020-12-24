@@ -1,0 +1,193 @@
+---
+title: "Plyranges tutorial with pupfish genes"
+author: "Joe McGirr"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    code_folding: show
+    collapsed: no
+    df_print: paged
+    number_sections: yes
+    theme: paper
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+  html_notebook:
+    toc: yes
+    toc_depth: 5
+editor_options: 
+  chunk_output_type: console
+---
+
+```{css, echo=FALSE}
+pre, code {white-space:pre !important; overflow-x:auto}
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+
+# A quick tutorial using my favorite R package called plyranges.
+This notebook is used to overlap genes interesting SNPs and get `.fasta` files for your favorite pupfish genes.
+
+Plyranges has lots of advanced options for overlapping genomic intervalsYou can find out more about plyranges here:  
+https://bioconductor.org/packages/devel/bioc/vignettes/plyranges/inst/doc/an-introduction.html  
+
+# Make sure you are running R v.3.6 or higher
+
+# Install plyranges.
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE, eval = FALSE}
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install()
+BiocManager::install("plyranges")
+
+```
+
+# Install tidyverse.
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE, eval = FALSE}
+BiocManager::install("tidyverse")
+```
+
+# Load libraries.
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(tidyverse)
+library(plyranges)
+```
+
+# Read in two files  
+
+gene coordinates - c_brontotheroides.all.renamed.putative_function.genes_only.reformated.known.final.saf  
+exon coordinates - c_brontotheroides.all.renamed.putative_function.exons_only_reformated_known_final.saf
+
+Normally this information is combined in a `.gtf` or `.gff3` file
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+genes <- read.table("D:/Cyprinodon/bronto/c_brontotheroides.all.renamed.putative_function.genes_only.reformated.known.final.saf", header = TRUE, stringsAsFactors = FALSE)
+exons <- read.table("D:/Cyprinodon/bronto/c_brontotheroides.all.renamed.putative_function.exons_only_reformated_known_final.saf", header = FALSE, stringsAsFactors = FALSE)
+
+head(genes)
+head(exons)
+```
+
+# Change the headers into labels recognized by plyranges.
+plyranges works with objects called granges (genomic ranges) which require the following information:  
+      seqnames (chromosome names)  
+      start    (start position of feature)  
+      end      (end position of feature)  
+      strand   (strand of feature)  
+All other columns with different names will be treated as metadata.  
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+names(genes) <- c("gene","seqnames","start","end","strand")
+names(exons) <- c("exon","seqnames","start","end","strand")
+```
+
+# Convert genes and exons dataframes into grange objects.
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+genes <- genes %>% as_granges()
+exons <- exons %>% as_granges()
+```
+
+# Find overlap between gene regions and a list of interesting SNPs
+Read in your SNP file and make sure it has the appropriate granges headers (seqnames, start, end)  
+I'll show an example with these 5 made up SNP coordinates:  
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+scaffolds <- c("HiC_scaffold_1089","HiC_scaffold_1089","HiC_scaffold_1089","HiC_scaffold_16","HiC_scaffold_16")
+starts <- c(2400,2502,4334,10045453,10045738)
+ends <- starts + 1
+
+snps <- data.frame(seqnames=scaffolds, 
+                   start=starts,
+                   end=ends,
+                   stringsAsFactors=FALSE)
+
+snps
+
+```
+
+plyranges has lots of options for looking at overlaps between regions.  
+To find SNPs that overlap with any coding gene region, convert your SNP dataframe to a granges object and use join_overlap_intersect()  
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+snps <- snps %>% as_granges()
+hits <- join_overlap_intersect(genes,snps) %>% as.data.frame()
+hits
+```
+
+# For more practice, we can match exons to their gene regions and generate fasta files for interesting exons.
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+features <- join_overlap_intersect(genes,exons) %>% as.data.frame()
+head(features)
+```
+
+# Now lets grab the coordinates for the gene gpa33.  
+One of the exons in this gene is deleted in the scale-eater pupfish species.  
+see Fig. 3 from [here](https://doi.org/10.1093/molbev/msaa218) 
+
+![gpa33](C:/Users/jmcgirr/Documents/GitHub/my_website/images/gpa33.jpg "gpa33")  
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+gene_name <- "Gpa33"
+
+gene_region <- features %>% filter(gene == gene_name)
+gene_region
+```
+
+# Notice that there are two regions of the genome called gpa33.  
+One version is on scaffold 5 and the other is on scaffold 1089.  
+This is one of the joys of working with non-model organisms! /s   
+Often times genome annotations are a little messy.  
+However, in cases like this, we can be reasonably sure that  
+these genes correspond to gpa33a and gpa33b  
+orthologs in zebrafish. 
+The genome duplications that occured in    
+teleosts makes this kind of thing common in this system.   
+Lets only include the Gpa33 found on scaffold 1089.  
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+gpa33 <- gene_region %>% filter(seqnames == "HiC_scaffold_1089")
+```
+
+# The exon that is deleted in scale-eaters is labeled CBRO_00019393-RA:5
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+deleted_exon <- gpa33 %>% filter(exon == "CBRO_00019393-RA:5")
+```
+
+# The last thing we will do in R is create two `.bed` files.
+One with the location of the entire gpa33 coding region  
+and another with the location of the deleted exon.  
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+gpa33 <- data.frame("seqnames" = c(as.character(gpa33$seqnames)[1]), 
+                    "start"    = c(min(gpa33$start)), 
+                    "end"      = c(max(gpa33$end)), 
+                    stringsAsFactors = FALSE)
+
+# #write.table(gpa33, "gpa33.bed", col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t")
+# #write.table(deleted_exon[c("seqnames","start","end")], "gpa33_exon5.bed", col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t")
+```
+
+# Finally, get the fasta sequence from the reference genome for each `.bed` file.
+This should be done on the cluster or on a computer thats running bedtools.  
+I run the following on the cluster:  
+```{r, echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE}
+
+module load bedtools
+bedtools getfasta -fi /path/to/asm.racon.fasta -bed /path/to/gpa33.bed -fo gpa33.fa
+bedtools getfasta -fi /proj/cmarlab/users/joe/Cyprinodon/bronto/asm.racon.fasta -bed /pine/scr/j/m/jmcgirr/scratch/gpa33.bed -fo /pine/scr/j/m/jmcgirr/scratch/gpa33.fa
+
+```
