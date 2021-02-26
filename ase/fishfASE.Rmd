@@ -36,7 +36,7 @@ McGirr JA and Martin CH. 2020. Ecological divergence in sympatry causes gene mis
 
 The associated github repo with example data files can be found here [here](https://github.com/joemcgirr/fishfASE).
 
-# Assign parental alleles with `parental_allele_counts.py`
+## Assign parental alleles with `parental_allele_counts.py`
 
 ```{python, results='hide', eval = FALSE,class.source = 'fold-show'}
 ###################################################################
@@ -131,7 +131,7 @@ for infile in infiles:
 
 ```
 
-# Estimate allele specific expression with `mbased.R`
+## Estimate allele specific expression with `mbased.R`
 Identify genes showing ASE using [MBASED](https://bioconductor.org/packages/release/bioc/html/MBASED.html)
 
 ```{r, message=FALSE, warning=FALSE,eval = FALSE,class.source = 'fold-show'}
@@ -234,7 +234,7 @@ write.table(ase,paste(out_dir,indiv,"_mbased_ase_phased_",ase_run_type,".txt",se
 
 ```
 
-# Differential expression with `Deseq2.R`
+## Differential expression with `Deseq2.R`
 Identify genes differentially expressed between species using [DEseq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
 
 ```{r, message=FALSE, warning=FALSE,eval = FALSE,class.source = 'fold-show'}
@@ -298,7 +298,7 @@ prop_de     <- de_total/total_genes
 write.table(res_ordered, "de_genes_8dpf_gff.txt", row.names = FALSE, quote= FALSE,sep="\t")
 ```
 
-# Candidate genes showing cis-regulatory divergence between species
+## Candidate genes showing cis-regulatory divergence between species
 
 Genes differentially expressed between species (white) generated with DEseq2.R
 Genes showing ASE (grey) generated with mbased.R
