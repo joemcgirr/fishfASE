@@ -39,7 +39,7 @@ The associated github repo with example data files can be found here [here](http
 ## Assign parental alleles with `parental_allele_counts.py`
 
 ```{python, results='hide', eval = FALSE,class.source = 'fold-show'}
-###################################################################
+#------------------------------------------------------------------------------------
 #
 # parental_allele_counts.py
 #
@@ -65,14 +65,14 @@ The associated github repo with example data files can be found here [here](http
 # example output:
 # https://github.com/joemcgirr/fishfASE/blob/master/examples/CUT1_parental_counts.txt
 #
-###################################################################
+#------------------------------------------------------------------------------------
 
 import pandas as pd
 import numpy as np
 
-#------------------------------------------------------------------------------------------
-# set paths to directories / parent dictionaries / F1 sample names (infiles) / scaffold sizes file directory
-#------------------------------------------------------------------------------------------
+#------------------------------------------------------------------
+# set paths to directories 
+#------------------------------------------------------------------
 
 cts_dir = 'C:/Users/jmcgirr/Documents/remote_pups/ase/allele_counts/'  # contains sample_counts.csv files
 snp_dir = 'C:/Users/jmcgirr/Documents/remote_pups/ase/'                # contains snp tables for F1 (rna) and F0 parents (dna)
@@ -136,7 +136,7 @@ Identify genes showing ASE using [MBASED](https://bioconductor.org/packages/rele
 
 ```{r, message=FALSE, warning=FALSE,eval = FALSE,class.source = 'fold-show'}
 
-##########################################################
+#------------------------------------------------------------------------------------
 #
 # mbased.R
 #
@@ -149,7 +149,7 @@ Identify genes showing ASE using [MBASED](https://bioconductor.org/packages/rele
 # example output:
 # https://github.com/joemcgirr/fishfASE/blob/master/examples/CUT1_mbased_ase_gene_level.txt
 #
-##########################################################
+#------------------------------------------------------------------------------------
 
 library("MBASED")
 library("dplyr")
@@ -238,7 +238,7 @@ write.table(ase,paste(out_dir,indiv,"_mbased_ase_phased_",ase_run_type,".txt",se
 Identify genes differentially expressed between species using [DEseq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
 
 ```{r, message=FALSE, warning=FALSE,eval = FALSE,class.source = 'fold-show'}
-############################################################
+#------------------------------------------------------------------------------------
 # DEseq2.R
 #
 # This script is used after generating read counts 
@@ -249,7 +249,7 @@ Identify genes differentially expressed between species using [DEseq2](https://b
 #
 # example output: https://github.com/joemcgirr/fishfASE/blob/master/examples/de_genes_8dpf_gff.txt
 #
-############################################################
+#------------------------------------------------------------------------------------
 
 # sample metadata 
 samples <- read.table("sample_metadata.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")

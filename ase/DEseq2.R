@@ -1,4 +1,4 @@
-############################################################
+#------------------------------------------------------------------------------------
 # DEseq2.R
 #
 # This script is used after generating read counts 
@@ -9,7 +9,7 @@
 #
 # example output: https://github.com/joemcgirr/fishfASE/blob/master/examples/de_genes_8dpf_gff.txt
 #
-############################################################
+#------------------------------------------------------------------------------------
 
 # sample metadata 
 samples <- read.table("sample_metadata.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")

@@ -1,4 +1,4 @@
-###################################################################
+#------------------------------------------------------------------------------------
 #
 # parental_allele_counts.py
 #
@@ -24,14 +24,14 @@
 # example output:
 # https://github.com/joemcgirr/fishfASE/blob/master/examples/CUT1_parental_counts.txt
 #
-###################################################################
+#------------------------------------------------------------------------------------
 
 import pandas as pd
 import numpy as np
 
-#------------------------------------------------------------------------------------------
-# set paths to directories / parent dictionaries / F1 sample names (infiles) / scaffold sizes file directory
-#------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# set paths to directories 
+#------------------------------------------------------------------------------------
 
 cts_dir = 'C:/Users/jmcgirr/Documents/remote_pups/ase/allele_counts/'  # contains sample_counts.csv files
 snp_dir = 'C:/Users/jmcgirr/Documents/remote_pups/ase/'                # contains snp tables for F1 (rna) and F0 parents (dna)
