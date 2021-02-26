@@ -1,3 +1,44 @@
+---
+title: "fishfASE"
+author: "Joe McGirr"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    code_folding: show
+    collapsed: no
+    df_print: paged
+    number_sections: no
+    theme: paper
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+  html_notebook:
+    toc: yes
+    toc_depth: 5
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{css, echo=FALSE}
+pre, code {white-space:pre !important; overflow-x:auto}
+```
+
+# Summary
+
+A multi-omics approach analyzing allele specific expression (ASE) to identify cis-regulatory variation influencing rapidly evolving craniofacial phenotypes in Cyprinodon pupfishes.
+
+The following scripts were used for two related publications:
+
+McGirr JA and Martin CH. 2020. Few fixed variants between trophic specialist pupfish species reveal candidate cis-regulatory alleles underlying rapid craniofacial divergence. [Molecular Biology and Evolution pdf](https://github.com/joemcgirr/joemcgirr.github.io/blob/master/files/papers/mcgirr_2020.pdf)
+
+McGirr JA and Martin CH. 2020. Ecological divergence in sympatry causes gene misexpression in hybrids. [Molecular Ecology pdf](https://github.com/joemcgirr/joemcgirr.github.io/blob/master/files/papers/mcgirr_2020b.pdf)
+
+The associated github repo with example data files can be found here [here](https://github.com/joemcgirr/fishfASE).
+
+# Assign parental alleles with `parental_allele_counts.py`
+
+```{python, results='hide', eval = FALSE,class.source = 'fold-show'}
 ###################################################################
 #
 # parental_allele_counts.py
@@ -87,3 +128,191 @@ for infile in infiles:
 
     
     mom_kid.to_csv(out_dir +infile+'_parental_counts.txt',index=False, sep = "\t")
+
+```
+
+# Estimate allele specific expression with `mbased.R`
+Identify genes showing ASE using [MBASED](https://bioconductor.org/packages/release/bioc/html/MBASED.html)
+
+```{r, message=FALSE, warning=FALSE,eval = FALSE,class.source = 'fold-show'}
+
+##########################################################
+#
+# mbased.R
+#
+# This script is used after parental_allele_counts.py
+# to estimate snp or gene level alelle specific expression
+#
+# example input:
+# https://github.com/joemcgirr/fishfASE/blob/master/examples/CUT1_parental_counts.txt
+# 
+# example output:
+# https://github.com/joemcgirr/fishfASE/blob/master/examples/CUT1_mbased_ase_gene_level.txt
+#
+##########################################################
+
+library("MBASED")
+library("dplyr")
+library("magrittr")
+library("plyranges")
+
+# F1 rna sample name
+indiv <- "CUT1" 
+
+# directories
+out_dir <- "/pine/scr/j/m/jmcgirr/pupfish_transcriptomes/ase/mbased/gene_output/"
+cts_dir <- "/pine/scr/j/m/jmcgirr/pupfish_transcriptomes/ase/allele_counts/"
+gene <- read.table("/pine/scr/j/m/jmcgirr/pupfish_transcriptomes/ase/mbased/c_brontotheroides.all.renamed.putative_function.genes_only_reformated_known_final.bed", header = FALSE, stringsAsFactors = FALSE, sep = "	")
+
+# parental counts output by parental_allele_counts.py
+parental_cts <- read.table(paste(cts_dir, indiv, "_parental_counts.txt",sep = ""),sep = "	", stringsAsFactors = FALSE, header = TRUE)
+
+parental_cts_ranges <- parental_cts
+parental_cts_ranges$seqnames <- parental_cts_ranges$chrom
+parental_cts_ranges$start <- parental_cts_ranges$position
+parental_cts_ranges$end <- parental_cts_ranges$start +1
+parental_cts_ranges <- parental_cts_ranges %>% as_granges()
+
+names(gene) <- c("seqnames", "start","end","GeneID", "strand")
+gene <- gene %>% as_granges()
+gene <- join_overlap_intersect(gene, parental_cts_ranges) %>% as.data.frame()
+
+gene$geneIndex <- gene$GeneID
+gene$alleleOneCount <- gene$refCount
+gene$alleleTwoCount <- gene$altCount
+gene$aseIndex <- paste(gene$geneIndex, gene$snpIndex, sep = ":")
+gene$zero_counts <- paste(gene$refCount, gene$altCount, sep= ":")
+gene <- gene %>% filter(zero_counts != "0:0")
+cts <- gene[c("geneIndex", "snpIndex","alleleOneCount","alleleTwoCount","refAllele","altAllele", "chrom","position","aseIndex")]
+
+# change aseID=cts$aseIndex to aseID=cts$geneIndex for gene/exon level ase rather than snp level
+set.seed(988482)
+mySNVs <- GRanges(
+  seqnames=cts$chrom,ranges=IRanges(start=cts$position, width=1),
+  aseID=cts$geneIndex,allele1=cts$refAllele,allele2=cts$altAllele)
+names(mySNVs) <- cts$geneIndex
+## create input RangedSummarizedExperiment object
+mySample <- SummarizedExperiment(assays=list(
+  lociAllele1Counts=matrix(cts$alleleOneCount,ncol=1,dimnames=list(names(mySNVs),
+  "mySample")),lociAllele2Counts=matrix(cts$alleleTwoCount,ncol=1,dimnames=list(names(mySNVs),"mySample"))),rowRanges=mySNVs)
+
+ASEresults_1s_haplotypesKnown <- runMBASED(
+  ASESummarizedExperiment=mySample,
+  isPhased=TRUE,
+  numSim=10^5,
+  BPPARAM = SerialParam()
+)
+
+class(ASEresults_1s_haplotypesKnown)
+names(assays(ASEresults_1s_haplotypesKnown))
+head(assays(ASEresults_1s_haplotypesKnown)$majorAlleleFrequency)
+head(assays(metadata(ASEresults_1s_haplotypesKnown)$locusSpecificResults)$allele1IsMajor)
+
+summarizeASEResults_1s <- function(MBASEDOutput) {
+  geneOutputDF <- data.frame(
+    majorAlleleFrequency=assays(MBASEDOutput)$majorAlleleFrequency[,1],
+    #allele1IsMajor=assays(metadata(MBASEDOutput)$locusSpecificResults)$allele1IsMajor,
+    pValueASE=assays(MBASEDOutput)$pValueASE[,1],
+    pValueHeterogeneity=assays(MBASEDOutput)$pValueHeterogeneity[,1]
+  )
+  lociOutputGR <- rowRanges(metadata(MBASEDOutput)$locusSpecificResults)
+  lociOutputGR$allele1IsMajor <- assays(metadata(MBASEDOutput)$locusSpecificResults)$allele1IsMajor[,1]
+  lociOutputGR$MAF <- assays(metadata(MBASEDOutput)$locusSpecificResults)$MAF[,1]
+  lociOutputList <- split(lociOutputGR, factor(lociOutputGR$aseID, levels=unique(lociOutputGR$aseID)))
+  return(
+    list(
+      geneOutput=geneOutputDF,
+      locusOutput=lociOutputList
+    )
+  )
+}
+
+ase <- as.data.frame(summarizeASEResults_1s(ASEresults_1s_haplotypesKnown)$geneOutput)
+ase$geneID <- rownames(ase)
+
+write.table(ase,paste(out_dir,indiv,"_mbased_ase_phased_",ase_run_type,".txt",sep = ""), quote = FALSE, row.names = FALSE, sep = "	")
+
+```
+
+# Differential expression with `Deseq2.R`
+Identify genes differentially expressed between species using [DEseq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
+
+```{r, message=FALSE, warning=FALSE,eval = FALSE,class.source = 'fold-show'}
+############################################################
+# DEseq2.R
+#
+# This script is used after generating read counts 
+# for genes using featureCounts.
+#
+# Identify genes differentially expressed between
+# species at a particular developmental stage (2dpf or 8dpf)
+#
+# example output: https://github.com/joemcgirr/fishfASE/blob/master/examples/de_genes_8dpf_gff.txt
+#
+############################################################
+
+# sample metadata 
+samples <- read.table("sample_metadata.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+#remove hybrids and test 8dpf stage
+samples <- filter(samples, species != "h") %>% filter(stage == "8dpf")
+
+# read counts for all genes generated by featureCounts
+cts <- read.table("counts_all_feature_types_gff.txt",row.names=1, header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+cts <- cts[samples$sample]
+row.names(samples) <- samples$sample
+samples$sample <- NULL
+
+cts <- as.matrix(cts) 
+colData <- as.matrix(samples)
+
+# create DESeq object
+dds <- DESeqDataSetFromMatrix(countData = cts,
+                              colData = colData,
+                              design= ~p_unique)
+dds <- estimateSizeFactors(dds)
+idx <- rowSums(counts(dds, normalized=TRUE) >= 1 ) >= 1
+length(rowSums(counts(dds, normalized=TRUE) >= 1 ) >= 1)
+length(idx)
+dds <- dds[idx,]
+dds <- DESeq(dds)
+
+# normalized counts
+norm_cts <- data.frame(counts(dds, normalized=TRUE))
+norm_cts$GeneID <- row.names(norm_cts)
+
+# Identify genes DE between species at 0.01 significance
+res <- results(dds, alpha=0.01)
+resOrdered <- res[order(res$padj),]
+
+res_ordered <- as.data.frame(resOrdered)
+res_ordered$Geneid <- rownames(res_ordered)
+
+# summary of DE genes
+total_genes <- nrow(res_ordered)
+de_total    <- nrow(res_ordered[which(res_ordered$padj < 0.01),])
+de_up       <- (nrow(res_ordered[which(res_ordered$log2FoldChange > 0 & res_ordered$padj < 0.01),]))/total_genes
+de_dn       <- (nrow(res_ordered[which(res_ordered$log2FoldChange < 0 & res_ordered$padj < 0.01),]))/total_genes
+prop_de     <- de_total/total_genes
+
+
+write.table(res_ordered, "de_genes_8dpf_gff.txt", row.names = FALSE, quote= FALSE,sep="\t")
+```
+
+# Candidate genes showing cis-regulatory divergence between species
+
+Genes differentially expressed between species (white) generated with DEseq2.R
+Genes showing ASE (grey) generated with mbased.R
+
+```{r, message=FALSE, warning=FALSE,eval = TRUE,class.source = 'fold-show'}
+
+library(eulerr)
+
+de <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/examples/de_genes_8dpf_gff.txt", header = TRUE, stringsAsFactors = FALSE, sep = "\t")
+
+ase <- read.table("C:/Users/jmcgirr/Documents/GitHub/fishfASE/examples/CUT1_mbased_ase_gene_level.txt", header = TRUE)
+ase <- ase[ase$pValueASE < 0.01,]
+
+plot(euler(list(DE=de$Geneid,ASE=ase$geneID)),
+     quantities = TRUE, labels = c("DE","ASE"), main ="" )
+
+```

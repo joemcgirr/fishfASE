@@ -1,38 +1,40 @@
-##########################################################
-#
-# mbased.R
-#
-# This script is used after parental_allele_counts.py
-# to estimate snp or gene level alelle specific expression
-#
-# example input:
-# https://github.com/joemcgirr/fishfASE/blob/master/examples/CUT1_parental_counts.txt
-# 
-# example output:
-# https://github.com/joemcgirr/fishfASE/blob/master/examples/CUT1_mbased_ase_gene_level.txt
-#
-##########################################################
 
+# This script is used after parental_allele_counts.py
+# This script is used to estimate snp or gene level alelle specific expression
+# NOTE: change aseID=cts$aseIndex to aseID=cts$geneIndex for gene/exon level ase rather than snp level
+# within mySNV function
+#------------------------------------------------------------------------------------------
+# set working directories / individual name / genes (.bed file)
+#------------------------------------------------------------------------------------------
+
+
+#BiocManager::install("MBASED")
+#BiocManager::install("dplyr")
+#BiocManager::install("magrittr")
+#BiocManager::install("plyranges")
 library("MBASED")
 library("dplyr")
 library("magrittr")
 library("plyranges")
 
-# F1 rna sample name
-indiv <- "CUT1" 
+indiv <- "CPU1" 
 
-# directories
+#local
+#gene <- read.table("C:/Users/jmcgirr/Documents/remote_pups/igv/c_brontotheroides.all.renamed.putative_function.genes_only_reformated_known_final.bed", header = FALSE, stringsAsFactors = FALSE, sep = "	")
+#cts_dir <- "C:/Users/jmcgirr/Documents/remote_pups/ase/parental_counts/dad_doublecheck/"
+
+#cluster
 out_dir <- "/pine/scr/j/m/jmcgirr/pupfish_transcriptomes/ase/mbased/gene_output/"
-cts_dir <- "/pine/scr/j/m/jmcgirr/pupfish_transcriptomes/ase/allele_counts/"
+cts_dir <- "/pine/scr/j/m/jmcgirr/pupfish_transcriptomes/ase/allele_counts/dad_doublecheck/"
 gene <- read.table("/pine/scr/j/m/jmcgirr/pupfish_transcriptomes/ase/mbased/c_brontotheroides.all.renamed.putative_function.genes_only_reformated_known_final.bed", header = FALSE, stringsAsFactors = FALSE, sep = "	")
 
-# parental counts output by parental_allele_counts.py
 parental_cts <- read.table(paste(cts_dir, indiv, "_parental_counts.txt",sep = ""),sep = "	", stringsAsFactors = FALSE, header = TRUE)
 
 parental_cts_ranges <- parental_cts
 parental_cts_ranges$seqnames <- parental_cts_ranges$chrom
 parental_cts_ranges$start <- parental_cts_ranges$position
 parental_cts_ranges$end <- parental_cts_ranges$start +1
+head(parental_cts_ranges)
 parental_cts_ranges <- parental_cts_ranges %>% as_granges()
 
 names(gene) <- c("seqnames", "start","end","GeneID", "strand")
@@ -60,7 +62,7 @@ mySample <- SummarizedExperiment(assays=list(
 
 ASEresults_1s_haplotypesKnown <- runMBASED(
   ASESummarizedExperiment=mySample,
-  isPhased=TRUE,
+  isPhased=FALSE,
   numSim=10^5,
   BPPARAM = SerialParam()
 )
@@ -88,8 +90,8 @@ summarizeASEResults_1s <- function(MBASEDOutput) {
     )
   )
 }
-
+tail(summarizeASEResults_1s(ASEresults_1s_haplotypesKnown)$locusOutput,5)
 ase <- as.data.frame(summarizeASEResults_1s(ASEresults_1s_haplotypesKnown)$geneOutput)
 ase$geneID <- rownames(ase)
-
-write.table(ase,paste(out_dir,indiv,"_mbased_ase_phased_",ase_run_type,".txt",sep = ""), quote = FALSE, row.names = FALSE, sep = "	")
+head(ase)
+write.table(ase,paste(out_dir,indiv,"_mbased_ase_unphased_",ase_run_type,".txt",sep = ""), quote = FALSE, row.names = FALSE, sep = "	")
