@@ -70,9 +70,9 @@ The associated github repo with example data files can be found here [here](http
 import pandas as pd
 import numpy as np
 
-#------------------------------------------------------------------
+#------------------------------------------------------------------------------------
 # set paths to directories 
-#------------------------------------------------------------------
+#------------------------------------------------------------------------------------
 
 cts_dir = 'C:/Users/jmcgirr/Documents/remote_pups/ase/allele_counts/'  # contains sample_counts.csv files
 snp_dir = 'C:/Users/jmcgirr/Documents/remote_pups/ase/'                # contains snp tables for F1 (rna) and F0 parents (dna)
